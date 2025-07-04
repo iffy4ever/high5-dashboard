@@ -1,0 +1,42 @@
+/* Sizes display */
+.sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.sizes span {
+  background: #e9ecef;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+/* Table improvements */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  min-width: 100%;
+}
+
+/* Card view improvements */
+.card-content {
+  overflow-y: auto;
+  max-height: 180px;
+  padding-right: 5px;
+}
+
+.card-row {
+  margin-bottom: 5px;
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+}
