@@ -32,34 +32,36 @@ function App() {
 
   // Modern Color Scheme
   const colors = {
-    primary: "#4F46E5",
-    primaryLight: "#6366F1",
-    primaryDark: "#4338CA",
-    secondary: "#10B981",
-    secondaryLight: "#34D399",
-    secondaryDark: "#059669",
-    accent: "#F59E0B",
-    accentLight: "#FCD34D",
-    accentDark: "#D97706",
-    danger: "#EF4444",
-    dangerLight: "#FCA5A5",
-    dangerDark: "#DC2626",
-    success: "#10B981",
-    warning: "#F59E0B",
-    info: "#3B82F6",
-    textDark: "#1F2937",
-    textMedium: "#4B5563",
-    textLight: "#F9FAFB",
-    background: "#F9FAFB",
-    cardBg: "#FFFFFF",
-    border: "#E5E7EB",
-    rowEven: "#FFFFFF",
-    rowOdd: "#F9FAFB",
-    headerBg: "#4F46E5",
-    headerText: "#FFFFFF",
-    activeTab: "#4F46E5",
-    inactiveTab: "#9CA3AF",
-    actionButton: "#10B981"
+    primary: "#3a7bd5",
+    primaryLight: "#4d8ae8",
+    primaryDark: "#2a5fb0",
+    secondary: "#00d2ff",
+    secondaryLight: "#33dbff",
+    secondaryDark: "#00b8e0",
+    accent: "#ff7b00",
+    accentLight: "#ff9233",
+    accentDark: "#e06d00",
+    danger: "#ff4757",
+    dangerLight: "#ff6b7a",
+    dangerDark: "#e03e4d",
+    success: "#2ecc71",
+    warning: "#f39c12",
+    info: "#3498db",
+    textDark: "#2c3e50",
+    textMedium: "#7f8c8d",
+    textLight: "#ecf0f1",
+    background: "#f5f7fa",
+    cardBg: "#ffffff",
+    border: "#dfe6e9",
+    rowEven: "#ffffff",
+    rowOdd: "#f8fafc",
+    headerBg: "#2c3e50",
+    headerText: "#ffffff",
+    activeTab: "#3a7bd5",
+    inactiveTab: "#95a5a6",
+    actionButton: "#00b894",
+    statCardBg: "#ffffff",
+    statCardBorder: "#dfe6e9"
   };
 
   // Form links
@@ -404,23 +406,26 @@ function App() {
     <div style={{ 
       minHeight: "100vh",
       background: colors.background,
-      fontFamily: "'Inter', sans-serif"
+      fontFamily: "'Inter', sans-serif",
+      display: "flex",
+      flexDirection: "column"
     }}>
       {/* Header */}
       <header style={{
         background: colors.headerBg,
         color: colors.headerText,
-        padding: "20px 0",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-        marginBottom: "30px",
+        padding: "16px 0",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
         position: "sticky",
         top: 0,
-        zIndex: 100
+        zIndex: 100,
+        borderBottom: `1px solid rgba(255,255,255,0.1)`
       }}>
         <div style={{
-          maxWidth: "1400px",
+          width: "100%",
+          maxWidth: "1800px",
           margin: "0 auto",
-          padding: "0 30px",
+          padding: "0 40px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center"
@@ -428,28 +433,44 @@ function App() {
           <div>
             <h1 style={{
               margin: 0,
-              fontSize: "28px",
+              fontSize: "24px",
               fontWeight: "700",
-              letterSpacing: "0.5px"
+              letterSpacing: "0.5px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px"
             }}>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.1)",
+                backdropFilter: "blur(5px)"
+              }}>
+                📊
+              </span>
               HIGH5 Production Dashboard
             </h1>
             <div style={{
-              fontSize: "14px",
+              fontSize: "13px",
               opacity: 0.8,
-              marginTop: "4px"
+              marginTop: "6px",
+              fontWeight: "400"
             }}>
               Real-time production tracking and management
             </div>
           </div>
           <div style={{
             display: "flex",
-            gap: "15px"
+            gap: "12px"
           }}>
             <button
               onClick={exportToExcel}
               style={{
-                backgroundColor: colors.secondary,
+                backgroundColor: "rgba(255,255,255,0.1)",
                 color: "white",
                 padding: "10px 20px",
                 border: "none",
@@ -461,177 +482,137 @@ function App() {
                 alignItems: "center",
                 gap: "8px",
                 transition: "all 0.2s",
-                boxShadow: `0 2px 10px rgba(16, 185, 129, 0.3)`,
+                backdropFilter: "blur(5px)",
                 ":hover": {
-                  backgroundColor: colors.secondaryDark,
-                  transform: "translateY(-2px)",
-                  boxShadow: `0 4px 12px rgba(16, 185, 129, 0.4)`
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  transform: "translateY(-1px)"
                 }
               }}
             >
               <span>Export to Excel</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <div style={{
-        maxWidth: "1400px",
+      <main style={{
+        flex: 1,
+        width: "100%",
+        maxWidth: "1800px",
         margin: "0 auto",
-        padding: "0 30px 40px"
+        padding: "30px 40px"
       }}>
         {/* Production Metrics Dashboard */}
         <div style={{ 
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "20px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "16px",
           marginBottom: "30px"
         }}>
-          {/* Total Orders */}
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-            border: `1px solid ${colors.border}`,
-            borderTop: `4px solid ${colors.primary}`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", color: colors.textMedium, fontWeight: "500" }}>Total Orders</div>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${colors.primary}20`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.primary }}>
-                📦
+          {/* Metric Cards */}
+          {[
+            {
+              title: "Total Orders",
+              value: productionStats.totalOrders,
+              subtitle: `${filteredSales.length} matching filters`,
+              icon: "📦",
+              color: colors.primary
+            },
+            {
+              title: "Delivered (30 Days)",
+              value: productionStats.deliveredLast30Days,
+              subtitle: `${productionStats.deliveredUnitsLast30Days} units`,
+              icon: "🚚",
+              color: colors.success
+            },
+            {
+              title: "Last Delivery Date",
+              value: productionStats.lastDeliveryDateFormatted,
+              subtitle: "Based on REAL DD date",
+              icon: "📅",
+              color: colors.secondary
+            },
+            {
+              title: "In Production",
+              value: productionStats.inProduction,
+              subtitle: "Currently being manufactured",
+              icon: "🏭",
+              color: colors.accent
+            },
+            {
+              title: "Not Delivered",
+              value: productionStats.notDelivered,
+              subtitle: "Pending completion",
+              icon: "⏳",
+              color: colors.warning
+            },
+            {
+              title: "Fabric Ordered",
+              value: productionStats.fabricOrdered,
+              subtitle: "Materials ordered",
+              icon: "🧵",
+              color: colors.info
+            }
+          ].map((metric, index) => (
+            <div key={index} style={{
+              background: colors.statCardBg,
+              borderRadius: "12px",
+              padding: "20px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              border: `1px solid ${colors.statCardBorder}`,
+              transition: "all 0.2s",
+              ":hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 6px 12px rgba(0,0,0,0.08)"
+              }
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ fontSize: "13px", color: colors.textMedium, fontWeight: "500", marginBottom: "8px" }}>
+                    {metric.title}
+                  </div>
+                  <div style={{ fontSize: "24px", fontWeight: "700", color: colors.textDark, lineHeight: "1.2" }}>
+                    {metric.value}
+                  </div>
+                </div>
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "10px",
+                  background: `${metric.color}15`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: metric.color,
+                  fontSize: "18px"
+                }}>
+                  {metric.icon}
+                </div>
+              </div>
+              <div style={{ 
+                fontSize: "12px", 
+                color: colors.textMedium, 
+                marginTop: "12px",
+                paddingTop: "8px",
+                borderTop: `1px solid ${colors.border}`
+              }}>
+                {metric.subtitle}
               </div>
             </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.totalOrders}
-            </div>
-            <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              {filteredSales.length} matching filters
-            </div>
-          </div>
-
-          {/* Delivered Last 30 Days */}
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-            border: `1px solid ${colors.border}`,
-            borderTop: `4px solid ${colors.success}`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", color: colors.textMedium, fontWeight: "500" }}>Delivered (30 Days)</div>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${colors.success}20`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.success }}>
-                🚚
-              </div>
-            </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.deliveredLast30Days}
-            </div>
-            <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              {productionStats.deliveredUnitsLast30Days} units
-            </div>
-          </div>
-
-          {/* Last Delivery Date */}
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-            border: `1px solid ${colors.border}`,
-            borderTop: `4px solid ${colors.secondary}`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", color: colors.textMedium, fontWeight: "500" }}>Last Delivery Date</div>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${colors.secondary}20`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.secondary }}>
-                📅
-              </div>
-            </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.lastDeliveryDateFormatted}
-            </div>
-            <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              Based on REAL DD date
-            </div>
-          </div>
-
-          {/* In Production */}
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-            border: `1px solid ${colors.border}`,
-            borderTop: `4px solid ${colors.accent}`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", color: colors.textMedium, fontWeight: "500" }}>In Production</div>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${colors.accent}20`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.accent }}>
-                🏭
-              </div>
-            </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.inProduction}
-            </div>
-            <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              Currently being manufactured
-            </div>
-          </div>
-
-          {/* Not Delivered */}
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-            border: `1px solid ${colors.border}`,
-            borderTop: `4px solid ${colors.warning}`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", color: colors.textMedium, fontWeight: "500" }}>Not Delivered</div>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${colors.warning}20`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.warning }}>
-                ⏳
-              </div>
-            </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.notDelivered}
-            </div>
-            <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              Pending completion
-            </div>
-          </div>
-
-          {/* Fabric Ordered */}
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-            border: `1px solid ${colors.border}`,
-            borderTop: `4px solid ${colors.info}`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", color: colors.textMedium, fontWeight: "500" }}>Fabric Ordered</div>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${colors.info}20`, display: "flex", alignItems: "center", justifyContent: "center", color: colors.info }}>
-                🧵
-              </div>
-            </div>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.fabricOrdered}
-            </div>
-            <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              Materials ordered
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Form Buttons Row */}
         <div style={{ 
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "20px",
+          gap: "16px",
           marginBottom: "30px"
         }}>
           {Object.entries(formLinks).map(([key, url]) => (
@@ -643,20 +624,30 @@ function App() {
               style={{
                 backgroundColor: colors.primary,
                 color: colors.textLight,
-                padding: "18px",
-                borderRadius: "12px",
+                padding: "16px",
+                borderRadius: "10px",
                 textDecoration: "none",
                 fontWeight: "600",
                 textAlign: "center",
                 transition: "all 0.2s",
-                boxShadow: `0 4px 12px ${colors.primary}30`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                boxShadow: `0 4px 12px ${colors.primary}20`,
                 ":hover": {
-                  transform: "translateY(-3px)",
-                  boxShadow: `0 6px 16px ${colors.primary}40`
+                  transform: "translateY(-2px)",
+                  boxShadow: `0 6px 16px ${colors.primary}30`,
+                  backgroundColor: colors.primaryDark
                 }
               }}
             >
               {key.split(/(?=[A-Z])/).join(" ")}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
             </a>
           ))}
         </div>
@@ -665,29 +656,32 @@ function App() {
         <div style={{ 
           display: "flex", 
           marginBottom: "25px",
-          borderBottom: `1px solid ${colors.border}`,
-          position: "relative"
+          position: "relative",
+          borderBottom: `1px solid ${colors.border}`
         }}>
           {["dashboard", "fabric"].map(tab => (
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
-                padding: "14px 30px",
+                padding: "12px 24px",
                 backgroundColor: "transparent",
                 color: activeTab === tab ? colors.primary : colors.textMedium,
                 border: "none",
                 cursor: "pointer",
                 fontWeight: "600",
-                fontSize: "15px",
+                fontSize: "14px",
                 position: "relative",
                 transition: "all 0.2s",
+                marginRight: "8px",
+                borderRadius: "8px 8px 0 0",
                 ":hover": {
-                  color: colors.primary
+                  color: colors.primary,
+                  background: "rgba(0,0,0,0.02)"
                 }
               }}
             >
-              {tab === "dashboard" ? "Sales PO" : "Fabric PO"}
+              {tab === "dashboard" ? "Sales Orders" : "Fabric Orders"}
               {activeTab === tab && (
                 <div style={{
                   position: "absolute",
@@ -701,7 +695,11 @@ function App() {
               )}
             </button>
           ))}
-          <div style={{ flex: 1, borderBottom: `1px solid ${colors.border}` }}></div>
+          <div style={{ 
+            flex: 1, 
+            borderBottom: `1px solid ${colors.border}`,
+            marginBottom: "-1px"
+          }}></div>
         </div>
 
         {/* Search and Filters */}
@@ -709,44 +707,55 @@ function App() {
           display: "flex", 
           justifyContent: "space-between", 
           marginBottom: "25px",
-          gap: "20px",
+          gap: "16px",
           flexWrap: "wrap"
         }}>
           <div style={{
             flex: 1,
             position: "relative",
-            maxWidth: "600px",
-            minWidth: "300px"
+            minWidth: "300px",
+            maxWidth: "600px"
           }}>
             <input
               placeholder="Search orders, styles, colors..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
-                padding: "14px 20px 14px 48px",
+                padding: "14px 20px 14px 44px",
                 width: "100%",
                 border: `1px solid ${colors.border}`,
                 borderRadius: "10px",
-                fontSize: "15px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                fontSize: "14px",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
                 transition: "all 0.2s",
                 background: colors.cardBg,
                 ":focus": {
                   outline: "none",
                   borderColor: colors.primary,
-                  boxShadow: `0 2px 12px ${colors.primary}20`
+                  boxShadow: `0 2px 10px ${colors.primary}15`
                 }
               }}
             />
-            <span style={{
-              position: "absolute",
-              left: "18px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: colors.textMedium
-            }}>
-              🔍
-            </span>
+            <svg
+              style={{
+                position: "absolute",
+                left: "16px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: colors.textMedium,
+                width: "18px",
+                height: "18px"
+              }}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
           </div>
           
           <button
@@ -777,6 +786,9 @@ function App() {
               fontWeight: "600",
               fontSize: "14px",
               transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
               ":hover": {
                 backgroundColor: colors.primary,
                 color: colors.textLight,
@@ -784,6 +796,11 @@ function App() {
               }
             }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6l3 6h12l3-6"></path>
+              <path d="M3 6h18"></path>
+              <path d="M7 12h10"></path>
+            </svg>
             Clear Filters
           </button>
         </div>
@@ -795,22 +812,22 @@ function App() {
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: "20px",
-              marginBottom: "30px",
+              gap: "16px",
+              marginBottom: "24px",
               background: colors.cardBg,
               padding: "20px",
               borderRadius: "12px",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
               border: `1px solid ${colors.border}`
             }}>
               {Object.keys(filters).map((key) => (
                 <div key={key}>
                   <label style={{
                     display: "block",
-                    marginBottom: "10px",
+                    marginBottom: "8px",
                     fontWeight: "600",
                     color: colors.textDark,
-                    fontSize: "14px"
+                    fontSize: "13px"
                   }}>
                     {key}
                   </label>
@@ -818,7 +835,7 @@ function App() {
                     value={filters[key]}
                     onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
                     style={{
-                      padding: "12px 15px",
+                      padding: "12px 40px 12px 14px",
                       width: "100%",
                       border: `1px solid ${colors.border}`,
                       borderRadius: "8px",
@@ -826,9 +843,9 @@ function App() {
                       fontSize: "14px",
                       cursor: "pointer",
                       appearance: "none",
-                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(colors.textMedium)}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
                       backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 10px center",
+                      backgroundPosition: "right 12px center",
                       backgroundSize: "16px",
                       transition: "all 0.2s",
                       ":hover": {
@@ -837,7 +854,7 @@ function App() {
                       ":focus": {
                         outline: "none",
                         borderColor: colors.primary,
-                        boxShadow: `0 0 0 2px ${colors.primary}20`
+                        boxShadow: `0 0 0 2px ${colors.primary}15`
                       }
                     }}
                   >
@@ -854,7 +871,7 @@ function App() {
             <div style={{ 
               overflowX: "auto",
               borderRadius: "12px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
               background: colors.cardBg,
               border: `1px solid ${colors.border}`,
               marginBottom: "40px"
@@ -863,7 +880,8 @@ function App() {
                 width: "100%", 
                 borderCollapse: "separate",
                 borderSpacing: 0,
-                fontSize: "14px"
+                fontSize: "14px",
+                minWidth: "1200px"
               }}>
                 <thead>
                   <tr style={{ 
@@ -879,13 +897,25 @@ function App() {
                       "PACKING LIST", "SIZES"
                     ].map(header => (
                       <th key={header} style={{ 
-                        padding: "16px",
+                        padding: "14px 16px",
                         textAlign: "left",
                         fontWeight: "600",
+                        fontSize: "13px",
                         borderBottom: `2px solid ${colors.primary}`,
-                        whiteSpace: "nowrap"
+                        whiteSpace: "nowrap",
+                        position: "relative"
                       }}>
                         {header}
+                        {header !== "IMAGE" && header !== "PACKING LIST" && (
+                          <div style={{
+                            position: "absolute",
+                            bottom: "4px",
+                            left: "16px",
+                            right: "16px",
+                            height: "1px",
+                            backgroundColor: "rgba(255,255,255,0.1)"
+                          }}></div>
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -900,8 +930,16 @@ function App() {
                         fontStyle: "italic",
                         backgroundColor: colors.cardBg
                       }}>
-                        <div style={{ marginBottom: "15px" }}>
-                          ⚠️
+                        <div style={{ 
+                          marginBottom: "15px",
+                          fontSize: "24px",
+                          opacity: 0.5
+                        }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
                         </div>
                         No matching orders found
                         <div style={{ 
@@ -921,7 +959,7 @@ function App() {
                           backgroundColor: i % 2 === 0 ? colors.rowEven : colors.rowOdd,
                           transition: "all 0.2s",
                           ":hover": {
-                            backgroundColor: "#f0f4f8"
+                            backgroundColor: "#f5f9ff"
                           }
                         }}
                       >
@@ -1089,22 +1127,22 @@ function App() {
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: "20px",
-              marginBottom: "30px",
+              gap: "16px",
+              marginBottom: "24px",
               background: colors.cardBg,
               padding: "20px",
               borderRadius: "12px",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
               border: `1px solid ${colors.border}`
             }}>
               {Object.keys(fabricFilters).map((key) => (
                 <div key={key}>
                   <label style={{
                     display: "block",
-                    marginBottom: "10px",
+                    marginBottom: "8px",
                     fontWeight: "600",
                     color: colors.textDark,
-                    fontSize: "14px"
+                    fontSize: "13px"
                   }}>
                     {key}
                   </label>
@@ -1112,7 +1150,7 @@ function App() {
                     value={fabricFilters[key] || ""}
                     onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
                     style={{
-                      padding: "12px 15px",
+                      padding: "12px 40px 12px 14px",
                       width: "100%",
                       border: `1px solid ${colors.border}`,
                       borderRadius: "8px",
@@ -1120,9 +1158,9 @@ function App() {
                       fontSize: "14px",
                       cursor: "pointer",
                       appearance: "none",
-                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(colors.textMedium)}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
                       backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 10px center",
+                      backgroundPosition: "right 12px center",
                       backgroundSize: "16px",
                       transition: "all 0.2s",
                       ":hover": {
@@ -1131,7 +1169,7 @@ function App() {
                       ":focus": {
                         outline: "none",
                         borderColor: colors.primary,
-                        boxShadow: `0 0 0 2px ${colors.primary}20`
+                        boxShadow: `0 0 0 2px ${colors.primary}15`
                       }
                     }}
                   >
@@ -1148,7 +1186,7 @@ function App() {
             <div style={{ 
               overflowX: "auto",
               borderRadius: "12px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
               background: colors.cardBg,
               border: `1px solid ${colors.border}`,
               marginBottom: "40px"
@@ -1157,7 +1195,8 @@ function App() {
                 width: "100%", 
                 borderCollapse: "separate",
                 borderSpacing: 0,
-                fontSize: "14px"
+                fontSize: "14px",
+                minWidth: "1000px"
               }}>
                 <thead>
                   <tr style={{ 
@@ -1171,13 +1210,23 @@ function App() {
                       "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS"
                     ].map(header => (
                       <th key={header} style={{ 
-                        padding: "16px",
+                        padding: "14px 16px",
                         textAlign: "left",
                         fontWeight: "600",
+                        fontSize: "13px",
                         borderBottom: `2px solid ${colors.primary}`,
-                        whiteSpace: "nowrap"
+                        whiteSpace: "nowrap",
+                        position: "relative"
                       }}>
                         {header}
+                        <div style={{
+                          position: "absolute",
+                          bottom: "4px",
+                          left: "16px",
+                          right: "16px",
+                          height: "1px",
+                          backgroundColor: "rgba(255,255,255,0.1)"
+                        }}></div>
                       </th>
                     ))}
                   </tr>
@@ -1192,8 +1241,16 @@ function App() {
                         fontStyle: "italic",
                         backgroundColor: colors.cardBg
                       }}>
-                        <div style={{ marginBottom: "15px" }}>
-                          ⚠️
+                        <div style={{ 
+                          marginBottom: "15px",
+                          fontSize: "24px",
+                          opacity: 0.5
+                        }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
                         </div>
                         No matching fabric orders found
                         <div style={{ 
@@ -1213,7 +1270,7 @@ function App() {
                           backgroundColor: i % 2 === 0 ? colors.rowEven : colors.rowOdd,
                           transition: "all 0.2s",
                           ":hover": {
-                            backgroundColor: "#f0f4f8"
+                            backgroundColor: "#f5f9ff"
                           }
                         }}
                       >
@@ -1303,7 +1360,7 @@ function App() {
             </div>
           </>
         )}
-      </div>
+      </main>
 
       {/* Image Preview */}
       {previewImage.visible && (
@@ -1370,35 +1427,39 @@ function App() {
       )}
 
       {/* Footer */}
-      <div style={{
-        background: colors.primary,
+      <footer style={{
+        background: colors.headerBg,
         color: colors.textLight,
-        padding: "20px 0",
-        marginTop: "50px",
-        textAlign: "center",
-        fontSize: "14px"
+        padding: "16px 0",
+        marginTop: "auto",
+        fontSize: "13px",
+        borderTop: `1px solid rgba(255,255,255,0.1)`
       }}>
         <div style={{ 
-          maxWidth: "1400px", 
+          width: "100%",
+          maxWidth: "1800px",
           margin: "0 auto",
-          padding: "0 30px",
+          padding: "0 40px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center"
         }}>
-          <div>
+          <div style={{ opacity: 0.8 }}>
             HIGH5 Production Dashboard © {new Date().getFullYear()}
           </div>
-          <div style={{
-            opacity: 0.8,
-            fontSize: "13px"
-          }}>
-            Last updated: {new Date().toLocaleString()}
+          <div style={{ opacity: 0.6 }}>
+            Last updated: {new Date().toLocaleString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
           </div>
         </div>
-      </div>
+      </footer>
 
-      {/* Add some global styles */}
+      {/* Global styles */}
       <style>{`
         @keyframes loading {
           0% { transform: translateX(-100%); }
@@ -1415,6 +1476,7 @@ function App() {
           margin: 0;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+          background-color: ${colors.background};
         }
         
         input, select, button {
@@ -1438,6 +1500,17 @@ function App() {
         
         ::-webkit-scrollbar-thumb:hover {
           background: #a1a1a1;
+        }
+
+        /* Modern focus styles */
+        *:focus-visible {
+          outline: 2px solid ${colors.primary};
+          outline-offset: 2px;
+        }
+
+        /* Smooth transitions */
+        a, button, input, select {
+          transition: all 0.2s ease;
         }
       `}</style>
     </div>
