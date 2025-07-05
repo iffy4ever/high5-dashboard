@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import * as XLSX from 'xlsx';
+import { 
+  FiHome, FiPackage, FiTruck, FiCalendar, FiClock, FiAlertCircle, 
+  FiDatabase, FiDownload, FiFilter, FiX, FiSearch, FiExternalLink,
+  FiImage, FiFileText, FiDollarSign, FiTag, FiUsers, FiCheckCircle,
+  FiTrendingUp, FiLayers, FiShoppingBag, FiGrid, FiPrinter, FiRefreshCw
+} from 'react-icons/fi';
 
 function App() {
   // State declarations
@@ -30,46 +36,58 @@ function App() {
     direction: 'below'
   });
 
-  // Modern Color Scheme
+  // Professional Color Scheme
   const colors = {
-    primary: "#3a7bd5",
-    primaryLight: "#4d8ae8",
-    primaryDark: "#2a5fb0",
-    secondary: "#00d2ff",
-    secondaryLight: "#33dbff",
-    secondaryDark: "#00b8e0",
-    accent: "#ff7b00",
-    accentLight: "#ff9233",
-    accentDark: "#e06d00",
-    danger: "#ff4757",
-    dangerLight: "#ff6b7a",
-    dangerDark: "#e03e4d",
-    success: "#2ecc71",
-    warning: "#f39c12",
-    info: "#3498db",
-    textDark: "#2c3e50",
-    textMedium: "#7f8c8d",
-    textLight: "#ecf0f1",
-    background: "#f5f7fa",
-    cardBg: "#ffffff",
-    border: "#dfe6e9",
-    rowEven: "#ffffff",
-    rowOdd: "#f8fafc",
-    headerBg: "#2c3e50",
-    headerText: "#ffffff",
-    activeTab: "#3a7bd5",
-    inactiveTab: "#95a5a6",
-    actionButton: "#00b894",
-    statCardBg: "#ffffff",
-    statCardBorder: "#dfe6e9"
+    primary: "#4F46E5",       // Indigo
+    primaryLight: "#6366F1",
+    primaryDark: "#4338CA",
+    secondary: "#10B981",     // Emerald
+    secondaryLight: "#34D399",
+    secondaryDark: "#059669",
+    accent: "#F97316",        // Orange
+    accentLight: "#FB923C",
+    accentDark: "#EA580C",
+    danger: "#EF4444",        // Red
+    dangerLight: "#F87171",
+    dangerDark: "#DC2626",
+    success: "#10B981",       // Emerald
+    warning: "#F59E0B",       // Amber
+    info: "#3B82F6",         // Blue
+    textDark: "#1F2937",      // Gray-800
+    textMedium: "#6B7280",    // Gray-500
+    textLight: "#F9FAFB",     // Gray-50
+    background: "#F9FAFB",    // Gray-50
+    cardBg: "#FFFFFF",
+    border: "#E5E7EB",       // Gray-200
+    rowEven: "#FFFFFF",
+    rowOdd: "#F9FAFB",
+    headerBg: "#111827",     // Gray-900
+    headerText: "#F9FAFB",
+    activeTab: "#4F46E5",
+    inactiveTab: "#9CA3AF",  // Gray-400
+    actionButton: "#10B981",
+    statCardBg: "#FFFFFF",
+    statCardBorder: "#E5E7EB"
   };
 
-  // Form links
-  const formLinks = {
-    development: "https://forms.gle/hq1pgP4rz1BSjiCc6",
-    fitStatus: "https://forms.gle/5BxFQWWTubZTq21g9",
-    insertPattern: "https://forms.gle/LBQwrpMjJuFzLTsC8"
-  };
+  // Form links with icons
+  const formLinks = [
+    {
+      label: "Development Form",
+      url: "https://forms.gle/hq1pgP4rz1BSjiCc6",
+      icon: <FiFileText size={18} />
+    },
+    {
+      label: "Fit Status Form",
+      url: "https://forms.gle/5BxFQWWTubZTq21g9",
+      icon: <FiCheckCircle size={18} />
+    },
+    {
+      label: "Insert Pattern Form",
+      url: "https://forms.gle/LBQwrpMjJuFzLTsC8",
+      icon: <FiLayers size={18} />
+    }
+  ];
 
   // Calculate production statistics
   const productionStats = useMemo(() => {
@@ -146,7 +164,7 @@ function App() {
             month: 'short', 
             year: 'numeric' 
           }) 
-        : "No deliveries yet"
+        : "No Deliveries Yet"
     };
   }, [data.sales_po]);
 
@@ -268,7 +286,7 @@ function App() {
           insert_pattern: fetched.insert_pattern || []
         });
       } catch (e) {
-        setError("Error parsing data");
+        setError("Error Parsing Data");
         console.error(e);
       }
       setLoading(false);
@@ -278,7 +296,7 @@ function App() {
     script.src = `https://script.google.com/macros/s/AKfycbzLeG4jbwZ5AOCUGuEc-d4o0akKIfw0KOb8qDb8wF3Pp0WXhzkSbmOyTZblV_U5vUMLLw/exec?callback=jsonpCallback`;
     script.async = true;
     script.onerror = () => {
-      setError("Failed to load data");
+      setError("Failed To Load Data");
       setLoading(false);
     };
     document.body.appendChild(script);
@@ -305,424 +323,286 @@ function App() {
 
   // Loading State
   if (loading) return (
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh",
-      background: colors.background
-    }}>
-      <div style={{
-        padding: "40px",
-        background: colors.cardBg,
-        borderRadius: "12px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        textAlign: "center",
-        border: `1px solid ${colors.border}`
-      }}>
-        <div style={{
-          fontSize: "24px",
-          fontWeight: "600",
-          color: colors.primary,
-          marginBottom: "20px"
-        }}>Loading Production Data</div>
-        <div style={{
-          width: "200px",
-          height: "6px",
-          background: colors.border,
-          borderRadius: "3px",
-          overflow: "hidden",
-          margin: "0 auto"
-        }}>
-          <div style={{
-            width: "100%",
-            height: "100%",
-            background: `linear-gradient(90deg, ${colors.primaryLight}, ${colors.primaryDark})`,
-            animation: "loading 1.5s infinite ease-in-out"
-          }}></div>
+    <div className="loading-container">
+      <div className="loading-card">
+        <div className="loading-title">
+          <FiRefreshCw className="spin" size={24} />
+          Loading Production Data
+        </div>
+        <div className="loading-bar">
+          <div className="loading-progress"></div>
         </div>
       </div>
+      <style jsx>{`
+        .loading-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background: ${colors.background};
+        }
+        .loading-card {
+          padding: 2.5rem;
+          background: ${colors.cardBg};
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          text-align: center;
+          border: 1px solid ${colors.border};
+          max-width: 400px;
+          width: 100%;
+        }
+        .loading-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: ${colors.primary};
+          margin-bottom: 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+        }
+        .loading-bar {
+          width: 100%;
+          height: 0.375rem;
+          background: ${colors.border};
+          border-radius: 0.25rem;
+          overflow: hidden;
+        }
+        .loading-progress {
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, ${colors.primaryLight}, ${colors.primaryDark});
+          animation: loading 1.5s infinite ease-in-out;
+        }
+        .spin {
+          animation: spin 1.5s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes loading {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+      `}</style>
     </div>
   );
 
   // Error State
   if (error) return (
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh",
-      background: colors.background
-    }}>
-      <div style={{
-        padding: "30px 40px",
-        textAlign: "center",
-        background: colors.cardBg,
-        borderRadius: "12px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        border: `1px solid ${colors.dangerLight}`,
-        maxWidth: "500px"
-      }}>
-        <div style={{
-          fontSize: "20px",
-          fontWeight: "600",
-          color: colors.danger,
-          marginBottom: "15px"
-        }}>
-          Error Loading Data
+    <div className="error-container">
+      <div className="error-card">
+        <div className="error-icon">
+          <FiAlertCircle size={32} />
         </div>
-        <div style={{
-          color: colors.textMedium,
-          marginBottom: "20px"
-        }}>
-          {error}
-        </div>
+        <div className="error-title">Error Loading Data</div>
+        <div className="error-message">{error}</div>
         <button
           onClick={() => window.location.reload()}
-          style={{
-            backgroundColor: colors.primary,
-            color: colors.textLight,
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "600",
-            fontSize: "14px",
-            transition: "all 0.2s",
-            ":hover": {
-              backgroundColor: colors.primaryDark,
-              transform: "translateY(-1px)"
-            }
-          }}
+          className="error-button"
         >
-          Try Again
+          <FiRefreshCw size={16} /> Try Again
         </button>
       </div>
+      <style jsx>{`
+        .error-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background: ${colors.background};
+        }
+        .error-card {
+          padding: 2rem;
+          text-align: center;
+          background: ${colors.cardBg};
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          border: 1px solid ${colors.dangerLight};
+          max-width: 400px;
+          width: 100%;
+        }
+        .error-icon {
+          color: ${colors.danger};
+          margin-bottom: 1rem;
+        }
+        .error-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: ${colors.danger};
+          margin-bottom: 0.75rem;
+        }
+        .error-message {
+          color: ${colors.textMedium};
+          margin-bottom: 1.5rem;
+        }
+        .error-button {
+          background-color: ${colors.primary};
+          color: ${colors.textLight};
+          padding: 0.75rem 1.5rem;
+          border: none;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 0.875rem;
+          transition: all 0.2s;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .error-button:hover {
+          background-color: ${colors.primaryDark};
+          transform: translateY(-1px);
+        }
+      `}</style>
     </div>
   );
 
   // Main Render
   return (
-    <div style={{ 
-      minHeight: "100vh",
-      background: colors.background,
-      fontFamily: "'Inter', sans-serif",
-      display: "flex",
-      flexDirection: "column"
-    }}>
+    <div className="app-container">
       {/* Header */}
-      <header style={{
-        background: colors.headerBg,
-        color: colors.headerText,
-        padding: "16px 0",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        borderBottom: `1px solid rgba(255,255,255,0.1)`
-      }}>
-        <div style={{
-          width: "100%",
-          padding: "0 40px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-          <div>
-            <h1 style={{
-              margin: 0,
-              fontSize: "24px",
-              fontWeight: "700",
-              letterSpacing: "0.5px",
-              display: "flex",
-              alignItems: "center",
-              gap: "12px"
-            }}>
-              <span style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "36px",
-                height: "36px",
-                borderRadius: "8px",
-                background: "rgba(255,255,255,0.1)",
-                backdropFilter: "blur(5px)"
-              }}>
-                📊
-              </span>
-              HIGH5 Production Dashboard
-            </h1>
-            <div style={{
-              fontSize: "13px",
-              opacity: 0.8,
-              marginTop: "6px",
-              fontWeight: "400"
-            }}>
-              Real-time production tracking and management
+      <header className="app-header">
+        <div className="header-content">
+          <div className="header-title">
+            <div className="header-icon">
+              <FiHome size={24} />
+            </div>
+            <div>
+              <h1>High5 Production Dashboard</h1>
+              <p>Real-Time Production Tracking And Management</p>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <main style={{
-        flex: 1,
-        width: "100%",
-        padding: "30px 40px"
-      }}>
+      <main className="main-content">
         {/* Production Metrics Dashboard */}
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "16px",
-          marginBottom: "30px"
-        }}>
+        <div className="metrics-grid">
           {/* Metric Cards */}
           {[
             {
               title: "Total Orders",
               value: productionStats.totalOrders,
-              subtitle: `${filteredSales.length} matching filters`,
-              icon: "📦",
-              color: colors.primary
+              subtitle: `${filteredSales.length} Matching Filters`,
+              icon: <FiPackage size={20} />,
+              color: colors.primary,
+              trend: null
             },
             {
               title: "Delivered (30 Days)",
               value: productionStats.deliveredLast30Days,
-              subtitle: `${productionStats.deliveredUnitsLast30Days} units`,
-              icon: "🚚",
-              color: colors.success
+              subtitle: `${productionStats.deliveredUnitsLast30Days} Units`,
+              icon: <FiTruck size={20} />,
+              color: colors.success,
+              trend: "up"
             },
             {
               title: "Last Delivery Date",
               value: productionStats.lastDeliveryDateFormatted,
-              subtitle: "Based on REAL DD date",
-              icon: "📅",
-              color: colors.secondary
+              subtitle: "Based On Real DD Date",
+              icon: <FiCalendar size={20} />,
+              color: colors.secondary,
+              trend: null
             },
             {
               title: "In Production",
               value: productionStats.inProduction,
-              subtitle: "Currently being manufactured",
-              icon: "🏭",
-              color: colors.accent
+              subtitle: "Currently Being Manufactured",
+              icon: <FiClock size={20} />,
+              color: colors.accent,
+              trend: "neutral"
             },
             {
               title: "Not Delivered",
               value: productionStats.notDelivered,
-              subtitle: "Pending completion",
-              icon: "⏳",
-              color: colors.warning
+              subtitle: "Pending Completion",
+              icon: <FiAlertCircle size={20} />,
+              color: colors.warning,
+              trend: "down"
             },
             {
               title: "Fabric Ordered",
               value: productionStats.fabricOrdered,
-              subtitle: "Materials ordered",
-              icon: "🧵",
-              color: colors.info
+              subtitle: "Materials Ordered",
+              icon: <FiDatabase size={20} />,
+              color: colors.info,
+              trend: "up"
             }
           ].map((metric, index) => (
-            <div key={index} style={{
-              background: colors.statCardBg,
-              borderRadius: "12px",
-              padding: "20px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              border: `1px solid ${colors.statCardBorder}`,
-              transition: "all 0.2s",
-              ":hover": {
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 12px rgba(0,0,0,0.08)"
-              }
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div key={index} className="metric-card">
+              <div className="metric-header">
                 <div>
-                  <div style={{ fontSize: "13px", color: colors.textMedium, fontWeight: "500", marginBottom: "8px" }}>
-                    {metric.title}
-                  </div>
-                  <div style={{ fontSize: "24px", fontWeight: "700", color: colors.textDark, lineHeight: "1.2" }}>
-                    {metric.value}
-                  </div>
+                  <div className="metric-title">{metric.title}</div>
+                  <div className="metric-value">{metric.value}</div>
                 </div>
-                <div style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  background: `${metric.color}15`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: metric.color,
-                  fontSize: "18px"
-                }}>
+                <div className="metric-icon" style={{ color: metric.color, backgroundColor: `${metric.color}15` }}>
                   {metric.icon}
                 </div>
               </div>
-              <div style={{ 
-                fontSize: "12px", 
-                color: colors.textMedium, 
-                marginTop: "12px",
-                paddingTop: "8px",
-                borderTop: `1px solid ${colors.border}`
-              }}>
+              <div className="metric-footer">
                 {metric.subtitle}
+                {metric.trend && (
+                  <span className={`trend-indicator ${metric.trend}`}>
+                    {metric.trend === 'up' ? '↑' : metric.trend === 'down' ? '↓' : '→'}
+                  </span>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         {/* Form Buttons Row */}
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "16px",
-          marginBottom: "30px"
-        }}>
-          {Object.entries(formLinks).map(([key, url]) => (
+        <div className="form-links-grid">
+          {formLinks.map((form, index) => (
             <a
-              key={key}
-              href={url}
+              key={index}
+              href={form.url}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.textLight,
-                padding: "16px",
-                borderRadius: "10px",
-                textDecoration: "none",
-                fontWeight: "600",
-                textAlign: "center",
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                boxShadow: `0 4px 12px ${colors.primary}20`,
-                ":hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: `0 6px 16px ${colors.primary}30`,
-                  backgroundColor: colors.primaryDark
-                }
-              }}
+              className="form-link"
             >
-              {key.split(/(?=[A-Z])/).join(" ")}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
+              {form.icon}
+              {form.label}
+              <FiExternalLink size={16} />
             </a>
           ))}
         </div>
 
         {/* Tabs */}
-        <div style={{ 
-          display: "flex", 
-          marginBottom: "25px",
-          position: "relative",
-          borderBottom: `1px solid ${colors.border}`
-        }}>
-          {["dashboard", "fabric"].map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                padding: "12px 24px",
-                backgroundColor: "transparent",
-                color: activeTab === tab ? colors.primary : colors.textMedium,
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "14px",
-                position: "relative",
-                transition: "all 0.2s",
-                marginRight: "8px",
-                borderRadius: "8px 8px 0 0",
-                ":hover": {
-                  color: colors.primary,
-                  background: "rgba(0,0,0,0.02)"
-                }
-              }}
-            >
-              {tab === "dashboard" ? "Sales Orders" : "Fabric Orders"}
-              {activeTab === tab && (
-                <div style={{
-                  position: "absolute",
-                  bottom: "-1px",
-                  left: 0,
-                  right: 0,
-                  height: "3px",
-                  backgroundColor: colors.primary,
-                  borderRadius: "3px 3px 0 0"
-                }}></div>
-              )}
-            </button>
-          ))}
-          <div style={{ 
-            flex: 1, 
-            borderBottom: `1px solid ${colors.border}`,
-            marginBottom: "-1px"
-          }}></div>
+        <div className="tab-container">
+          <div className="tabs">
+            {[
+              { id: "dashboard", label: "Sales Orders", icon: <FiShoppingBag size={18} /> },
+              { id: "fabric", label: "Fabric Orders", icon: <FiGrid size={18} /> }
+            ].map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="tab-divider"></div>
         </div>
 
         {/* Search and Filters */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", 
-          marginBottom: "25px",
-          gap: "16px",
-          flexWrap: "wrap"
-        }}>
-          <div style={{
-            flex: 1,
-            position: "relative",
-            minWidth: "300px"
-          }}>
+        <div className="search-filter-container">
+          <div className="search-box">
+            <FiSearch className="search-icon" size={18} />
             <input
-              placeholder="Search orders, styles, colors..."
+              placeholder="Search Orders, Styles, Colors..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                padding: "14px 20px 14px 44px",
-                width: "100%",
-                border: `1px solid ${colors.border}`,
-                borderRadius: "10px",
-                fontSize: "14px",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
-                transition: "all 0.2s",
-                background: colors.cardBg,
-                ":focus": {
-                  outline: "none",
-                  borderColor: colors.primary,
-                  boxShadow: `0 2px 10px ${colors.primary}15`
-                }
-              }}
+              className="search-input"
             />
-            <svg
-              style={{
-                position: "absolute",
-                left: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: colors.textMedium,
-                width: "18px",
-                height: "18px"
-              }}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
           </div>
           
-          <div style={{
-            display: "flex",
-            gap: "12px"
-          }}>
+          <div className="action-buttons">
             <button
               onClick={() => {
                 if (activeTab === "dashboard") {
@@ -741,61 +621,17 @@ function App() {
                 }
                 setSearch("");
               }}
-              style={{
-                backgroundColor: colors.cardBg,
-                color: colors.textMedium,
-                padding: "12px 20px",
-                border: `1px solid ${colors.border}`,
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "14px",
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                ":hover": {
-                  backgroundColor: colors.primary,
-                  color: colors.textLight,
-                  borderColor: colors.primary
-                }
-              }}
+              className="secondary-button"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6l3 6h12l3-6"></path>
-                <path d="M3 6h18"></path>
-                <path d="M7 12h10"></path>
-              </svg>
+              <FiFilter size={16} />
               Clear Filters
             </button>
 
             <button
               onClick={exportToExcel}
-              style={{
-                backgroundColor: colors.primary,
-                color: colors.textLight,
-                padding: "12px 20px",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "14px",
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                boxShadow: `0 2px 8px ${colors.primary}30`,
-                ":hover": {
-                  backgroundColor: colors.primaryDark,
-                  transform: "translateY(-1px)"
-                }
-              }}
+              className="primary-button"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
+              <FiDownload size={16} />
               Export Excel
             </button>
           </div>
@@ -805,54 +641,16 @@ function App() {
         {activeTab === "dashboard" && (
           <>
             {/* Filters */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: "16px",
-              marginBottom: "24px",
-              background: colors.cardBg,
-              padding: "20px",
-              borderRadius: "12px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              border: `1px solid ${colors.border}`
-            }}>
+            <div className="filter-grid">
               {Object.keys(filters).map((key) => (
-                <div key={key}>
-                  <label style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: "600",
-                    color: colors.textDark,
-                    fontSize: "13px"
-                  }}>
+                <div key={key} className="filter-item">
+                  <label className="filter-label">
                     {key}
                   </label>
                   <select
                     value={filters[key]}
                     onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
-                    style={{
-                      padding: "12px 40px 12px 14px",
-                      width: "100%",
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: "8px",
-                      backgroundColor: colors.cardBg,
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      appearance: "none",
-                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(colors.textMedium)}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 12px center",
-                      backgroundSize: "16px",
-                      transition: "all 0.2s",
-                      ":hover": {
-                        borderColor: colors.primary
-                      },
-                      ":focus": {
-                        outline: "none",
-                        borderColor: colors.primary,
-                        boxShadow: `0 0 0 2px ${colors.primary}15`
-                      }
-                    }}
+                    className="filter-select"
                   >
                     <option value="">All {key}</option>
                     {[...new Set(data.sales_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
@@ -864,249 +662,124 @@ function App() {
             </div>
 
             {/* Table */}
-            <div style={{ 
-              overflowX: "auto",
-              borderRadius: "12px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-              background: colors.cardBg,
-              border: `1px solid ${colors.border}`,
-              marginBottom: "40px"
-            }}>
-              <table style={{ 
-                width: "100%", 
-                borderCollapse: "separate",
-                borderSpacing: 0,
-                fontSize: "14px",
-                minWidth: "1200px"
-              }}>
+            <div className="table-container">
+              <table className="data-table">
                 <thead>
-                  <tr style={{ 
-                    backgroundColor: colors.headerBg,
-                    color: colors.headerText,
-                    position: "sticky",
-                    top: 0
-                  }}>
+                  <tr>
                     {[
-                      "IMAGE", "H-NUMBER", "PO NUMBER", "STYLE NUMBER", "DESCRIPTION", 
-                      "COLOUR", "PRICE", "TOTAL UNITS", "FIT STATUS", "CUSTOMER NAME",
-                      "XFACT DD", "REAL DD", "LIVE STATUS", "CMT PRICE", "ACTUAL CMT",
-                      "PACKING LIST", "SIZES"
-                    ].map(header => (
-                      <th key={header} style={{ 
-                        padding: "14px 16px",
-                        textAlign: "left",
-                        fontWeight: "600",
-                        fontSize: "13px",
-                        borderBottom: `2px solid ${colors.primary}`,
-                        whiteSpace: "nowrap",
-                        position: "relative"
-                      }}>
-                        {header}
-                        {header !== "IMAGE" && header !== "PACKING LIST" && (
-                          <div style={{
-                            position: "absolute",
-                            bottom: "4px",
-                            left: "16px",
-                            right: "16px",
-                            height: "1px",
-                            backgroundColor: "rgba(255,255,255,0.1)"
-                          }}></div>
-                        )}
+                      { label: "IMAGE", icon: <FiImage size={16} /> },
+                      { label: "H-NUMBER" },
+                      { label: "PO NUMBER" },
+                      { label: "STYLE NUMBER" },
+                      { label: "DESCRIPTION" },
+                      { label: "COLOUR" },
+                      { label: "PRICE", icon: <FiDollarSign size={16} /> },
+                      { label: "TOTAL UNITS" },
+                      { label: "FIT STATUS" },
+                      { label: "CUSTOMER NAME", icon: <FiUsers size={16} /> },
+                      { label: "XFACT DD" },
+                      { label: "REAL DD" },
+                      { label: "LIVE STATUS" },
+                      { label: "CMT PRICE", icon: <FiDollarSign size={16} /> },
+                      { label: "ACTUAL CMT", icon: <FiDollarSign size={16} /> },
+                      { label: "PACKING LIST", icon: <FiFileText size={16} /> },
+                      { label: "SIZES" }
+                    ].map((header, index) => (
+                      <th key={index}>
+                        <div className="header-content">
+                          {header.icon && <span className="header-icon">{header.icon}</span>}
+                          {header.label}
+                        </div>
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSales.length === 0 ? (
-                    <tr>
-                      <td colSpan="17" style={{ 
-                        padding: "40px", 
-                        textAlign: "center",
-                        color: colors.textMedium,
-                        fontStyle: "italic",
-                        backgroundColor: colors.cardBg
-                      }}>
-                        <div style={{ 
-                          marginBottom: "15px",
-                          fontSize: "24px",
-                          opacity: 0.5
-                        }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                          </svg>
-                        </div>
-                        No matching orders found
-                        <div style={{ 
-                          fontSize: "13px",
-                          marginTop: "10px",
-                          color: colors.textMedium
-                        }}>
-                          Try adjusting your search or filters
+                    <tr className="empty-state">
+                      <td colSpan="17">
+                        <div className="empty-content">
+                          <FiAlertCircle size={32} />
+                          <div>No Matching Orders Found</div>
+                          <p>Try Adjusting Your Search Or Filters</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     filteredSales.map((row, i) => (
-                      <tr 
-                        key={i} 
-                        style={{ 
-                          backgroundColor: i % 2 === 0 ? colors.rowEven : colors.rowOdd,
-                          transition: "all 0.2s",
-                          ":hover": {
-                            backgroundColor: "#f5f9ff"
-                          }
-                        }}
-                      >
-                        <td style={{ padding: "12px", width: "120px", height: "80px" }}>
+                      <tr key={i}>
+                        <td className="image-cell">
                           {row.IMAGE ? (
                             <div 
                               onMouseEnter={(e) => handleMouseEnter(row.IMAGE, e)}
                               onMouseLeave={handleMouseLeave}
-                              style={{ width: "100%", height: "100%" }}
                             >
                               <a href={row.IMAGE} target="_blank" rel="noopener noreferrer">
                                 <img
                                   src={getGoogleDriveThumbnail(row.IMAGE)}
                                   alt="Product"
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    transition: "transform 0.2s",
-                                    border: `1px solid ${colors.border}`,
-                                    ":hover": {
-                                      transform: "scale(1.03)",
-                                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-                                    }
-                                  }}
+                                  className="product-image"
                                 />
                               </a>
                             </div>
                           ) : (
-                            <div style={{
-                              width: "100%",
-                              height: "100%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontStyle: "italic",
-                              color: colors.textMedium,
-                              backgroundColor: "#f5f5f5",
-                              borderRadius: "6px",
-                              border: `1px dashed ${colors.border}`
-                            }}>
+                            <div className="no-image">
                               No Image
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: "12px", fontWeight: "600", color: colors.primary }}>
-                          {row["H-NUMBER"]}
-                        </td>
-                        <td style={{ padding: "12px", fontWeight: "500" }}>{row["PO NUMBER"]}</td>
-                        <td style={{ padding: "12px" }}>{row["STYLE NUMBER"]}</td>
-                        <td style={{ padding: "12px" }}>{row["DESCRIPTION"]}</td>
-                        <td style={{ padding: "12px" }}>
-                          <div style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px"
-                          }}>
+                        <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                        <td>{row["PO NUMBER"]}</td>
+                        <td>{row["STYLE NUMBER"]}</td>
+                        <td>{row["DESCRIPTION"]}</td>
+                        <td>
+                          <div className="color-cell">
                             {row["COLOUR"] && (
-                              <span style={{
-                                display: "inline-block",
-                                width: "12px",
-                                height: "12px",
-                                borderRadius: "50%",
-                                backgroundColor: row["COLOUR"].toLowerCase() === "red" ? "#EF4444" :
-                                              row["COLOUR"].toLowerCase() === "blue" ? "#3B82F6" :
-                                              row["COLOUR"].toLowerCase() === "green" ? "#10B981" :
-                                              row["COLOUR"].toLowerCase() === "black" ? "#1F2937" :
-                                              row["COLOUR"].toLowerCase() === "white" ? "#E5E7EB" : "#8B5CF6"
-                              }}></span>
+                              <span 
+                                className="color-dot" 
+                                style={{
+                                  backgroundColor: getColorCode(row["COLOUR"])
+                                }}
+                              ></span>
                             )}
                             {row["COLOUR"]}
                           </div>
                         </td>
-                        <td style={{ padding: "12px", fontWeight: "600", color: colors.primary }}>
-                          {formatCurrency(row["PRICE"])}
-                        </td>
-                        <td style={{ padding: "12px", fontWeight: "600" }}>{row["TOTAL UNITS"]}</td>
-                        <td style={{ padding: "12px" }}>
-                          <span style={{
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            background: row["FIT STATUS"] === "GS SENT" ? "#e3faf2" : "#fff4e6",
-                            color: row["FIT STATUS"] === "GS SENT" ? colors.success : colors.warning,
-                            fontWeight: "600",
-                            fontSize: "13px"
-                          }}>
+                        <td className="highlight-cell">{formatCurrency(row["PRICE"])}</td>
+                        <td className="bold-cell">{row["TOTAL UNITS"]}</td>
+                        <td>
+                          <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
                             {row["FIT STATUS"]}
                           </span>
                         </td>
-                        <td style={{ padding: "12px" }}>{row["CUSTOMER NAME"]}</td>
-                        <td style={{ padding: "12px", whiteSpace: "nowrap" }}>
-                          {formatDate(row["XFACT DD"])}
-                        </td>
-                        <td style={{ padding: "12px", whiteSpace: "nowrap" }}>
-                          {formatDate(row["REAL DD"])}
-                        </td>
-                        <td style={{ padding: "12px" }}>
-                          <span style={{
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            background: row["LIVE STATUS"] === "DELIVERED" ? "#e3faf2" : 
-                                      row["LIVE STATUS"] === "FABRIC ORDERED" ? "#e6f3ff" : "#fff4e6",
-                            color: row["LIVE STATUS"] === "DELIVERED" ? colors.success : 
-                                 row["LIVE STATUS"] === "FABRIC ORDERED" ? colors.info : colors.warning,
-                            fontWeight: "600",
-                            fontSize: "13px"
-                          }}>
+                        <td>{row["CUSTOMER NAME"]}</td>
+                        <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
+                        <td className="nowrap">{formatDate(row["REAL DD"])}</td>
+                        <td>
+                          <span className={`status-badge ${
+                            row["LIVE STATUS"] === "DELIVERED" ? 'success' : 
+                            row["LIVE STATUS"] === "FABRIC ORDERED" ? 'info' : 'warning'
+                          }`}>
                             {row["LIVE STATUS"]}
                           </span>
                         </td>
-                        <td style={{ padding: "12px", fontWeight: "600", whiteSpace: "nowrap" }}>
-                          {formatCurrency(row["CMT PRICE"])}
-                        </td>
-                        <td style={{ padding: "12px", fontWeight: "600", whiteSpace: "nowrap" }}>
-                          {formatCurrency(row["ACTUAL CMT"])}
-                        </td>
-                        <td style={{ padding: "12px" }}>
+                        <td className="nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
+                        <td className="nowrap bold-cell">{formatCurrency(row["ACTUAL CMT"])}</td>
+                        <td>
                           {row["PACKING LIST"] ? (
                             <a
                               href={getGoogleDriveDownloadLink(row["PACKING LIST"])}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{
-                                backgroundColor: colors.secondary,
-                                color: "white",
-                                padding: "8px 12px",
-                                borderRadius: "6px",
-                                textDecoration: "none",
-                                display: "inline-block",
-                                minWidth: "100px",
-                                textAlign: "center",
-                                fontWeight: "600",
-                                fontSize: "13px",
-                                transition: "all 0.2s",
-                                ":hover": {
-                                  backgroundColor: "#26a899",
-                                  transform: "translateY(-1px)"
-                                }
-                              }}
+                              className="download-button"
                             >
                               Download
                             </a>
                           ) : (
-                            <span style={{ fontStyle: "italic", color: colors.textMedium }}>N/A</span>
+                            <span className="na-text">N/A</span>
                           )}
                         </td>
-                        <td style={{ padding: "12px", fontSize: "13px", color: colors.textMedium }}>
-                          {compactSizes(row)}
-                        </td>
+                        <td className="sizes-cell">{compactSizes(row)}</td>
                       </tr>
                     ))
                   )}
@@ -1120,54 +793,16 @@ function App() {
         {activeTab === "fabric" && (
           <>
             {/* Filters */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: "16px",
-              marginBottom: "24px",
-              background: colors.cardBg,
-              padding: "20px",
-              borderRadius: "12px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              border: `1px solid ${colors.border}`
-            }}>
+            <div className="filter-grid">
               {Object.keys(fabricFilters).map((key) => (
-                <div key={key}>
-                  <label style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: "600",
-                    color: colors.textDark,
-                    fontSize: "13px"
-                  }}>
+                <div key={key} className="filter-item">
+                  <label className="filter-label">
                     {key}
                   </label>
                   <select
                     value={fabricFilters[key] || ""}
                     onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
-                    style={{
-                      padding: "12px 40px 12px 14px",
-                      width: "100%",
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: "8px",
-                      backgroundColor: colors.cardBg,
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      appearance: "none",
-                      backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(colors.textMedium)}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 12px center",
-                      backgroundSize: "16px",
-                      transition: "all 0.2s",
-                      ":hover": {
-                        borderColor: colors.primary
-                      },
-                      ":focus": {
-                        outline: "none",
-                        borderColor: colors.primary,
-                        boxShadow: `0 0 0 2px ${colors.primary}15`
-                      }
-                    }}
+                    className="filter-select"
                   >
                     <option value="">All {key}</option>
                     {[...new Set(data.fabric_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
@@ -1179,173 +814,82 @@ function App() {
             </div>
 
             {/* Table */}
-            <div style={{ 
-              overflowX: "auto",
-              borderRadius: "12px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-              background: colors.cardBg,
-              border: `1px solid ${colors.border}`,
-              marginBottom: "40px"
-            }}>
-              <table style={{ 
-                width: "100%", 
-                borderCollapse: "separate",
-                borderSpacing: 0,
-                fontSize: "14px",
-                minWidth: "1000px"
-              }}>
+            <div className="table-container">
+              <table className="data-table">
                 <thead>
-                  <tr style={{ 
-                    backgroundColor: colors.headerBg,
-                    color: colors.headerText,
-                    position: "sticky",
-                    top: 0
-                  }}>
+                  <tr>
                     {[
-                      "NO.", "DATE", "H-NUMBER", "ORDER REF", "TYPE", 
-                      "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS"
-                    ].map(header => (
-                      <th key={header} style={{ 
-                        padding: "14px 16px",
-                        textAlign: "left",
-                        fontWeight: "600",
-                        fontSize: "13px",
-                        borderBottom: `2px solid ${colors.primary}`,
-                        whiteSpace: "nowrap",
-                        position: "relative"
-                      }}>
-                        {header}
-                        <div style={{
-                          position: "absolute",
-                          bottom: "4px",
-                          left: "16px",
-                          right: "16px",
-                          height: "1px",
-                          backgroundColor: "rgba(255,255,255,0.1)"
-                        }}></div>
+                      { label: "NO." },
+                      { label: "DATE" },
+                      { label: "H-NUMBER" },
+                      { label: "ORDER REF" },
+                      { label: "TYPE" },
+                      { label: "DESCRIPTION" },
+                      { label: "COLOUR" },
+                      { label: "TOTAL" },
+                      { label: "FABRIC/TRIM PRICE", icon: <FiDollarSign size={16} /> },
+                      { label: "FABRIC PO LINKS" }
+                    ].map((header, index) => (
+                      <th key={index}>
+                        <div className="header-content">
+                          {header.icon && <span className="header-icon">{header.icon}</span>}
+                          {header.label}
+                        </div>
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredFabric.length === 0 ? (
-                    <tr>
-                      <td colSpan="10" style={{ 
-                        padding: "40px", 
-                        textAlign: "center",
-                        color: colors.textMedium,
-                        fontStyle: "italic",
-                        backgroundColor: colors.cardBg
-                      }}>
-                        <div style={{ 
-                          marginBottom: "15px",
-                          fontSize: "24px",
-                          opacity: 0.5
-                        }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                          </svg>
-                        </div>
-                        No matching fabric orders found
-                        <div style={{ 
-                          fontSize: "13px",
-                          marginTop: "10px",
-                          color: colors.textMedium
-                        }}>
-                          Try adjusting your search or filters
+                    <tr className="empty-state">
+                      <td colSpan="10">
+                        <div className="empty-content">
+                          <FiAlertCircle size={32} />
+                          <div>No Matching Fabric Orders Found</div>
+                          <p>Try Adjusting Your Search Or Filters</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     filteredFabric.map((row, i) => (
-                      <tr 
-                        key={i} 
-                        style={{ 
-                          backgroundColor: i % 2 === 0 ? colors.rowEven : colors.rowOdd,
-                          transition: "all 0.2s",
-                          ":hover": {
-                            backgroundColor: "#f5f9ff"
-                          }
-                        }}
-                      >
-                        <td style={{ padding: "12px", fontWeight: "600" }}>{row["NO."]}</td>
-                        <td style={{ padding: "12px", whiteSpace: "nowrap" }}>
-                          {formatDate(row["DATE"])}
-                        </td>
-                        <td style={{ padding: "12px", fontWeight: "600", color: colors.primary }}>
-                          {row["H-NUMBER"]}
-                        </td>
-                        <td style={{ padding: "12px" }}>{row["ORDER REF"]}</td>
-                        <td style={{ padding: "12px" }}>
-                          <span style={{
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            background: `${colors.primary}10`,
-                            color: colors.primary,
-                            fontWeight: "600",
-                            fontSize: "13px",
-                            display: "inline-block"
-                          }}>
+                      <tr key={i}>
+                        <td className="bold-cell">{row["NO."]}</td>
+                        <td className="nowrap">{formatDate(row["DATE"])}</td>
+                        <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                        <td>{row["ORDER REF"]}</td>
+                        <td>
+                          <span className="type-badge">
                             {row["TYPE"]}
                           </span>
                         </td>
-                        <td style={{ padding: "12px" }}>{row["DESCRIPTION"]}</td>
-                        <td style={{ padding: "12px" }}>
-                          <div style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px"
-                          }}>
+                        <td>{row["DESCRIPTION"]}</td>
+                        <td>
+                          <div className="color-cell">
                             {row["COLOUR"] && (
-                              <span style={{
-                                display: "inline-block",
-                                width: "12px",
-                                height: "12px",
-                                borderRadius: "50%",
-                                backgroundColor: row["COLOUR"].toLowerCase() === "red" ? "#EF4444" :
-                                              row["COLOUR"].toLowerCase() === "blue" ? "#3B82F6" :
-                                              row["COLOUR"].toLowerCase() === "green" ? "#10B981" :
-                                              row["COLOUR"].toLowerCase() === "black" ? "#1F2937" :
-                                              row["COLOUR"].toLowerCase() === "white" ? "#E5E7EB" : "#8B5CF6"
-                              }}></span>
+                              <span 
+                                className="color-dot" 
+                                style={{
+                                  backgroundColor: getColorCode(row["COLOUR"])
+                                }}
+                              ></span>
                             )}
                             {row["COLOUR"]}
                           </div>
                         </td>
-                        <td style={{ padding: "12px", fontWeight: "600" }}>{row["TOTAL"]}</td>
-                        <td style={{ padding: "12px", fontWeight: "600", whiteSpace: "nowrap" }}>
-                          {formatCurrency(row["FABRIC/TRIM PRICE"])}
-                        </td>
-                        <td style={{ padding: "12px" }}>
+                        <td className="bold-cell">{row["TOTAL"]}</td>
+                        <td className="nowrap bold-cell">{formatCurrency(row["FABRIC/TRIM PRICE"])}</td>
+                        <td>
                           {row["FABRIC PO LINKS"] ? (
                             <a
                               href={row["FABRIC PO LINKS"]}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{
-                                backgroundColor: colors.secondary,
-                                color: "white",
-                                padding: "8px 12px",
-                                borderRadius: "6px",
-                                textDecoration: "none",
-                                display: "inline-block",
-                                minWidth: "100px",
-                                textAlign: "center",
-                                fontWeight: "600",
-                                fontSize: "13px",
-                                transition: "all 0.2s",
-                                ":hover": {
-                                  backgroundColor: "#26a899",
-                                  transform: "translateY(-1px)"
-                                }
-                              }}
+                              className="view-button"
                             >
                               View PO
                             </a>
                           ) : (
-                            <span style={{ fontStyle: "italic", color: colors.textMedium }}>No Link</span>
+                            <span className="na-text">No Link</span>
                           )}
                         </td>
                       </tr>
@@ -1361,88 +905,28 @@ function App() {
       {/* Image Preview */}
       {previewImage.visible && (
         <div 
+          className={`image-preview ${previewImage.direction}`}
           style={{
-            position: "fixed",
             left: `${previewImage.position.x}px`,
-            top: previewImage.direction === 'below' 
-              ? `${previewImage.position.y + 20}px` 
-              : 'auto',
-            bottom: previewImage.direction === 'above' 
-              ? `${window.innerHeight - previewImage.position.y + 20}px` 
-              : 'auto',
-            zIndex: 1000,
-            width: "320px",
-            height: "auto",
-            pointerEvents: "none",
-            backgroundColor: colors.cardBg,
-            padding: "15px",
-            borderRadius: "12px",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-            transform: previewImage.direction === 'above' 
-              ? 'translateY(-100%)' 
-              : 'none',
-            transition: "transform 0.1s ease-out",
-            border: `1px solid ${colors.border}`
+            [previewImage.direction === 'below' ? 'top' : 'bottom']: 
+              `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
           }}
         >
           <img 
             src={previewImage.url} 
             alt="Preview" 
-            style={{ 
-              width: "100%",
-              height: "auto",
-              maxHeight: "400px",
-              objectFit: "contain",
-              borderRadius: "6px",
-              border: `1px solid ${colors.border}`
-            }}
+            className="preview-image"
           />
-          <div style={{
-            position: "absolute",
-            top: previewImage.direction === 'above' ? "100%" : "-10px",
-            left: "20px",
-            width: "20px",
-            height: "20px",
-            backgroundColor: colors.cardBg,
-            transform: previewImage.direction === 'above' 
-              ? "rotate(-45deg)" 
-              : "rotate(45deg)",
-            borderRight: `1px solid ${colors.border}`,
-            borderBottom: previewImage.direction === 'above' 
-              ? `1px solid ${colors.border}` 
-              : 'none',
-            borderTop: previewImage.direction === 'above' 
-              ? 'none' 
-              : `1px solid ${colors.border}`,
-            borderLeft: previewImage.direction === 'above' 
-              ? 'none' 
-              : `1px solid ${colors.border}`,
-            zIndex: -1
-          }}></div>
+          <div className="preview-arrow"></div>
         </div>
       )}
 
       {/* Footer */}
-      <footer style={{
-        background: colors.headerBg,
-        color: colors.textLight,
-        padding: "16px 0",
-        marginTop: "auto",
-        fontSize: "13px",
-        borderTop: `1px solid rgba(255,255,255,0.1)`
-      }}>
-        <div style={{ 
-          width: "100%",
-          padding: "0 40px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-          <div style={{ opacity: 0.8 }}>
-            HIGH5 Production Dashboard © {new Date().getFullYear()}
-          </div>
-          <div style={{ opacity: 0.6 }}>
-            Last updated: {new Date().toLocaleString('en-GB', {
+      <footer className="app-footer">
+        <div className="footer-content">
+          <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
+          <div>
+            Last Updated: {new Date().toLocaleString('en-GB', {
               day: '2-digit',
               month: 'short',
               year: 'numeric',
@@ -1454,29 +938,39 @@ function App() {
       </footer>
 
       {/* Global styles */}
-      <style>{`
-        @keyframes loading {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
-        }
-        
+      <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         * {
           box-sizing: border-box;
+          margin: 0;
+          padding: 0;
         }
         
         body {
-          margin: 0;
+          font-family: 'Inter', sans-serif;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
           background-color: ${colors.background};
+          color: ${colors.textDark};
+          line-height: 1.5;
         }
         
         input, select, button {
           font-family: inherit;
+          font-size: inherit;
         }
         
+        a {
+          text-decoration: none;
+          color: inherit;
+        }
+        
+        button {
+          cursor: pointer;
+        }
+        
+        /* Scrollbar styles */
         ::-webkit-scrollbar {
           width: 8px;
           height: 8px;
@@ -1495,20 +989,722 @@ function App() {
         ::-webkit-scrollbar-thumb:hover {
           background: #a1a1a1;
         }
-
+        
         /* Modern focus styles */
         *:focus-visible {
           outline: 2px solid ${colors.primary};
           outline-offset: 2px;
         }
-
+        
         /* Smooth transitions */
         a, button, input, select {
           transition: all 0.2s ease;
         }
       `}</style>
+
+      {/* Component styles */}
+      <style jsx>{`
+        .app-container {
+          min-height: 100vh;
+          background: ${colors.background};
+          display: flex;
+          flex-direction: column;
+        }
+        
+        /* Header styles */
+        .app-header {
+          background: ${colors.headerBg};
+          color: ${colors.headerText};
+          padding: 1rem 0;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .header-content {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 0 2.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .header-title {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        .header-title h1 {
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+        
+        .header-title p {
+          font-size: 0.8125rem;
+          opacity: 0.8;
+          margin-top: 0.375rem;
+          font-weight: 400;
+        }
+        
+        .header-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 2.5rem;
+          height: 2.5rem;
+          border-radius: 0.5rem;
+          background: rgba(255,255,255,0.1);
+          backdrop-filter: blur(5px);
+        }
+        
+        /* Main content styles */
+        .main-content {
+          flex: 1;
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 2rem 2.5rem;
+        }
+        
+        /* Metrics grid */
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+          background: ${colors.statCardBg};
+          border-radius: 0.75rem;
+          padding: 1.5rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          border: 1px solid ${colors.statCardBorder};
+          transition: all 0.2s;
+        }
+        
+        .metric-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        }
+        
+        .metric-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 0.75rem;
+        }
+        
+        .metric-title {
+          font-size: 0.8125rem;
+          color: ${colors.textMedium};
+          font-weight: 500;
+          margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: ${colors.textDark};
+          line-height: 1.2;
+        }
+        
+        .metric-icon {
+          width: 2.5rem;
+          height: 2.5rem;
+          border-radius: 0.625rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.125rem;
+        }
+        
+        .metric-footer {
+          font-size: 0.75rem;
+          color: ${colors.textMedium};
+          padding-top: 0.5rem;
+          border-top: 1px solid ${colors.border};
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .trend-indicator {
+          font-weight: bold;
+          margin-left: 0.5rem;
+        }
+        
+        .trend-indicator.up {
+          color: ${colors.success};
+        }
+        
+        .trend-indicator.down {
+          color: ${colors.danger};
+        }
+        
+        .trend-indicator.neutral {
+          color: ${colors.warning};
+        }
+        
+        /* Form links grid */
+        .form-links-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        
+        .form-link {
+          background-color: ${colors.primary};
+          color: ${colors.textLight};
+          padding: 1rem;
+          border-radius: 0.625rem;
+          text-decoration: none;
+          font-weight: 600;
+          text-align: center;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.625rem;
+          box-shadow: 0 4px 12px ${colors.primary}20;
+        }
+        
+        .form-link:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px ${colors.primary}30;
+          background-color: ${colors.primaryDark};
+        }
+        
+        /* Tab styles */
+        .tab-container {
+          margin-bottom: 1.5rem;
+          position: relative;
+          border-bottom: 1px solid ${colors.border};
+        }
+        
+        .tabs {
+          display: flex;
+        }
+        
+        .tab-button {
+          padding: 0.75rem 1.5rem;
+          background-color: transparent;
+          color: ${colors.inactiveTab};
+          border: none;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 0.875rem;
+          position: relative;
+          transition: all 0.2s;
+          margin-right: 0.5rem;
+          border-radius: 0.5rem 0.5rem 0 0;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .tab-button:hover {
+          color: ${colors.primary};
+          background: rgba(0,0,0,0.02);
+        }
+        
+        .tab-button.active {
+          color: ${colors.primary};
+        }
+        
+        .tab-button.active::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background-color: ${colors.primary};
+          border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-divider {
+          flex: 1;
+          border-bottom: 1px solid ${colors.border};
+          margin-bottom: -1px;
+        }
+        
+        /* Search and filter styles */
+        .search-filter-container {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 1.5rem;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        
+        .search-box {
+          flex: 1;
+          position: relative;
+          min-width: 300px;
+          max-width: 600px;
+        }
+        
+        .search-icon {
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: ${colors.textMedium};
+        }
+        
+        .search-input {
+          padding: 0.875rem 1.25rem 0.875rem 2.75rem;
+          width: 100%;
+          border: 1px solid ${colors.border};
+          border-radius: 0.625rem;
+          font-size: 0.875rem;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+          transition: all 0.2s;
+          background: ${colors.cardBg};
+        }
+        
+        .search-input:focus {
+          outline: none;
+          border-color: ${colors.primary};
+          box-shadow: 0 2px 10px ${colors.primary}15;
+        }
+        
+        .action-buttons {
+          display: flex;
+          gap: 0.75rem;
+        }
+        
+        .primary-button {
+          background-color: ${colors.primary};
+          color: ${colors.textLight};
+          padding: 0.75rem 1.25rem;
+          border: none;
+          border-radius: 0.625rem;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 0.875rem;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          box-shadow: 0 2px 8px ${colors.primary}30;
+        }
+        
+        .primary-button:hover {
+          background-color: ${colors.primaryDark};
+          transform: translateY(-1px);
+        }
+        
+        .secondary-button {
+          background-color: ${colors.cardBg};
+          color: ${colors.textMedium};
+          padding: 0.75rem 1.25rem;
+          border: 1px solid ${colors.border};
+          border-radius: 0.625rem;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 0.875rem;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .secondary-button:hover {
+          background-color: ${colors.primary};
+          color: ${colors.textLight};
+          border-color: ${colors.primary};
+        }
+        
+        /* Filter grid */
+        .filter-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          background: ${colors.cardBg};
+          padding: 1.25rem;
+          border-radius: 0.75rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          border: 1px solid ${colors.border};
+        }
+        
+        .filter-item {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .filter-label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: ${colors.textDark};
+          font-size: 0.8125rem;
+        }
+        
+        .filter-select {
+          padding: 0.75rem 2.5rem 0.75rem 0.875rem;
+          width: 100%;
+          border: 1px solid ${colors.border};
+          border-radius: 0.5rem;
+          background-color: ${colors.cardBg};
+          font-size: 0.875rem;
+          cursor: pointer;
+          appearance: none;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(colors.textMedium)}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+          background-repeat: no-repeat;
+          background-position: right 0.75rem center;
+          background-size: 1rem;
+          transition: all 0.2s;
+        }
+        
+        .filter-select:hover {
+          border-color: ${colors.primary};
+        }
+        
+        .filter-select:focus {
+          outline: none;
+          border-color: ${colors.primary};
+          box-shadow: 0 0 0 2px ${colors.primary}15;
+        }
+        
+        /* Table styles */
+        .table-container {
+          overflow-x: auto;
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+          background: ${colors.cardBg};
+          border: 1px solid ${colors.border};
+          margin-bottom: 2.5rem;
+        }
+        
+        .data-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          font-size: 0.875rem;
+          min-width: 1200px;
+        }
+        
+        .data-table thead tr {
+          background-color: ${colors.headerBg};
+          color: ${colors.headerText};
+          position: sticky;
+          top: 0;
+        }
+        
+        .data-table th {
+          padding: 0.875rem 1rem;
+          text-align: left;
+          font-weight: 600;
+          font-size: 0.8125rem;
+          border-bottom: 2px solid ${colors.primary};
+          white-space: nowrap;
+          position: relative;
+        }
+        
+        .header-content {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .header-icon {
+          display: flex;
+          align-items: center;
+        }
+        
+        .data-table th::after {
+          content: '';
+          position: absolute;
+          bottom: 0.25rem;
+          left: 1rem;
+          right: 1rem;
+          height: 1px;
+          background-color: rgba(255,255,255,0.1);
+        }
+        
+        .data-table tbody tr {
+          background-color: ${colors.rowEven};
+          transition: all 0.2s;
+        }
+        
+        .data-table tbody tr:nth-child(odd) {
+          background-color: ${colors.rowOdd};
+        }
+        
+        .data-table tbody tr:hover {
+          background-color: #f5f9ff;
+        }
+        
+        .data-table td {
+          padding: 0.75rem 1rem;
+          vertical-align: middle;
+        }
+        
+        /* Special cell styles */
+        .image-cell {
+          width: 120px;
+          height: 80px;
+          padding: 0.75rem !important;
+        }
+        
+        .product-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 0.375rem;
+          cursor: pointer;
+          transition: transform 0.2s;
+          border: 1px solid ${colors.border};
+        }
+        
+        .product-image:hover {
+          transform: scale(1.03);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .no-image {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-style: italic;
+          color: ${colors.textMedium};
+          background-color: #f5f5f5;
+          border-radius: 0.375rem;
+          border: 1px dashed ${colors.border};
+        }
+        
+        .highlight-cell {
+          font-weight: 600;
+          color: ${colors.primary};
+        }
+        
+        .bold-cell {
+          font-weight: 600;
+        }
+        
+        .nowrap {
+          white-space: nowrap;
+        }
+        
+        .color-cell {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.375rem;
+        }
+        
+        .color-dot {
+          display: inline-block;
+          width: 0.75rem;
+          height: 0.75rem;
+          border-radius: 50%;
+        }
+        
+        .status-badge {
+          padding: 0.375rem 0.625rem;
+          border-radius: 0.375rem;
+          font-weight: 600;
+          font-size: 0.8125rem;
+          display: inline-block;
+        }
+        
+        .status-badge.success {
+          background: #e3faf2;
+          color: ${colors.success};
+        }
+        
+        .status-badge.warning {
+          background: #fff4e6;
+          color: ${colors.warning};
+        }
+        
+        .status-badge.info {
+          background: #e6f3ff;
+          color: ${colors.info};
+        }
+        
+        .type-badge {
+          padding: 0.375rem 0.625rem;
+          border-radius: 0.375rem;
+          background: ${colors.primary}10;
+          color: ${colors.primary};
+          font-weight: 600;
+          font-size: 0.8125rem;
+          display: inline-block;
+        }
+        
+        .download-button, .view-button {
+          background-color: ${colors.secondary};
+          color: white;
+          padding: 0.5rem 0.75rem;
+          border-radius: 0.375rem;
+          text-decoration: none;
+          display: inline-block;
+          min-width: 100px;
+          text-align: center;
+          font-weight: 600;
+          font-size: 0.8125rem;
+          transition: all 0.2s;
+        }
+        
+        .download-button:hover, .view-button:hover {
+          background-color: #26a899;
+          transform: translateY(-1px);
+        }
+        
+        .na-text {
+          font-style: italic;
+          color: ${colors.textMedium};
+        }
+        
+        .sizes-cell {
+          font-size: 0.8125rem;
+          color: ${colors.textMedium};
+        }
+        
+        /* Empty state */
+        .empty-state td {
+          padding: 2.5rem;
+          text-align: center;
+          color: ${colors.textMedium};
+          font-style: italic;
+          background-color: ${colors.cardBg};
+        }
+        
+        .empty-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .empty-content svg {
+          opacity: 0.5;
+          margin-bottom: 0.5rem;
+        }
+        
+        .empty-content p {
+          font-size: 0.8125rem;
+          margin-top: 0.5rem;
+          color: ${colors.textMedium};
+        }
+        
+        /* Image preview */
+        .image-preview {
+          position: fixed;
+          z-index: 1000;
+          width: 320px;
+          height: auto;
+          pointer-events: none;
+          background-color: ${colors.cardBg};
+          padding: 0.9375rem;
+          border-radius: 0.75rem;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+          transform: translateX(-50%);
+          transition: transform 0.1s ease-out;
+          border: 1px solid ${colors.border};
+        }
+        
+        .image-preview.below {
+          top: 0;
+        }
+        
+        .image-preview.above {
+          bottom: 0;
+          transform: translateX(-50%) translateY(-100%);
+        }
+        
+        .preview-image {
+          width: 100%;
+          height: auto;
+          max-height: 400px;
+          object-fit: contain;
+          border-radius: 0.375rem;
+          border: 1px solid ${colors.border};
+        }
+        
+        .preview-arrow {
+          position: absolute;
+          width: 1.25rem;
+          height: 1.25rem;
+          background-color: ${colors.cardBg};
+          transform: rotate(45deg);
+          border-right: 1px solid ${colors.border};
+          z-index: -1;
+        }
+        
+        .image-preview.below .preview-arrow {
+          top: -0.625rem;
+          left: 50%;
+          transform: translateX(-50%) rotate(45deg);
+          border-bottom: 1px solid ${colors.border};
+        }
+        
+        .image-preview.above .preview-arrow {
+          bottom: -0.625rem;
+          left: 50%;
+          transform: translateX(-50%) rotate(45deg);
+          border-top: 1px solid ${colors.border};
+        }
+        
+        /* Footer styles */
+        .app-footer {
+          background: ${colors.headerBg};
+          color: ${colors.textLight};
+          padding: 1rem 0;
+          margin-top: auto;
+          font-size: 0.8125rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .footer-content {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 0 2.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .footer-content div:first-child {
+          opacity: 0.8;
+        }
+        
+        .footer-content div:last-child {
+          opacity: 0.6;
+        }
+      `}</style>
     </div>
   );
+
+  // Helper function to get color codes
+  function getColorCode(color) {
+    if (!color) return "#8B5CF6";
+    const colorLower = color.toLowerCase();
+    if (colorLower.includes("red")) return "#EF4444";
+    if (colorLower.includes("blue")) return "#3B82F6";
+    if (colorLower.includes("green")) return "#10B981";
+    if (colorLower.includes("black")) return "#1F2937";
+    if (colorLower.includes("white")) return "#E5E7EB";
+    if (colorLower.includes("pink")) return "#EC4899";
+    if (colorLower.includes("yellow")) return "#F59E0B";
+    if (colorLower.includes("purple")) return "#8B5CF6";
+    if (colorLower.includes("gray") || colorLower.includes("grey")) return "#6B7280";
+    return "#8B5CF6";
+  }
 }
 
 export default App;
