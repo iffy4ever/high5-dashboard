@@ -423,8 +423,6 @@ function App() {
       }}>
         <div style={{
           width: "100%",
-          maxWidth: "1800px",
-          margin: "0 auto",
           padding: "0 40px",
           display: "flex",
           justifyContent: "space-between",
@@ -463,40 +461,6 @@ function App() {
               Real-time production tracking and management
             </div>
           </div>
-          <div style={{
-            display: "flex",
-            gap: "12px"
-          }}>
-            <button
-              onClick={exportToExcel}
-              style={{
-                backgroundColor: "rgba(255,255,255,0.1)",
-                color: "white",
-                padding: "10px 20px",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                transition: "all 0.2s",
-                backdropFilter: "blur(5px)",
-                ":hover": {
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  transform: "translateY(-1px)"
-                }
-              }}
-            >
-              <span>Export to Excel</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-            </button>
-          </div>
         </div>
       </header>
 
@@ -504,8 +468,6 @@ function App() {
       <main style={{
         flex: 1,
         width: "100%",
-        maxWidth: "1800px",
-        margin: "0 auto",
         padding: "30px 40px"
       }}>
         {/* Production Metrics Dashboard */}
@@ -713,8 +675,7 @@ function App() {
           <div style={{
             flex: 1,
             position: "relative",
-            minWidth: "300px",
-            maxWidth: "600px"
+            minWidth: "300px"
           }}>
             <input
               placeholder="Search orders, styles, colors..."
@@ -758,51 +719,86 @@ function App() {
             </svg>
           </div>
           
-          <button
-            onClick={() => {
-              if (activeTab === "dashboard") {
-                setFilters({
-                  TYPE: "",
-                  COLOUR: "",
-                  "LIVE STATUS": "",
-                  "FIT STATUS": ""
-                });
-              } else {
-                setFabricFilters({
-                  TYPE: "",
-                  COLOUR: "",
-                  SUPPLIER: ""
-                });
-              }
-              setSearch("");
-            }}
-            style={{
-              backgroundColor: colors.cardBg,
-              color: colors.textMedium,
-              padding: "12px 20px",
-              border: `1px solid ${colors.border}`,
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "600",
-              fontSize: "14px",
-              transition: "all 0.2s",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              ":hover": {
+          <div style={{
+            display: "flex",
+            gap: "12px"
+          }}>
+            <button
+              onClick={() => {
+                if (activeTab === "dashboard") {
+                  setFilters({
+                    TYPE: "",
+                    COLOUR: "",
+                    "LIVE STATUS": "",
+                    "FIT STATUS": ""
+                  });
+                } else {
+                  setFabricFilters({
+                    TYPE: "",
+                    COLOUR: "",
+                    SUPPLIER: ""
+                  });
+                }
+                setSearch("");
+              }}
+              style={{
+                backgroundColor: colors.cardBg,
+                color: colors.textMedium,
+                padding: "12px 20px",
+                border: `1px solid ${colors.border}`,
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "14px",
+                transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                ":hover": {
+                  backgroundColor: colors.primary,
+                  color: colors.textLight,
+                  borderColor: colors.primary
+                }
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6l3 6h12l3-6"></path>
+                <path d="M3 6h18"></path>
+                <path d="M7 12h10"></path>
+              </svg>
+              Clear Filters
+            </button>
+
+            <button
+              onClick={exportToExcel}
+              style={{
                 backgroundColor: colors.primary,
                 color: colors.textLight,
-                borderColor: colors.primary
-              }
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6l3 6h12l3-6"></path>
-              <path d="M3 6h18"></path>
-              <path d="M7 12h10"></path>
-            </svg>
-            Clear Filters
-          </button>
+                padding: "12px 20px",
+                border: "none",
+                borderRadius: "10px",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "14px",
+                transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: `0 2px 8px ${colors.primary}30`,
+                ":hover": {
+                  backgroundColor: colors.primaryDark,
+                  transform: "translateY(-1px)"
+                }
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export Excel
+            </button>
+          </div>
         </div>
 
         {/* Sales PO Tab */}
@@ -1437,8 +1433,6 @@ function App() {
       }}>
         <div style={{ 
           width: "100%",
-          maxWidth: "1800px",
-          margin: "0 auto",
           padding: "0 40px",
           display: "flex",
           justifyContent: "space-between",
