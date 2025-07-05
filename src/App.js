@@ -9,7 +9,7 @@ function App() {
     insert_pattern: []
   });
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     TYPE: "",
@@ -74,64 +74,77 @@ function App() {
     const now = new Date();
     const oneMonthAgo = new Date(now);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const twelveMonthsAgo = new Date(now);
-    twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
 
-    let lastDeliveryDate = null;
-    let deliveredCountLast30Days = 0;
-    let deliveredCountLast12Months = 0;
-    let inProductionCount = 0;
-    let fabricOrderedCount = 0;
-    let notDeliveredCount = 0;
-    let gsSentCount = 0;
+    let stats = {
+      totalOrders: 0,
+      deliveredLast30Days: 0,
+      deliveredUnitsLast30Days: 0,
+      inProduction: 0,
+      fabricOrdered: 0,
+      notDelivered: 0,
+      gsSent: 0,
+      lastDeliveryDate: null
+    };
 
     data.sales_po.forEach(order => {
-      const deliveryDate = order["REAL DD"] ? new Date(order["REAL DD"]) : null;
+      const status = String(order["LIVE STATUS"] || "").toUpperCase().trim();
+      const totalUnits = parseInt(order["TOTAL UNITS"] || 0);
       
-      // Track last delivery date
-      if (deliveryDate && (!lastDeliveryDate || deliveryDate > lastDeliveryDate)) {
-        lastDeliveryDate = deliveryDate;
+      // Parse REAL DD date
+      let deliveryDate = null;
+      try {
+        if (order["REAL DD"]) {
+          if (typeof order["REAL DD"] === 'number') {
+            // Convert Excel serial number to JS date
+            deliveryDate = new Date((order["REAL DD"] - 25569) * 86400 * 1000);
+          } else {
+            deliveryDate = new Date(order["REAL DD"]);
+          }
+          if (isNaN(deliveryDate.getTime())) deliveryDate = null;
+        }
+      } catch (e) {
+        deliveryDate = null;
       }
 
-      // Count delivered orders
-      if (order["LIVE STATUS"] === "DELIVERED" && deliveryDate) {
+      stats.totalOrders++;
+
+      // Count delivered orders and units in last 30 days
+      if (status === "DELIVERED" && deliveryDate) {
         if (deliveryDate > oneMonthAgo) {
-          deliveredCountLast30Days++;
+          stats.deliveredLast30Days++;
+          stats.deliveredUnitsLast30Days += totalUnits;
         }
-        if (deliveryDate > twelveMonthsAgo) {
-          deliveredCountLast12Months++;
+        
+        // Track last delivery date
+        if (!stats.lastDeliveryDate || deliveryDate > stats.lastDeliveryDate) {
+          stats.lastDeliveryDate = deliveryDate;
         }
       }
-      
+
       // Count production status
-      if (order["LIVE STATUS"] === "IN PRODUCTION") {
-        inProductionCount++;
-      } else if (order["LIVE STATUS"] === "FABRIC ORDERED") {
-        fabricOrderedCount++;
-      } else if (order["LIVE STATUS"] !== "DELIVERED") {
-        notDeliveredCount++;
+      if (status === "IN PRODUCTION") {
+        stats.inProduction++;
+      } else if (status === "FABRIC ORDERED") {
+        stats.fabricOrdered++;
+      } else if (status !== "DELIVERED") {
+        stats.notDelivered++;
       }
 
       // Count GS SENT status
-      if (order["FIT STATUS"] === "GS SENT") {
-        gsSentCount++;
+      if (String(order["FIT STATUS"] || "").toUpperCase().trim() === "GS SENT") {
+        stats.gsSent++;
       }
     });
 
     return {
-      totalOrders: data.sales_po.length,
-      deliveredLast30Days: deliveredCountLast30Days,
-      deliveredLast12Months: deliveredCountLast12Months,
-      inProduction: inProductionCount,
-      fabricOrdered: fabricOrderedCount,
-      notDelivered: notDeliveredCount,
-      gsSent: gsSentCount,
-      lastDeliveryDate: lastDeliveryDate ? 
-        lastDeliveryDate.toLocaleDateString('en-GB', { 
-          day: 'numeric', 
-          month: 'short', 
-          year: 'numeric' 
-        }) : "No deliveries yet"
+      ...stats,
+      lastDeliveryDateFormatted: stats.lastDeliveryDate 
+        ? stats.lastDeliveryDate.toLocaleDateString('en-GB', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+          }) 
+        : "No deliveries yet"
     };
   }, [data.sales_po]);
 
@@ -246,11 +259,16 @@ function App() {
     setError(null);
 
     window.jsonpCallback = (fetched) => {
-      setData({
-        sales_po: fetched.sales_po || [],
-        fabric_po: fetched.fabric_po || [],
-        insert_pattern: fetched.insert_pattern || []
-      });
+      try {
+        setData({
+          sales_po: fetched.sales_po || [],
+          fabric_po: fetched.fabric_po || [],
+          insert_pattern: fetched.insert_pattern || []
+        });
+      } catch (e) {
+        setError("Error parsing data");
+        console.error(e);
+      }
       setLoading(false);
     };
 
@@ -386,12 +404,12 @@ function App() {
     <div style={{ 
       minHeight: "100vh",
       background: colors.background,
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif"
+      fontFamily: "'Inter', sans-serif"
     }}>
       {/* Header */}
-      <div style={{
-        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
-        color: colors.textLight,
+      <header style={{
+        background: colors.headerBg,
+        color: colors.headerText,
         padding: "20px 0",
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         marginBottom: "30px",
@@ -455,7 +473,7 @@ function App() {
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Container */}
       <div style={{
@@ -512,7 +530,7 @@ function App() {
               {productionStats.deliveredLast30Days}
             </div>
             <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
-              Recently completed orders
+              {productionStats.deliveredUnitsLast30Days} units
             </div>
           </div>
 
@@ -532,7 +550,7 @@ function App() {
               </div>
             </div>
             <div style={{ fontSize: "28px", fontWeight: "700", color: colors.textDark }}>
-              {productionStats.lastDeliveryDate}
+              {productionStats.lastDeliveryDateFormatted}
             </div>
             <div style={{ fontSize: "12px", color: colors.textMedium, marginTop: "4px" }}>
               Based on REAL DD date
@@ -562,7 +580,7 @@ function App() {
             </div>
           </div>
 
-          {/* Not Yet Delivered */}
+          {/* Not Delivered */}
           <div style={{
             background: "white",
             borderRadius: "12px",
