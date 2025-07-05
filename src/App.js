@@ -114,14 +114,6 @@ function App() {
     setPreviewImage(prev => ({ ...prev, visible: false }));
   };
 
-  const handleMouseMove = (e) => {
-    if (previewImage.visible) {
-      setPreviewImage(prev => ({
-        ...prev,
-        position: { x: e.clientX + 20, y: e.clientY + 20 }
-      }));
-    }
-  };
 
   const exportToExcel = () => {
     let dataToExport, columnOrder;
