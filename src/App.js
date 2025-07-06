@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import * as XLSX from 'xlsx';
-import { 
+import {
   FiHome, FiPackage, FiTruck, FiCalendar, FiClock, FiAlertCircle, 
   FiDatabase, FiDownload, FiFilter, FiX, FiSearch, FiExternalLink,
-  FiImage, FiFileText, FiDollarSign, FiTag, FiUsers, FiCheckCircle,
-  FiTrendingUp, FiLayers, FiShoppingBag, FiGrid, FiPrinter, FiRefreshCw,
-  FiBarChart2, FiPieChart, FiSettings, FiBell, FiUser, FiLogOut
+  FiImage, FiFileText, FiDollarSign, FiUsers, FiCheckCircle,
+  FiTrendingUp, FiLayers, FiShoppingBag, FiGrid, FiRefreshCw,
+  FiBarChart2, FiPieChart, FiSettings, FiBell, FiLogOut, FiPrinter
 } from 'react-icons/fi';
 import { FaCircle } from 'react-icons/fa';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
@@ -240,7 +240,7 @@ function App() {
   const chartData = useMemo(() => {
     const statusLabels = Object.keys(productionStats.statusDistribution);
     const colorLabels = Object.keys(productionStats.colorDistribution);
-    
+
     return {
       statusDistribution: {
         labels: statusLabels,
@@ -278,7 +278,21 @@ function App() {
         }]
       }
     };
-  }, [productionStats, darkMode]);
+  }, [
+    productionStats,
+    darkMode,
+    colors.accent,
+    colors.border,
+    colors.cardBg,
+    colors.primary,
+    colors.primaryDark,
+    colors.success,
+    colors.info,
+    colors.warning,
+    colors.danger,
+    colors.textDark,
+    colors.textMedium
+  ]);
 
   // Utility Functions
   const formatDate = (dateString) => {
@@ -495,7 +509,7 @@ function App() {
           {navItems.map((item, index) => (
             <a 
               key={index} 
-              href="#" 
+              href="/" onClick={(e) => e.preventDefault()} 
               className={`nav-item ${item.active ? 'active' : ''}`}
             >
               <span className="nav-icon">{item.icon}</span>
@@ -591,7 +605,7 @@ function App() {
               ))}
             </div>
             <div className="notification-footer">
-              <a href="#">View all notifications</a>
+              <a href="/" onClick={(e) => e.preventDefault()}>View all notifications</a>
             </div>
           </div>
         )}
