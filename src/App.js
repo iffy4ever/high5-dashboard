@@ -278,21 +278,7 @@ function App() {
         }]
       }
     };
-  }, [
-    productionStats,
-    darkMode,
-    colors.accent,
-    colors.border,
-    colors.cardBg,
-    colors.primary,
-    colors.primaryDark,
-    colors.success,
-    colors.info,
-    colors.warning,
-    colors.danger,
-    colors.textDark,
-    colors.textMedium
-  ]);
+  }, [productionStats, darkMode, colors.accent, colors.border, colors.cardBg, colors.primary, colors.primaryDark, colors.success, colors.info, colors.warning, colors.danger]);
 
   // Utility Functions
   const formatDate = (dateString) => {
