@@ -281,18 +281,26 @@ function App() {
   }, [productionStats, darkMode, colors.accent, colors.border, colors.cardBg, colors.primary, colors.primaryDark, colors.success, colors.info, colors.warning, colors.danger]);
 
   // Utility Functions
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
+  const formatDate = (value) => {
+    if (!value) return "";
     try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString;
+      let date;
+      if (typeof value === 'number') {
+        // Convert Excel serial date numbers to a proper JavaScript Date
+        date = new Date((value - 25569) * 86400 * 1000);
+      } else {
+        date = new Date(value);
+      }
+
+      if (isNaN(date.getTime())) return String(value);
+
       return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
       });
     } catch {
-      return dateString;
+      return String(value);
     }
   };
 
