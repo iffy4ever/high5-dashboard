@@ -4,6 +4,7 @@
   flex-wrap: wrap;
   gap: 5px;
   margin-top: 3px;
+  font-family: inherit;
 }
 
 .sizes span {
@@ -11,6 +12,7 @@
   padding: 3px 8px;
   border-radius: 3px;
   font-size: 12px;
+  font-family: inherit;
 }
 
 /* Table improvements */
@@ -21,6 +23,9 @@
 
 table {
   min-width: 100%;
+  background: white;
+  border: 1px solid #cfd8dc;
+  border-radius: 4px;
 }
 
 /* Card view improvements */
@@ -28,6 +33,9 @@ table {
   overflow-y: auto;
   max-height: 180px;
   padding-right: 5px;
+  background: #fff;
+  border: 1px solid #cfd8dc;
+  border-radius: 4px;
 }
 
 .card-row {
@@ -39,4 +47,5 @@ table {
   text-align: center;
   padding: 50px;
   font-size: 18px;
+  color: #546e7a;
 }

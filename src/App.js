@@ -48,68 +48,68 @@ function App() {
 
   // Premium Color Scheme with dark mode support
   const colors = darkMode ? {
-    primary: "#8B5CF6",       // Purple
-    primaryLight: "#A78BFA",
-    primaryDark: "#7C3AED",
-    secondary: "#10B981",     // Emerald
-    secondaryLight: "#34D399",
-    secondaryDark: "#059669",
-    accent: "#F97316",        // Orange
-    accentLight: "#FB923C",
-    accentDark: "#EA580C",
-    danger: "#EF4444",        // Red
-    dangerLight: "#F87171",
-    dangerDark: "#DC2626",
-    success: "#10B981",       // Emerald
-    warning: "#F59E0B",       // Amber
-    info: "#3B82F6",         // Blue
-    textDark: "#F3F4F6",      // Gray-100
-    textMedium: "#D1D5DB",    // Gray-300
-    textLight: "#111827",     // Gray-900
-    background: "#111827",    // Gray-900
-    cardBg: "#1F2937",       // Gray-800
-    border: "#374151",       // Gray-700
-    rowEven: "#1F2937",      // Gray-800
-    rowOdd: "#1A202E",       // Slightly darker
-    headerBg: "#030712",     // Gray-950
-    headerText: "#F9FAFB",
-    activeTab: "#8B5CF6",
-    inactiveTab: "#6B7280",  // Gray-500
-    actionButton: "#10B981",
-    statCardBg: "#1F2937",
-    statCardBorder: "#374151",
-    chartBg: "#1F2937"
+    primary: "#90CAF9",
+    primaryLight: "#E3F2FD",
+    primaryDark: "#42A5F5",
+    secondary: "#CE93D8",
+    secondaryLight: "#F3E5F5",
+    secondaryDark: "#AB47BC",
+    accent: "#FFAB91",
+    accentLight: "#FFCCBC",
+    accentDark: "#FF8A65",
+    danger: "#EF9A9A",
+    dangerLight: "#FFCDD2",
+    dangerDark: "#E57373",
+    success: "#A5D6A7",
+    warning: "#FFCC80",
+    info: "#81D4FA",
+    textDark: "#ECEFF1",
+    textMedium: "#B0BEC5",
+    textLight: "#263238",
+    background: "#263238",
+    cardBg: "#37474F",
+    border: "#455A64",
+    rowEven: "#37474F",
+    rowOdd: "#263238",
+    headerBg: "#1E88E5",
+    headerText: "#ECEFF1",
+    activeTab: "#90CAF9",
+    inactiveTab: "#607D8B",
+    actionButton: "#A5D6A7",
+    statCardBg: "#37474F",
+    statCardBorder: "#455A64",
+    chartBg: "#37474F"
   } : {
-    primary: "#6366F1",       // Indigo
-    primaryLight: "#818CF8",
-    primaryDark: "#4F46E5",
-    secondary: "#10B981",     // Emerald
-    secondaryLight: "#34D399",
-    secondaryDark: "#059669",
-    accent: "#F97316",        // Orange
-    accentLight: "#FB923C",
-    accentDark: "#EA580C",
-    danger: "#EF4444",        // Red
-    dangerLight: "#F87171",
-    dangerDark: "#DC2626",
-    success: "#10B981",       // Emerald
-    warning: "#F59E0B",       // Amber
-    info: "#3B82F6",         // Blue
-    textDark: "#1F2937",      // Gray-800
-    textMedium: "#6B7280",    // Gray-500
-    textLight: "#F9FAFB",     // Gray-50
-    background: "#F9FAFB",    // Gray-50
+    primary: "#1E88E5",
+    primaryLight: "#64B5F6",
+    primaryDark: "#1565C0",
+    secondary: "#8E24AA",
+    secondaryLight: "#BA68C8",
+    secondaryDark: "#6A1B9A",
+    accent: "#F4511E",
+    accentLight: "#FF7043",
+    accentDark: "#D84315",
+    danger: "#E53935",
+    dangerLight: "#EF5350",
+    dangerDark: "#C62828",
+    success: "#43A047",
+    warning: "#FB8C00",
+    info: "#1E88E5",
+    textDark: "#263238",
+    textMedium: "#546E7A",
+    textLight: "#FFFFFF",
+    background: "#ECEFF1",
     cardBg: "#FFFFFF",
-    border: "#E5E7EB",       // Gray-200
+    border: "#CFD8DC",
     rowEven: "#FFFFFF",
-    rowOdd: "#F9FAFB",
-    headerBg: "#111827",     // Gray-900
-    headerText: "#F9FAFB",
-    activeTab: "#6366F1",
-    inactiveTab: "#9CA3AF",  // Gray-400
-    actionButton: "#10B981",
+    rowOdd: "#ECEFF1",
+    headerBg: "#1E88E5",
+    headerText: "#FFFFFF",
+    activeTab: "#8E24AA",
+    inactiveTab: "#B0BEC5",
+    actionButton: "#43A047",
     statCardBg: "#FFFFFF",
-    statCardBorder: "#E5E7EB",
+    statCardBorder: "#CFD8DC",
     chartBg: "#FFFFFF"
   };
 
