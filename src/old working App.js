@@ -128,18 +128,10 @@ function App() {
     const oneMonthAgo = new Date(now);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const lastQuarterStart = new Date('2025-04-01');
-    const lastQuarterEnd = new Date('2025-06-30');
-    const currentYearStart = new Date('2024-07-01');
-    const currentYearEnd = new Date('2025-06-30');
-
     let stats = {
       totalOrders: 0,
       deliveredLast30Days: 0,
       deliveredUnitsLast30Days: 0,
-      unitsDeliveredLastQuarter: 0,
-      unitsDeliveredCurrentYear: 0,
-      pendingUnits: 0,
       inProduction: 0,
       fabricOrdered: 0,
       notDelivered: 0,
@@ -181,20 +173,10 @@ function App() {
           stats.deliveredLast30Days++;
           stats.deliveredUnitsLast30Days += totalUnits;
         }
-
-        if (deliveryDate >= lastQuarterStart && deliveryDate <= lastQuarterEnd) {
-          stats.unitsDeliveredLastQuarter += totalUnits;
-        }
-
-        if (deliveryDate >= currentYearStart && deliveryDate <= currentYearEnd) {
-          stats.unitsDeliveredCurrentYear += totalUnits;
-        }
         
         if (!stats.lastDeliveryDate || deliveryDate > stats.lastDeliveryDate) {
           stats.lastDeliveryDate = deliveryDate;
         }
-      } else {
-        stats.pendingUnits += totalUnits;
       }
 
       if (status === "IN PRODUCTION") {
@@ -266,17 +248,8 @@ function App() {
 
   const getGoogleDriveThumbnail = (url) => {
     if (!url) return "";
-    try {
-      const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-      if (!fileId) {
-        console.warn("No valid file ID found in URL:", url);
-        return "";
-      }
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-    } catch (e) {
-      console.error("Error generating thumbnail URL:", e);
-      return "";
-    }
+    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w200` : "";
   };
 
   const getGoogleDriveDownloadLink = (url) => {
@@ -313,17 +286,11 @@ function App() {
         "XFACT DD", "REAL DD", "LIVE STATUS", "CMT PRICE", "ACTUAL CMT",
         "PACKING LIST", "SIZES"
       ];
-    } else if (activeTab === "fabric") {
+    } else {
       dataToExport = filteredFabric;
       columnOrder = [
         "NO.", "DATE", "H-NUMBER", "ORDER REF", "TYPE", 
         "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS"
-      ];
-    } else if (activeTab === "developments") {
-      dataToExport = filteredDevelopments;
-      columnOrder = [
-        "H-NUMBER", "TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
-        "SIDE IMAGE", "PATTERN IMAGE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
       ];
     }
 
@@ -332,12 +299,10 @@ function App() {
       columnOrder.forEach(key => {
         const originalKey = key === "FABRIC/TRIM PRICE" ? "FABRIC/TRIM PRICE" : key;
         if (originalKey in row) {
-          if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE", "TOTAL COST"].includes(originalKey)) {
+          if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE"].includes(originalKey)) {
             newRow[key] = formatCurrency(row[originalKey]);
           } else if (["XFACT DD", "REAL DD", "DATE"].includes(originalKey)) {
             newRow[key] = formatDate(row[originalKey]);
-          } else if (key === "SIZES") {
-            newRow[key] = compactSizes(row);
           } else {
             newRow[key] = row[originalKey];
           }
@@ -348,7 +313,7 @@ function App() {
 
     const ws = XLSX.utils.json_to_sheet(exportData, { header: columnOrder });
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}Data`);
+    XLSX.utils.book_append_sheet(wb, ws, "ExportedData");
     
     const fileName = `High5_${activeTab}_${new Date().toISOString().slice(0,10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
@@ -417,11 +382,6 @@ function App() {
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
       .filter(row => Object.entries(fabricFilters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()));
   }, [data.fabric_po, search, fabricFilters]);
-
-  const filteredDevelopments = useMemo(() => {
-    return data.insert_pattern
-      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()));
-  }, [data.insert_pattern, search]);
 
   // Loading State
   if (loading) return (
@@ -493,18 +453,6 @@ function App() {
                 color: colors.success,
               },
               {
-                title: "Units Del. Last Qtr",
-                value: productionStats.unitsDeliveredLastQuarter,
-                icon: <FiTruck size={16} />,
-                color: colors.success,
-              },
-              {
-                title: "Units Del. Curr Year",
-                value: productionStats.unitsDeliveredCurrentYear,
-                icon: <FiTruck size={16} />,
-                color: colors.success,
-              },
-              {
                 title: "Last Delivery",
                 value: productionStats.lastDeliveryDateFormatted,
                 icon: <FiCalendar size={16} />,
@@ -529,12 +477,6 @@ function App() {
                 color: colors.warning,
               },
               {
-                title: "Pending Units",
-                value: productionStats.pendingUnits,
-                icon: <FiAlertCircle size={16} />,
-                color: colors.warning,
-              },
-              {
                 title: "GS Sent",
                 value: productionStats.gsSent,
                 icon: <FiCheckCircle size={16} />,
@@ -549,7 +491,7 @@ function App() {
                   <div className="nav-stat-value">{metric.value}</div>
                   <div className="nav-stat-title">{metric.title}</div>
                 </div>
-                {index < 10 && <div className="nav-stat-divider"></div>}
+                {index < 7 && <div className="nav-stat-divider"></div>}
               </div>
             ))}
           </div>
@@ -633,8 +575,7 @@ function App() {
             <div className="tabs">
               {[
                 { id: "dashboard", label: "Sales Orders", icon: <FiShoppingBag size={16} /> },
-                { id: "fabric", label: "Fabric Orders", icon: <FiLayers size={16} /> },
-                { id: "developments", label: "Developments", icon: <FiLayers size={16} /> }
+                { id: "fabric", label: "Fabric Orders", icon: <FiLayers size={16} /> }
               ].map(tab => (
                 <button 
                   key={tab.id}
@@ -670,7 +611,7 @@ function App() {
                       "LIVE STATUS": "",
                       "FIT STATUS": ""
                     });
-                  } else if (activeTab === "fabric") {
+                  } else {
                     setFabricFilters({
                       TYPE: "",
                       COLOUR: "",
@@ -809,7 +750,7 @@ function App() {
                               {row["COLOUR"]}
                             </div>
                           </td>
-                          <td className="price-cell">{formatCurrency(row["PRICE"])}</td>
+                          <td className="highlight-cell">{formatCurrency(row["PRICE"])}</td>
                           <td className="bold-cell">{row["TOTAL UNITS"]}</td>
                           <td>
                             <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
@@ -827,8 +768,8 @@ function App() {
                               {row["LIVE STATUS"]}
                             </span>
                           </td>
-                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
-                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["ACTUAL CMT"])}</td>
+                          <td className="nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
+                          <td className="nowrap bold-cell">{formatCurrency(row["ACTUAL CMT"])}</td>
                           <td>
                             {row["PACKING LIST"] ? (
                               <a
@@ -939,7 +880,7 @@ function App() {
                             </div>
                           </td>
                           <td className="bold-cell">{row["TOTAL"]}</td>
-                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["FABRIC/TRIM PRICE"])}</td>
+                          <td className="nowrap bold-cell">{formatCurrency(row["FABRIC/TRIM PRICE"])}</td>
                           <td>
                             {row["FABRIC PO LINKS"] ? (
                               <a
@@ -961,173 +902,6 @@ function App() {
                 </table>
               </div>
             </>
-          )}
-
-          {/* Developments Tab */}
-          {activeTab === "developments" && (
-            <div className="tab-content">
-              <div className="filter-grid">
-                {["TYPE"].map((key) => (
-                  <div key={key} className="filter-item">
-                    <label className="filter-label">{key}</label>
-                    <select
-                      value={filters[key] || ""}
-                      onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
-                      className="filter-select"
-                    >
-                      <option value="">All {key}</option>
-                      {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
-                        <option key={i} value={value}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      {[
-                        { label: "H-NUMBER" },
-                        { label: "TYPE" },
-                        { label: "CUSTOMER CODE" },
-                        { label: "FRONT IMAGE", icon: <FiImage size={14} /> },
-                        { label: "BACK IMAGE", icon: <FiImage size={14} /> },
-                        { label: "SIDE IMAGE", icon: <FiImage size={14} /> },
-                        { label: "PATTERN IMAGE", icon: <FiImage size={14} /> },
-                        { label: "TOTAL COST", icon: <FiDollarSign size={14} /> },
-                        { label: "CMT PRICE", icon: <FiDollarSign size={14} /> },
-                        { label: "COSTING LINK", icon: <FiExternalLink size={14} /> }
-                      ].map((header, index) => (
-                        <th key={index}>
-                          <div className="header-content">
-                            {header.icon && <span className="header-icon">{header.icon}</span>}
-                            {header.label}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDevelopments.length === 0 ? (
-                      <tr className="empty-state">
-                        <td colSpan="10">
-                          <div className="empty-content">
-                            <FiAlertCircle size={28} />
-                            <div>No Matching Patterns Found</div>
-                            <p>Try Adjusting Your Search Or Filters</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredDevelopments.map((row, i) => (
-                        <tr key={i}>
-                          <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                          <td>{row["TYPE"]}</td>
-                          <td>{row["CUSTOMER CODE"] || "N/A"}</td>
-                          <td className="image-cell">
-                            {row["FRONT IMAGE"] ? (
-                              <div 
-                                onMouseEnter={(e) => handleMouseEnter(row["FRONT IMAGE"], e)}
-                                onMouseLeave={handleMouseLeave}
-                              >
-                                <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
-                                    alt="Front"
-                                    className="product-image"
-                                  />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="no-image">
-                                No Image
-                              </div>
-                            )}
-                          </td>
-                          <td className="image-cell">
-                            {row["BACK IMAGE"] ? (
-                              <div 
-                                onMouseEnter={(e) => handleMouseEnter(row["BACK IMAGE"], e)}
-                                onMouseLeave={handleMouseLeave}
-                              >
-                                <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
-                                    alt="Back"
-                                    className="product-image"
-                                  />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="no-image">
-                                No Image
-                              </div>
-                            )}
-                          </td>
-                          <td className="image-cell">
-                            {row["SIDE IMAGE"] ? (
-                              <div 
-                                onMouseEnter={(e) => handleMouseEnter(row["SIDE IMAGE"], e)}
-                                onMouseLeave={handleMouseLeave}
-                              >
-                                <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
-                                    alt="Side"
-                                    className="product-image"
-                                  />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="no-image">
-                                No Image
-                              </div>
-                            )}
-                          </td>
-                          <td className="image-cell">
-                            {row["PATTERN IMAGE"] ? (
-                              <div 
-                                onMouseEnter={(e) => handleMouseEnter(row["PATTERN IMAGE"], e)}
-                                onMouseLeave={handleMouseLeave}
-                              >
-                                <a href={row["PATTERN IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={getGoogleDriveThumbnail(row["PATTERN IMAGE"])}
-                                    alt="Pattern"
-                                    className="product-image"
-                                  />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="no-image">
-                                No Image
-                              </div>
-                            )}
-                          </td>
-                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
-                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
-                          <td>
-                            {row["COSTING LINK"] ? (
-                              <a
-                                href={row["COSTING LINK"]}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="view-button"
-                              >
-                                View
-                              </a>
-                            ) : (
-                              <span className="na-text">N/A</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           )}
         </div>
 
@@ -1254,9 +1028,6 @@ function App() {
           color: ${colors.textDark};
           display: flex;
           flex-direction: column;
-          width: 100%; /* Fit to screen fully */
-          margin: 0;
-          padding: 0; /* Remove padding to maximize width */
         }
 
         .app-container.light {
@@ -1406,7 +1177,7 @@ function App() {
         .nav-stats {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 1.25rem;
           flex: 1;
           justify-content: center;
           flex-wrap: wrap;
@@ -1415,12 +1186,10 @@ function App() {
         .nav-stat-item {
           display: flex;
           align-items: center;
-          gap: 0.25rem;
-          padding: 0.25rem 0.5rem;
+          gap: 0.5rem;
+          padding: 0.5rem;
           border-radius: 0.5rem;
           transition: all 0.2s;
-          font-size: 0.8rem;
-          white-space: nowrap;
         }
 
         .nav-stat-item:hover {
@@ -1435,24 +1204,22 @@ function App() {
 
         .nav-stat-content {
           display: flex;
-          flex-direction: row;
-          gap: 0.25rem;
-          align-items: center;
+          flex-direction: column;
         }
 
         .nav-stat-value {
-          font-size: 0.8rem;
+          font-size: 0.875rem;
           font-weight: 600;
         }
 
         .nav-stat-title {
-          font-size: 0.7rem;
+          font-size: 0.75rem;
           opacity: 0.8;
         }
 
         .nav-stat-divider {
           width: 1px;
-          height: 16px;
+          height: 20px;
           background-color: rgba(255, 255, 255, 0.2);
         }
 
@@ -1614,8 +1381,9 @@ function App() {
         .content-wrapper {
           flex: 1;
           padding: 1.5rem;
-          width: 100%; /* Fit to screen fully */
-          margin: 0;
+          max-width: 1600px;
+          margin: 0 auto;
+          width: 100%;
           background: ${colors.cardBg};
           border-radius: 1rem;
           box-shadow: 0 4px 16px var(--shadow-color);
@@ -2018,11 +1786,6 @@ function App() {
           color: ${colors.textMedium};
         }
 
-        .price-cell {
-          color: ${colors.success};
-          font-weight: 600;
-        }
-
         /* Empty state */
         .empty-state td {
           padding: 2rem;
@@ -2124,8 +1887,8 @@ function App() {
           justify-content: space-between;
           align-items: center;
           font-size: 0.75rem;
-          width: 100%;
-          margin: 0;
+          max-width: 1600px;
+          margin: 0 auto;
         }
 
         /* Responsive adjustments */
