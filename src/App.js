@@ -1023,7 +1023,7 @@ function App() {
                       filteredDevelopments.map((row, i) => (
                         <tr key={i}>
                           <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                          <td>{row["TYPE"]}</td>
+                          <td>{row["Type"]}</td>
                           <td>{row["CUSTOMER CODE"] || "N/A"}</td>
                           <td className="image-cell">
                             {row["FRONT IMAGE"] ? (
@@ -1625,18 +1625,21 @@ function App() {
 
         /* Form Links Grid */
         .form-links-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          display: flex;
           gap: 1rem;
           margin-bottom: 1.5rem;
+          flex-wrap: wrap;
         }
 
         .form-link {
+          flex: 1;
+          min-width: 200px;
+          max-width: 300px;
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem 1rem;
-          border-radius: 0.75rem;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 0.5rem;
           color: white;
           transition: all 0.3s ease;
           box-shadow: 0 2px 6px var(--shadow-color);
@@ -1648,14 +1651,14 @@ function App() {
         }
 
         .form-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
           background-color: rgba(255, 255, 255, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1rem;
+          font-size: 0.875rem;
         }
 
         .form-content {
