@@ -20,6 +20,7 @@ function App() {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     TYPE: "",
+    "STYLE TYPE": "",
     COLOUR: "",
     "LIVE STATUS": "",
     "FIT STATUS": ""
@@ -38,6 +39,8 @@ function App() {
   });
   const [notifications, setNotifications] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
+  const [poInput, setPoInput] = useState(""); // New: Input for PO numbers
+  const [selectedPOs, setSelectedPOs] = useState([]); // New: Parsed PO numbers
 
   // Premium Color Scheme with dark mode support
   const colors = darkMode ? {
@@ -62,7 +65,7 @@ function App() {
     border: "#4B5563",
     rowEven: "#374151",
     rowOdd: "#2D3748",
-    headerBg: "linear-gradient(90deg, #2563EB, #7C3AED)",
+    headerBg: "#2563EB",
     headerText: "#F3F4F6",
     activeTab: "#A78BFA",
     inactiveTab: "#6B7280",
@@ -91,7 +94,7 @@ function App() {
     border: "#E5E7EB",
     rowEven: "#FFFFFF",
     rowOdd: "#F9FAFB",
-    headerBg: "linear-gradient(90deg, #2563EB, #7C3AED)",
+    headerBg: "#2563EB",
     headerText: "#FFFFFF",
     activeTab: "#7C3AED",
     inactiveTab: "#9CA3AF",
@@ -302,6 +305,11 @@ function App() {
     setPreviewImage(prev => ({ ...prev, visible: false }));
   };
 
+  const getMatchingSalesImage = (orderRef) => {
+    const matchingSales = data.sales_po.find(sales => sales["PO NUMBER"] === orderRef);
+    return matchingSales ? matchingSales.IMAGE : null;
+  };
+
   const exportToExcel = () => {
     let dataToExport, columnOrder;
     
@@ -314,15 +322,18 @@ function App() {
         "PACKING LIST", "SIZES"
       ];
     } else if (activeTab === "fabric") {
-      dataToExport = filteredFabric;
+      dataToExport = filteredFabric.map(row => ({
+        ...row,
+        IMAGE: getMatchingSalesImage(row["ORDER REF"]) || "N/A"
+      }));
       columnOrder = [
         "NO.", "DATE", "H-NUMBER", "ORDER REF", "TYPE", 
-        "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS"
+        "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS", "IMAGE"
       ];
     } else if (activeTab === "developments") {
       dataToExport = filteredDevelopments;
       columnOrder = [
-        "H-NUMBER", "TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
+        "H-NUMBER", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
         "SIDE IMAGE", "PATTERN IMAGE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
       ];
     }
@@ -381,6 +392,7 @@ function App() {
           fabric_po: fetched.fabric_po || [],
           insert_pattern: fetched.insert_pattern || []
         });
+        console.log('Insert Pattern keys:', Object.keys(fetched.insert_pattern[0] || {})); // Check keys
         setNotifications(generateNotifications());
       } catch (e) {
         setError("Error Parsing Data");
@@ -420,8 +432,9 @@ function App() {
 
   const filteredDevelopments = useMemo(() => {
     return data.insert_pattern
-      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()));
-  }, [data.insert_pattern, search]);
+      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()));
+  }, [data.insert_pattern, search, filters]);
 
   // Loading State
   if (loading) return (
@@ -460,7 +473,7 @@ function App() {
       {/* Main Content */}
       <div className="main-content">
         {/* Top Navigation */}
-        <header className="top-nav">
+        <header className="top-nav no-print">
           <div className="nav-left">
             <h1>High5 Production Dashboard</h1>
             <button 
@@ -573,7 +586,7 @@ function App() {
 
         {/* Notification Dropdown */}
         {notifications.filter(n => !n.read).length > 0 && (
-          <div className="notification-dropdown">
+          <div className="notification-dropdown no-print">
             <div className="notification-header">
               <h3>Notifications</h3>
               <button 
@@ -606,7 +619,7 @@ function App() {
         )}
 
         {/* Dashboard Content */}
-        <div className="content-wrapper">
+        <div className="content-wrapper no-print">
           {/* Form Buttons Row */}
           <div className="form-links-grid">
             {formLinks.map((form, index) => (
@@ -634,7 +647,8 @@ function App() {
               {[
                 { id: "dashboard", label: "Sales Orders", icon: <FiShoppingBag size={16} /> },
                 { id: "fabric", label: "Fabric Orders", icon: <FiLayers size={16} /> },
-                { id: "developments", label: "Developments", icon: <FiLayers size={16} /> }
+                { id: "developments", label: "Developments", icon: <FiLayers size={16} /> },
+                { id: "production", label: "Production Sheets", icon: <FiPrinter size={16} /> }
               ].map(tab => (
                 <button 
                   key={tab.id}
@@ -676,6 +690,10 @@ function App() {
                       COLOUR: "",
                       SUPPLIER: ""
                     });
+                  } else if (activeTab === "developments") {
+                    setFilters({
+                      "STYLE TYPE": ""
+                    });
                   }
                   setSearch("");
                 }}
@@ -707,7 +725,7 @@ function App() {
           {activeTab === "dashboard" && (
             <>
               <div className="filter-grid">
-                {Object.keys(filters).map((key) => (
+                {Object.keys(filters).filter(key => key !== "STYLE TYPE").map((key) => (
                   <div key={key} className="filter-item">
                     <label className="filter-label">
                       {key}
@@ -890,7 +908,8 @@ function App() {
                         { label: "COLOUR" },
                         { label: "TOTAL" },
                         { label: "FABRIC/TRIM PRICE", icon: <FiDollarSign size={14} /> },
-                        { label: "FABRIC PO LINKS" }
+                        { label: "FABRIC PO LINKS" },
+                        { label: "IMAGE", icon: <FiImage size={14} /> } // New
                       ].map((header, index) => (
                         <th key={index}>
                           <div className="header-content">
@@ -904,7 +923,7 @@ function App() {
                   <tbody>
                     {filteredFabric.length === 0 ? (
                       <tr className="empty-state">
-                        <td colSpan="10">
+                        <td colSpan="11">
                           <div className="empty-content">
                             <FiAlertCircle size={28} />
                             <div>No Matching Fabric Orders Found</div>
@@ -954,6 +973,24 @@ function App() {
                               <span className="na-text">No Link</span>
                             )}
                           </td>
+                          <td className="image-cell">
+                            {getMatchingSalesImage(row["ORDER REF"]) ? (
+                              <div 
+                                onMouseEnter={(e) => handleMouseEnter(getMatchingSalesImage(row["ORDER REF"]), e)}
+                                onMouseLeave={handleMouseLeave}
+                              >
+                                <a href={getMatchingSalesImage(row["ORDER REF"])} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={getGoogleDriveThumbnail(getMatchingSalesImage(row["ORDER REF"]))}
+                                    alt="Product"
+                                    className="product-image"
+                                  />
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}
@@ -965,17 +1002,17 @@ function App() {
 
           {/* Developments Tab */}
           {activeTab === "developments" && (
-            <div className="tab-content">
+            <>
               <div className="filter-grid">
-                {["TYPE"].map((key) => (
+                {["STYLE TYPE"].map((key) => (
                   <div key={key} className="filter-item">
-                    <label className="filter-label">{key}</label>
+                    <label className="filter-label">TYPE</label>
                     <select
                       value={filters[key] || ""}
                       onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
                       className="filter-select"
                     >
-                      <option value="">All {key}</option>
+                      <option value="">All Types</option>
                       {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
                         <option key={i} value={value}>{value}</option>
                       ))}
@@ -984,7 +1021,7 @@ function App() {
                 ))}
               </div>
               <div className="table-container">
-                <table className="data-table">
+                <table className="data-table developments-table">
                   <thead>
                     <tr>
                       {[
@@ -1023,7 +1060,7 @@ function App() {
                       filteredDevelopments.map((row, i) => (
                         <tr key={i}>
                           <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                          <td>{row["Type"]}</td>
+                          <td>{row["STYLE TYPE"]}</td>
                           <td>{row["CUSTOMER CODE"] || "N/A"}</td>
                           <td className="image-cell">
                             {row["FRONT IMAGE"] ? (
@@ -1127,14 +1164,55 @@ function App() {
                   </tbody>
                 </table>
               </div>
+            </>
+          )}
+
+          {/* Production Sheets Tab */}
+          {activeTab === "production" && (
+            <div className="tab-content no-print">
+              <div className="filter-grid no-print">
+                <div className="filter-item">
+                  <label className="filter-label">Enter PO Numbers (comma-separated or one per line)</label>
+                  <textarea
+                    value={poInput}
+                    onChange={(e) => setPoInput(e.target.value)}
+                    placeholder="e.g., PO0004,PO0001\nPO0002"
+                    rows={4}
+                    className="filter-select"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const pos = poInput.split(/[\n,]+/).map(p => p.trim()).filter(Boolean);
+                  setSelectedPOs(pos);
+                }}
+                className="primary-button no-print"
+              >
+                Generate Sheets
+              </button>
+
+              {selectedPOs.length > 0 && (
+                <>
+                  <button onClick={() => window.print()} className="primary-button no-print">
+                    <FiPrinter size={14} /> Print Sheets
+                  </button>
+
+                  <div className="sheets-container">
+                    <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                    <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                  </div>
+                </>
+              )}
             </div>
           )}
+
         </div>
 
         {/* Image Preview */}
         {previewImage.visible && (
           <div 
-            className={`image-preview ${previewImage.direction}`}
+            className={`image-preview ${previewImage.direction} no-print`}
             style={{
               left: `${previewImage.position.x}px`,
               [previewImage.direction === 'below' ? 'top' : 'bottom']: 
@@ -1151,7 +1229,7 @@ function App() {
         )}
 
         {/* Footer */}
-        <footer className="app-footer">
+        <footer className="app-footer no-print">
           <div className="footer-content">
             <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
             <div>
@@ -1863,6 +1941,10 @@ function App() {
           min-width: 1000px;
         }
 
+        .developments-table {
+          table-layout: fixed;
+        }
+
         .data-table thead tr {
           background: ${colors.headerBg};
           color: ${colors.headerText};
@@ -1905,15 +1987,14 @@ function App() {
 
         /* Special cell styles */
         .image-cell {
-          width: 100px;
-          height: 60px;
           padding: 0.5rem !important;
         }
 
         .product-image {
           width: 100%;
-          height: 100%;
-          object-fit: cover;
+          height: auto;
+          max-height: 100px;
+          object-fit: contain;
           border-radius: 0.5rem;
           cursor: pointer;
           transition: transform 0.2s;
@@ -1926,7 +2007,7 @@ function App() {
 
         .no-image {
           width: 100%;
-          height: 100%;
+          height: 100px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2131,92 +2212,116 @@ function App() {
           margin: 0;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 1280px) {
-          .nav-stats {
-            gap: 1rem;
-          }
-          
-          .nav-stat-item {
-            flex: 1 1 auto;
-          }
+        /* Sheets Container */
+        .sheets-container {
+          display: flex;
+          gap: 1rem;
         }
 
-        @media (max-width: 1024px) {
-          .content-wrapper {
-            padding: 1rem;
-          }
-          
-          .form-links-grid {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          }
-          
-          .top-nav {
-            padding: 1rem;
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          
-          .nav-stats {
-            justify-content: flex-start;
-            margin: 0.5rem 0;
-            width: 100%;
-          }
+        /* Printable Sheets */
+        .printable-sheet {
+          width: 210mm;
+          height: 297mm;
+          margin: 0 auto;
+          padding: 5mm;
+          box-sizing: border-box;
+          font-size: 8pt;
+          page-break-after: always;
+          border: 1px solid #000;
         }
 
-        @media (max-width: 768px) {
-          .nav-stats {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-          }
-          
-          .nav-stat-divider {
-            display: none;
-          }
-          
-          .content-wrapper {
-            padding: 0.75rem;
-          }
-          
-          .search-filter-container {
-            flex-direction: column;
-          }
-          
-          .search-box {
-            min-width: 100%;
-          }
-          
-          .action-buttons {
-            width: 100%;
-            justify-content: flex-end;
-          }
+        .printable-sheet table {
+          margin-bottom: 3mm;
         }
 
-        @media (max-width: 480px) {
-          .form-link {
-            flex-direction: column;
-            text-align: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
+        .table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+
+        .table th, .table td {
+          border: 1px solid #000;
+          padding: 1mm;
+          vertical-align: top;
+          text-align: left;
+          font-size: 8pt;
+        }
+
+        .table th {
+          background-color: #f0f0f0;
+        }
+
+        .merged-total {
+          background-color: #ffff00;
+          text-align: center;
+          vertical-align: middle;
+        }
+
+        .notes-section, .ratio-section {
+          border: none;
+          width: 100%;
+        }
+
+        .notes-section td, .ratio-section td {
+          border: none;
+          height: 5mm;
+        }
+
+        .image-cell {
+          height: 50mm;
+        }
+
+        .image-cell img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .sizes-table td {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 7pt;
+        }
+
+        .main-data {
+          font-weight: bold;
+          color: #000;
+        }
+
+        /* Hide non-printable elements during print */
+        @media print {
+          body * {
+            visibility: hidden;
           }
-          
-          .form-icon {
-            margin: 0 auto;
+
+          .sheets-container, .sheets-container * {
+            visibility: visible;
           }
-          
-          .action-buttons {
-            flex-direction: column;
-            gap: 0.5rem;
-          }
-          
-          .primary-button, .secondary-button {
+
+          .sheets-container {
+            position: absolute;
+            left: 0;
+            top: 0;
             width: 100%;
-            justify-content: center;
+            display: block;
           }
-          
-          .nav-stat-item {
-            flex: 1 1 100%;
+
+          .printable-sheet {
+            margin: 0;
+            border: initial;
+            border-radius: initial;
+            width: initial;
+            min-height: initial;
+            box-shadow: initial;
+            background: initial;
+            page-break-after: always;
+          }
+
+          @page {
+            size: A4 portrait;
+            margin: 0;
           }
         }
       `}</style>
@@ -2240,6 +2345,256 @@ function App() {
     if (colorLower.includes("teal")) return "#0D9488";
     if (colorLower.includes("orange")) return "#F97316";
     return "#7C3AED";
+  }
+
+  function DocketSheet({ selectedData }) {
+    const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+    const maxPOs = 6;
+    const paddedData = [...selectedData.slice(0, maxPOs), ...Array(maxPOs - selectedData.length).fill({})];
+
+    return (
+      <div className="printable-sheet">
+        <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center'}}>DOCKET SHEET</div>
+        <table className="table">
+          <tbody>
+            {paddedData.map((row, i) => (
+              <tr key={i}>
+                <td>{row["H-NUMBER"] || ""}</td>
+                <td colSpan={7}>{row["DESCRIPTION"] || ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <table className="table">
+          <tbody>
+            <tr>
+              <td className="image-cell" colSpan={8}>
+                <div style={{display: 'flex', gap: '2mm'}}>
+                  {paddedData.map((row, i) => (
+                    <div key={i} style={{flex: 1}}>
+                      {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} /> : 'No Image'}
+                    </div>
+                  ))}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={{marginBottom: '3mm'}}>
+          Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}   Actual DD: {formatDate(selectedData[0]?.["REAL DD"] || "")}
+        </div>
+
+        <table className="table">
+          <thead>
+            <tr>
+              <th>PO Number</th>
+              <th>Style #</th>
+              <th>Colour</th>
+              <th>Department</th>
+              <th>Units</th>
+              <th>H Number</th>
+              <th>Type</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paddedData.map((row, i) => (
+              <tr key={i}>
+                <td className="main-data">{row["PO NUMBER"] || ""}</td>
+                <td>{row["STYLE NUMBER"] || ""}</td>
+                <td className="main-data">{row["COLOUR"] || ""}</td>
+                <td>{row["DEPARTMENT"] || "-"}</td>
+                <td>{row["TOTAL UNITS"] || ""}</td>
+                <td>{row["H-NUMBER"] || ""}</td>
+                <td>{row["TYPE"] || ""}</td>
+                {i === 0 && (
+                  <td rowSpan={maxPOs} className="merged-total main-data">
+                    {totalUnits}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <table className="table">
+          <colgroup>
+            <col style={{width: '10%'}} />
+            {Array.from({length: maxPOs}).map((_, i) => (
+              <col key={i} style={{width: `${90 / maxPOs}%`}} />
+            ))}
+          </colgroup>
+          <thead>
+            <tr>
+              <th>SIZES</th>
+              {paddedData.map((row, i) => (
+                <th key={i}>{row["TYPE"] || ""} {row["PO NUMBER"] || ""}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {["4", "6", "8", "10", "12", "14", "16", "18"].map(size => (
+              <tr key={size}>
+                <td>UK {size}</td>
+                {paddedData.map((row, j) => (
+                  <td key={j}>{row[size] || ""}</td>
+                ))}
+              </tr>
+            ))}
+            <tr>
+              <td>TOTAL : -</td>
+              {paddedData.map((row, i) => (
+                <td key={i}>{row["TOTAL UNITS"] || ""}</td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+
+        <table className="notes-section">
+          <tbody>
+            <tr>
+              <td>NOTES : -</td>
+            </tr>
+            {Array.from({length: 8}).map((_, i) => (
+              <tr key={i}>
+                <td></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function CuttingSheet({ selectedData }) {
+    const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+    const maxPOs = 6;
+    const paddedData = [...selectedData.slice(0, maxPOs), ...Array(maxPOs - selectedData.length).fill({})];
+    const sizes = ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"];
+
+    const totalBySize = sizes.reduce((acc, size) => {
+      acc[size] = selectedData.reduce((sum, row) => sum + parseInt(row[size] || 0), 0);
+      return acc;
+    }, {});
+
+    return (
+      <div className="printable-sheet">
+        <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center', color: 'red'}}>CUTTING SHEET</div>
+
+        <div style={{display: 'flex', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm'}}>
+          {paddedData.map((row, i) => (
+            <div key={i} style={{flex: 1}}>
+              {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} style={{width: '100%', height: '50mm', objectFit: 'contain'}} /> : 'No Image'}
+            </div>
+          ))}
+        </div>
+
+        <table className="table">
+          <tbody>
+            <tr>
+              <th>Name:</th>
+              <th>Name:</th>
+              <th>Name:</th>
+              <th style={{color: 'red'}}>Binding details</th>
+            </tr>
+            <tr>
+              <td style={{height: '24mm'}}></td>
+              <td style={{height: '24mm'}}></td>
+              <td style={{height: '24mm'}}></td>
+              <td style={{height: '24mm'}}></td>
+            </tr>
+            <tr>
+              <td>Width:</td>
+              <td>Width:</td>
+              <td>Width:</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table className="table">
+          <thead>
+            <tr>
+              <th>PO Number</th>
+              <th>Style #</th>
+              <th>Colour</th>
+              <th>Department</th>
+              <th>Units</th>
+              <th>H Number</th>
+              <th>Type</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paddedData.map((row, i) => (
+              <tr key={i}>
+                <td className="main-data">{row["PO NUMBER"] || ""}</td>
+                <td>{row["STYLE NUMBER"] || ""}</td>
+                <td className="main-data">{row["COLOUR"] || ""}</td>
+                <td>{row["DEPARTMENT"] || "-"}</td>
+                <td>{row["TOTAL UNITS"] || ""}</td>
+                <td>{row["H-NUMBER"] || ""}</td>
+                <td>{row["TYPE"] || ""}</td>
+                {i === 0 && (
+                  <td rowSpan={maxPOs} className="merged-total main-data">
+                    {totalUnits}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <table className="table sizes-table">
+          <colgroup>
+            <col style={{width: '10%'}} />
+            <col style={{width: '15%'}} />
+            {sizes.map((_, i) => (
+              <col key={i} style={{width: '5%'}} />
+            ))}
+          </colgroup>
+          <thead>
+            <tr>
+              <th>PO Number</th>
+              <th>Colour</th>
+              {sizes.map(size => <th key={size}>{size}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {paddedData.map((row, i) => (
+              <tr key={i}>
+                <td className="main-data">{row["PO NUMBER"] || ""}</td>
+                <td className="main-data">{row["COLOUR"] || ""}</td>
+                {sizes.map(size => (
+                  <td key={size}>{row[size] || ""}</td>
+                ))}
+              </tr>
+            ))}
+            <tr>
+              <td>Total:</td>
+              <td></td>
+              {sizes.map(size => (
+                <td key={size}>{totalBySize[size]}</td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+        <table className="ratio-section">
+          <tbody>
+            <tr>
+              <td>RATIO:.</td>
+            </tr>
+            {Array.from({length: 10}).map((_, i) => (
+              <tr key={i}>
+                <td></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   }
 }
 
