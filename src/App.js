@@ -1170,9 +1170,9 @@ function App() {
           {/* Production Sheets Tab */}
           {activeTab === "production" && (
             <div className="tab-content no-print">
-              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: '2px solid ${colors.border}', paddingTop: '1rem', marginTop: '1rem'}}>
+              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: '2px solid ${colors.border}', paddingTop: '1rem', marginTop: '1.5rem'}}>
                 <div className="filter-item" style={{flex: 1}}>
-                  <label className="filter-label">Enter PO Numbers</label>
+                  <label className="filter-label" style={{lineHeight: '1'}}>Enter PO Numbers</label>
                   <textarea
                     value={poInput}
                     onChange={(e) => setPoInput(e.target.value)}
@@ -2240,7 +2240,7 @@ function App() {
           padding: 5mm;
           box-sizing: border-box;
           font-size: 8pt;
-          page-break-after: always;
+          page-break-after: auto;
           border: 1px solid #000;
         }
 
@@ -2345,7 +2345,7 @@ function App() {
             min-height: initial;
             box-shadow: initial;
             background: initial;
-            page-break-after: always;
+            page-break-after: auto;
           }
 
           @page {
@@ -2404,10 +2404,10 @@ function App() {
           <tbody>
             <tr>
               <td className="image-cell" colSpan={8}>
-                <div style={{display: 'grid', gridTemplateColumns: `repeat(${numPOs}, 1fr)`, gap: '2mm', overflow: 'hidden'}}>
-                  {paddedData.map((row, i) => (
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', overflow: 'hidden'}}>
+                  {Array.from({length: 6}).map((_, i) => (
                     <div key={i} style={{overflow: 'hidden'}}>
-                      {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+                      {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
                     </div>
                   ))}
                 </div>
@@ -2514,10 +2514,10 @@ function App() {
       <div className="printable-sheet">
         <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center', color: 'red'}}>CUTTING SHEET</div>
 
-        <div style={{display: 'grid', gridTemplateColumns: `repeat(${numPOs}, 1fr)`, gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
-          {paddedData.map((row, i) => (
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
+          {Array.from({length: 6}).map((_, i) => (
             <div key={i} style={{overflow: 'hidden'}}>
-              {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+              {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
             </div>
           ))}
         </div>
