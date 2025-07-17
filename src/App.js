@@ -1170,39 +1170,39 @@ function App() {
           {/* Production Sheets Tab */}
           {activeTab === "production" && (
             <div className="tab-content no-print">
-              <div className="filter-grid no-print">
-                <div className="filter-item">
-                  <label className="filter-label">Enter PO Numbers (comma-separated or one per line)</label>
+              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: '2px solid ${colors.border}', paddingTop: '1rem', marginTop: '1rem'}}>
+                <div className="filter-item" style={{flex: 1}}>
+                  <label className="filter-label">Enter PO Numbers</label>
                   <textarea
                     value={poInput}
                     onChange={(e) => setPoInput(e.target.value)}
-                    placeholder="e.g., PO0004,PO0001\nPO0002"
-                    rows={4}
+                    placeholder="e.g., PO0004 PO0001,PO0002"
+                    rows={1}
                     className="filter-select"
+                    style={{width: '100%', height: '40px', overflow: 'hidden'}}
                   />
                 </div>
-              </div>
-              <button
-                onClick={() => {
-                  const pos = poInput.split(/[\n,]+/).map(p => p.trim()).filter(Boolean);
-                  setSelectedPOs(pos);
-                }}
-                className="primary-button no-print"
-              >
-                Generate Sheets
-              </button>
-
-              {selectedPOs.length > 0 && (
-                <>
-                  <button onClick={() => window.print()} className="primary-button no-print">
+                <div className="po-buttons" style={{display: 'flex', gap: '0.75rem'}}>
+                  <button
+                    onClick={() => {
+                      const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
+                      setSelectedPOs(pos);
+                    }}
+                    className="primary-button"
+                  >
+                    Generate Sheets
+                  </button>
+                  <button onClick={() => window.print()} className="primary-button">
                     <FiPrinter size={14} /> Print Sheets
                   </button>
+                </div>
+              </div>
 
-                  <div className="sheets-container">
-                    <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                    <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                  </div>
-                </>
+              {selectedPOs.length > 0 && (
+                <div className="sheets-container" style={{marginTop: '20px'}}>
+                  <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                  <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                </div>
               )}
             </div>
           )}
@@ -1875,6 +1875,19 @@ function App() {
           border-color: ${colors.primary};
         }
 
+        /* PO Input Container */
+        .po-input-container {
+          display: flex;
+          gap: 1rem;
+          align-items: flex-end;
+        }
+
+        .po-buttons {
+          display: flex;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+        }
+
         /* Filter Grid */
         .filter-grid {
           display: grid;
@@ -2216,6 +2229,7 @@ function App() {
         .sheets-container {
           display: flex;
           gap: 1rem;
+          margin-top: 20px;
         }
 
         /* Printable Sheets */
@@ -2256,6 +2270,9 @@ function App() {
           background-color: #ffff00;
           text-align: center;
           vertical-align: middle;
+          font-size: 48pt;
+          font-weight: bold;
+          line-height: 1;
         }
 
         .notes-section, .ratio-section {
@@ -2288,6 +2305,18 @@ function App() {
         .main-data {
           font-weight: bold;
           color: #000;
+        }
+
+        .delivery-info {
+          margin: 2mm 0;
+          font-size: 16pt;
+          color: red;
+        }
+
+        .total-row {
+          color: red;
+          font-size: 12pt;
+          font-weight: normal;
         }
 
         /* Hide non-printable elements during print */
@@ -2350,11 +2379,12 @@ function App() {
   function DocketSheet({ selectedData }) {
     const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
     const maxPOs = 6;
-    const paddedData = [...selectedData.slice(0, maxPOs), ...Array(maxPOs - selectedData.length).fill({})];
+    const numPOs = Math.min(selectedData.length, maxPOs);
+    const paddedData = selectedData.slice(0, numPOs);
 
     return (
       <div className="printable-sheet">
-        <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center'}}>DOCKET SHEET</div>
+        <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center', color: 'green'}}>DOCKET SHEET</div>
         <table className="table">
           <tbody>
             {paddedData.map((row, i) => (
@@ -2366,14 +2396,18 @@ function App() {
           </tbody>
         </table>
 
+        <div className="delivery-info">
+          Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
+        </div>
+
         <table className="table">
           <tbody>
             <tr>
               <td className="image-cell" colSpan={8}>
-                <div style={{display: 'flex', gap: '2mm'}}>
+                <div style={{display: 'grid', gridTemplateColumns: `repeat(${numPOs}, 1fr)`, gap: '2mm', overflow: 'hidden'}}>
                   {paddedData.map((row, i) => (
-                    <div key={i} style={{flex: 1}}>
-                      {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} /> : 'No Image'}
+                    <div key={i} style={{overflow: 'hidden'}}>
+                      {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
                     </div>
                   ))}
                 </div>
@@ -2381,10 +2415,6 @@ function App() {
             </tr>
           </tbody>
         </table>
-
-        <div style={{marginBottom: '3mm'}}>
-          Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}   Actual DD: {formatDate(selectedData[0]?.["REAL DD"] || "")}
-        </div>
 
         <table className="table">
           <thead>
@@ -2410,7 +2440,7 @@ function App() {
                 <td>{row["H-NUMBER"] || ""}</td>
                 <td>{row["TYPE"] || ""}</td>
                 {i === 0 && (
-                  <td rowSpan={maxPOs} className="merged-total main-data">
+                  <td rowSpan={numPOs} className="merged-total">
                     {totalUnits}
                   </td>
                 )}
@@ -2422,8 +2452,8 @@ function App() {
         <table className="table">
           <colgroup>
             <col style={{width: '10%'}} />
-            {Array.from({length: maxPOs}).map((_, i) => (
-              <col key={i} style={{width: `${90 / maxPOs}%`}} />
+            {paddedData.map((_, i) => (
+              <col key={i} style={{width: `${90 / numPOs}%`}} />
             ))}
           </colgroup>
           <thead>
@@ -2443,7 +2473,7 @@ function App() {
                 ))}
               </tr>
             ))}
-            <tr>
+            <tr className="total-row">
               <td>TOTAL : -</td>
               {paddedData.map((row, i) => (
                 <td key={i}>{row["TOTAL UNITS"] || ""}</td>
@@ -2471,7 +2501,8 @@ function App() {
   function CuttingSheet({ selectedData }) {
     const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
     const maxPOs = 6;
-    const paddedData = [...selectedData.slice(0, maxPOs), ...Array(maxPOs - selectedData.length).fill({})];
+    const numPOs = Math.min(selectedData.length, maxPOs);
+    const paddedData = selectedData.slice(0, numPOs);
     const sizes = ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"];
 
     const totalBySize = sizes.reduce((acc, size) => {
@@ -2483,10 +2514,10 @@ function App() {
       <div className="printable-sheet">
         <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center', color: 'red'}}>CUTTING SHEET</div>
 
-        <div style={{display: 'flex', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm'}}>
+        <div style={{display: 'grid', gridTemplateColumns: `repeat(${numPOs}, 1fr)`, gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
           {paddedData.map((row, i) => (
-            <div key={i} style={{flex: 1}}>
-              {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} style={{width: '100%', height: '50mm', objectFit: 'contain'}} /> : 'No Image'}
+            <div key={i} style={{overflow: 'hidden'}}>
+              {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
             </div>
           ))}
         </div>
@@ -2494,16 +2525,16 @@ function App() {
         <table className="table">
           <tbody>
             <tr>
-              <th>Name:</th>
-              <th>Name:</th>
-              <th>Name:</th>
+              <th>Fabric Name 1:</th>
+              <th>Fabric Name 2:</th>
+              <th>Fabric Name 3:</th>
               <th style={{color: 'red'}}>Binding details</th>
             </tr>
             <tr>
-              <td style={{height: '24mm'}}></td>
-              <td style={{height: '24mm'}}></td>
-              <td style={{height: '24mm'}}></td>
-              <td style={{height: '24mm'}}></td>
+              <td style={{height: '20mm'}}></td>
+              <td style={{height: '20mm'}}></td>
+              <td style={{height: '20mm'}}></td>
+              <td style={{height: '20mm'}}></td>
             </tr>
             <tr>
               <td>Width:</td>
@@ -2538,7 +2569,7 @@ function App() {
                 <td>{row["H-NUMBER"] || ""}</td>
                 <td>{row["TYPE"] || ""}</td>
                 {i === 0 && (
-                  <td rowSpan={maxPOs} className="merged-total main-data">
+                  <td rowSpan={numPOs} className="merged-total">
                     {totalUnits}
                   </td>
                 )}
@@ -2572,9 +2603,8 @@ function App() {
                 ))}
               </tr>
             ))}
-            <tr>
-              <td>Total:</td>
-              <td></td>
+            <tr className="total-row">
+              <td colSpan={2}>Total:</td>
               {sizes.map(size => (
                 <td key={size}>{totalBySize[size]}</td>
               ))}
