@@ -8,6 +8,52 @@ import {
 } from 'react-icons/fi';
 import { FaCircle } from 'react-icons/fa';
 
+const formatDate = (value) => {
+  if (!value) return "";
+  try {
+    let date;
+    if (typeof value === 'number') {
+      date = new Date((value - 25569) * 86400 * 1000);
+    } else {
+      date = new Date(value);
+    }
+    if (isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return String(value);
+  }
+};
+
+const getDateValue = (value) => {
+  if (!value) return 0;
+  let date;
+  if (typeof value === 'number') {
+    date = new Date((value - 25569) * 86400 * 1000);
+  } else {
+    date = new Date(value);
+  }
+  return isNaN(date.getTime()) ? 0 : date.getTime();
+};
+
+const getGoogleDriveThumbnail = (url) => {
+  if (!url) return "";
+  try {
+    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+    if (!fileId) {
+      console.warn("No valid file ID found in URL:", url);
+      return "";
+    }
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+  } catch (e) {
+    console.error("Error generating thumbnail URL:", e);
+    return "";
+  }
+};
+
 function App() {
   // State declarations
   const [data, setData] = useState({
@@ -23,7 +69,9 @@ function App() {
     "STYLE TYPE": "",
     COLOUR: "",
     "LIVE STATUS": "",
-    "FIT STATUS": ""
+    "FIT STATUS": "",
+    "CUSTOMER NAME": "",
+    "FIT SAMPLE": ""
   });
   const [fabricFilters, setFabricFilters] = useState({
     TYPE: "",
@@ -39,8 +87,8 @@ function App() {
   });
   const [notifications, setNotifications] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
-  const [poInput, setPoInput] = useState(""); // New: Input for PO numbers
-  const [selectedPOs, setSelectedPOs] = useState([]); // New: Parsed PO numbers
+  const [poInput, setPoInput] = useState("");
+  const [selectedPOs, setSelectedPOs] = useState([]);
 
   // Premium Color Scheme with dark mode support
   const colors = darkMode ? {
@@ -130,7 +178,6 @@ function App() {
     const now = new Date();
     const oneMonthAgo = new Date(now);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
     const lastQuarterStart = new Date('2025-04-01');
     const lastQuarterEnd = new Date('2025-06-30');
     const currentYearStart = new Date('2024-07-01');
@@ -229,28 +276,6 @@ function App() {
   }, [data.sales_po]);
 
   // Utility Functions
-  const formatDate = (value) => {
-    if (!value) return "";
-    try {
-      let date;
-      if (typeof value === 'number') {
-        date = new Date((value - 25569) * 86400 * 1000);
-      } else {
-        date = new Date(value);
-      }
-
-      if (isNaN(date.getTime())) return String(value);
-
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch {
-      return String(value);
-    }
-  };
-
   const formatCurrency = (value) => {
     if (!value) return "£0.00";
     const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
@@ -267,21 +292,6 @@ function App() {
     return sizes.map(s => row[s] ? `${s}-${row[s]}` : "").filter(Boolean).join(", ");
   };
 
-  const getGoogleDriveThumbnail = (url) => {
-    if (!url) return "";
-    try {
-      const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-      if (!fileId) {
-        console.warn("No valid file ID found in URL:", url);
-        return "";
-      }
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-    } catch (e) {
-      console.error("Error generating thumbnail URL:", e);
-      return "";
-    }
-  };
-
   const getGoogleDriveDownloadLink = (url) => {
     if (!url) return "";
     const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
@@ -292,7 +302,6 @@ function App() {
     const windowHeight = window.innerHeight;
     const mouseY = e.clientY;
     const showAbove = mouseY > windowHeight * 0.7;
-    
     setPreviewImage({
       url: getGoogleDriveThumbnail(imageUrl).replace("w200", "w800"),
       visible: true,
@@ -312,13 +321,11 @@ function App() {
 
   const exportToExcel = () => {
     let dataToExport, columnOrder;
-    
     if (activeTab === "dashboard") {
       dataToExport = filteredSales;
       columnOrder = [
-        "IMAGE", "H-NUMBER", "PO NUMBER", "STYLE NUMBER", "DESCRIPTION", 
-        "COLOUR", "PRICE", "TOTAL UNITS", "FIT STATUS", "CUSTOMER NAME",
-        "XFACT DD", "REAL DD", "LIVE STATUS", "CMT PRICE", "ACTUAL CMT",
+        "IMAGE", "FIT STATUS", "H-NUMBER", "CUSTOMER NAME", "PO NUMBER", "STYLE NUMBER", "DESCRIPTION", 
+        "COLOUR", "PRICE", "TOTAL UNITS", "XFACT DD", "REAL DD", "LIVE STATUS", "CMT PRICE", "ACTUAL CMT",
         "PACKING LIST", "SIZES"
       ];
     } else if (activeTab === "fabric") {
@@ -327,25 +334,27 @@ function App() {
         IMAGE: getMatchingSalesImage(row["ORDER REF"]) || "N/A"
       }));
       columnOrder = [
-        "NO.", "DATE", "H-NUMBER", "ORDER REF", "TYPE", 
-        "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS", "IMAGE"
+        "NO.", "IMAGE", "DATE", "H-NUMBER", "ORDER REF", "TYPE", 
+        "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS"
       ];
     } else if (activeTab === "developments") {
       dataToExport = filteredDevelopments;
       columnOrder = [
-        "H-NUMBER", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
-        "SIDE IMAGE", "PATTERN IMAGE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
+        "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
+        "SIDE IMAGE", "PATTERN IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
       ];
     }
 
     const exportData = dataToExport.map(row => {
       const newRow = {};
       columnOrder.forEach(key => {
-        const originalKey = key === "FABRIC/TRIM PRICE" ? "FABRIC/TRIM PRICE" : key;
+        const originalKey = key === "FABRIC/TRIM PRICE" ? "FABRIC/TRIM PRICE" : 
+                            key === "FIT SAMPLE" ? "FIT SAMPLE" : 
+                            key === "TIMESTAMP" ? "Timestamp" : key;
         if (originalKey in row) {
           if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE", "TOTAL COST"].includes(originalKey)) {
             newRow[key] = formatCurrency(row[originalKey]);
-          } else if (["XFACT DD", "REAL DD", "DATE"].includes(originalKey)) {
+          } else if (["XFACT DD", "REAL DD", "DATE", "TIMESTAMP"].includes(originalKey)) {
             newRow[key] = formatDate(row[originalKey]);
           } else if (key === "SIZES") {
             newRow[key] = compactSizes(row);
@@ -360,7 +369,7 @@ function App() {
     const ws = XLSX.utils.json_to_sheet(exportData, { header: columnOrder });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}Data`);
-    
+
     const fileName = `High5_${activeTab}_${new Date().toISOString().slice(0,10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
@@ -370,7 +379,6 @@ function App() {
     const statuses = ["DELAYED", "URGENT", "NEW ORDER", "FABRIC RECEIVED"];
     const customers = ["Customer A", "Customer B", "Customer C", "Customer D"];
     const now = new Date();
-    
     return Array.from({ length: 5 }, (_, i) => ({
       id: i,
       type: statuses[i % statuses.length],
@@ -384,7 +392,6 @@ function App() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-
     window.jsonpCallback = (fetched) => {
       try {
         setData({
@@ -392,7 +399,7 @@ function App() {
           fabric_po: fetched.fabric_po || [],
           insert_pattern: fetched.insert_pattern || []
         });
-        console.log('Insert Pattern keys:', Object.keys(fetched.insert_pattern[0] || {})); // Check keys
+        console.log('Insert Pattern keys:', Object.keys(fetched.insert_pattern[0] || {}));
         setNotifications(generateNotifications());
       } catch (e) {
         setError("Error Parsing Data");
@@ -421,19 +428,22 @@ function App() {
     return data.sales_po
       .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()));
+      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
+      .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
   }, [data.sales_po, search, filters]);
 
   const filteredFabric = useMemo(() => {
     return data.fabric_po
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(fabricFilters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()));
+      .filter(row => Object.entries(fabricFilters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
+      .sort((a, b) => getDateValue(b["DATE"]) - getDateValue(a["DATE"]));
   }, [data.fabric_po, search, fabricFilters]);
 
   const filteredDevelopments = useMemo(() => {
     return data.insert_pattern
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()));
+      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
+      .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
   }, [data.insert_pattern, search, filters]);
 
   // Loading State
@@ -481,7 +491,7 @@ function App() {
               onClick={() => setDarkMode(!darkMode)}
             >
               <span className="toggle-icon">
-                {darkMode ? '☀️' : '🌙'}
+                {darkMode ? '' : ''}
               </span>
             </button>
           </div>
@@ -692,7 +702,9 @@ function App() {
                     });
                   } else if (activeTab === "developments") {
                     setFilters({
-                      "STYLE TYPE": ""
+                      "STYLE TYPE": "",
+                      "CUSTOMER NAME": "",
+                      "FIT SAMPLE": ""
                     });
                   }
                   setSearch("");
@@ -725,7 +737,7 @@ function App() {
           {activeTab === "dashboard" && (
             <>
               <div className="filter-grid">
-                {Object.keys(filters).filter(key => key !== "STYLE TYPE").map((key) => (
+                {Object.keys(filters).filter(key => key !== "STYLE TYPE" && key !== "CUSTOMER NAME" && key !== "FIT SAMPLE").map((key) => (
                   <div key={key} className="filter-item">
                     <label className="filter-label">
                       {key}
@@ -750,15 +762,15 @@ function App() {
                     <tr>
                       {[
                         { label: "IMAGE", icon: <FiImage size={14} /> },
+                        { label: "FIT STATUS" },
                         { label: "H-NUMBER" },
+                        { label: "CUSTOMER NAME", icon: <FiUsers size={14} /> },
                         { label: "PO NUMBER" },
                         { label: "STYLE NUMBER" },
                         { label: "DESCRIPTION" },
                         { label: "COLOUR" },
                         { label: "PRICE", icon: <FiDollarSign size={14} /> },
                         { label: "TOTAL UNITS" },
-                        { label: "FIT STATUS" },
-                        { label: "CUSTOMER NAME", icon: <FiUsers size={14} /> },
                         { label: "XFACT DD" },
                         { label: "REAL DD" },
                         { label: "LIVE STATUS" },
@@ -810,7 +822,13 @@ function App() {
                               </div>
                             )}
                           </td>
+                          <td>
+                            <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
+                              {row["FIT STATUS"]}
+                            </span>
+                          </td>
                           <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                          <td>{row["CUSTOMER NAME"]}</td>
                           <td>{row["PO NUMBER"]}</td>
                           <td>{row["STYLE NUMBER"]}</td>
                           <td>{row["DESCRIPTION"]}</td>
@@ -829,12 +847,6 @@ function App() {
                           </td>
                           <td className="price-cell">{formatCurrency(row["PRICE"])}</td>
                           <td className="bold-cell">{row["TOTAL UNITS"]}</td>
-                          <td>
-                            <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
-                              {row["FIT STATUS"]}
-                            </span>
-                          </td>
-                          <td>{row["CUSTOMER NAME"]}</td>
                           <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
                           <td className="nowrap">{formatDate(row["REAL DD"])}</td>
                           <td>
@@ -900,6 +912,7 @@ function App() {
                     <tr>
                       {[
                         { label: "NO." },
+                        { label: "IMAGE", icon: <FiImage size={14} /> },
                         { label: "DATE" },
                         { label: "H-NUMBER" },
                         { label: "ORDER REF" },
@@ -908,8 +921,7 @@ function App() {
                         { label: "COLOUR" },
                         { label: "TOTAL" },
                         { label: "FABRIC/TRIM PRICE", icon: <FiDollarSign size={14} /> },
-                        { label: "FABRIC PO LINKS" },
-                        { label: "IMAGE", icon: <FiImage size={14} /> } // New
+                        { label: "FABRIC PO LINKS" }
                       ].map((header, index) => (
                         <th key={index}>
                           <div className="header-content">
@@ -935,6 +947,26 @@ function App() {
                       filteredFabric.map((row, i) => (
                         <tr key={i}>
                           <td className="bold-cell">{row["NO."]}</td>
+                          <td className="image-cell">
+                            {getMatchingSalesImage(row["ORDER REF"]) ? (
+                              <div 
+                                onMouseEnter={(e) => handleMouseEnter(getMatchingSalesImage(row["ORDER REF"]), e)}
+                                onMouseLeave={handleMouseLeave}
+                              >
+                                <a href={getMatchingSalesImage(row["ORDER REF"])} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={getGoogleDriveThumbnail(getMatchingSalesImage(row["ORDER REF"]))}
+                                    alt="Product"
+                                    className="product-image"
+                                  />
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="no-image">
+                                No Image
+                              </div>
+                            )}
+                          </td>
                           <td className="nowrap">{formatDate(row["DATE"])}</td>
                           <td className="highlight-cell">{row["H-NUMBER"]}</td>
                           <td>{row["ORDER REF"]}</td>
@@ -973,24 +1005,6 @@ function App() {
                               <span className="na-text">No Link</span>
                             )}
                           </td>
-                          <td className="image-cell">
-                            {getMatchingSalesImage(row["ORDER REF"]) ? (
-                              <div 
-                                onMouseEnter={(e) => handleMouseEnter(getMatchingSalesImage(row["ORDER REF"]), e)}
-                                onMouseLeave={handleMouseLeave}
-                              >
-                                <a href={getMatchingSalesImage(row["ORDER REF"])} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={getGoogleDriveThumbnail(getMatchingSalesImage(row["ORDER REF"]))}
-                                    alt="Product"
-                                    className="product-image"
-                                  />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="no-image">No Image</div>
-                            )}
-                          </td>
                         </tr>
                       ))
                     )}
@@ -1004,15 +1018,15 @@ function App() {
           {activeTab === "developments" && (
             <>
               <div className="filter-grid">
-                {["STYLE TYPE"].map((key) => (
+                {["STYLE TYPE", "CUSTOMER NAME", "FIT SAMPLE"].map((key) => (
                   <div key={key} className="filter-item">
-                    <label className="filter-label">TYPE</label>
+                    <label className="filter-label">{key === "STYLE TYPE" ? "TYPE" : key}</label>
                     <select
                       value={filters[key] || ""}
                       onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
                       className="filter-select"
                     >
-                      <option value="">All Types</option>
+                      <option value="">All {key === "STYLE TYPE" ? "Types" : key}</option>
                       {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
                         <option key={i} value={value}>{value}</option>
                       ))}
@@ -1025,13 +1039,16 @@ function App() {
                   <thead>
                     <tr>
                       {[
+                        { label: "TIMESTAMP" },
                         { label: "H-NUMBER" },
+                        { label: "CUSTOMER NAME" },
                         { label: "TYPE" },
                         { label: "CUSTOMER CODE" },
                         { label: "FRONT IMAGE", icon: <FiImage size={14} /> },
                         { label: "BACK IMAGE", icon: <FiImage size={14} /> },
                         { label: "SIDE IMAGE", icon: <FiImage size={14} /> },
                         { label: "PATTERN IMAGE", icon: <FiImage size={14} /> },
+                        { label: "FIT SAMPLE" },
                         { label: "TOTAL COST", icon: <FiDollarSign size={14} /> },
                         { label: "CMT PRICE", icon: <FiDollarSign size={14} /> },
                         { label: "COSTING LINK", icon: <FiExternalLink size={14} /> }
@@ -1048,7 +1065,7 @@ function App() {
                   <tbody>
                     {filteredDevelopments.length === 0 ? (
                       <tr className="empty-state">
-                        <td colSpan="10">
+                        <td colSpan="13">
                           <div className="empty-content">
                             <FiAlertCircle size={28} />
                             <div>No Matching Patterns Found</div>
@@ -1059,7 +1076,9 @@ function App() {
                     ) : (
                       filteredDevelopments.map((row, i) => (
                         <tr key={i}>
+                          <td className="nowrap">{formatDate(row["Timestamp"])}</td>
                           <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                          <td>{row["CUSTOMER NAME"] || "N/A"}</td>
                           <td>{row["STYLE TYPE"]}</td>
                           <td>{row["CUSTOMER CODE"] || "N/A"}</td>
                           <td className="image-cell">
@@ -1142,6 +1161,7 @@ function App() {
                               </div>
                             )}
                           </td>
+                          <td>{row["FIT SAMPLE"] || "N/A"}</td>
                           <td className="price-cell nowrap bold-cell">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
                           <td className="price-cell nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
                           <td>
@@ -1170,13 +1190,12 @@ function App() {
           {/* Production Sheets Tab */}
           {activeTab === "production" && (
             <div className="tab-content no-print">
-              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: '2px solid ${colors.border}', paddingTop: '1rem', marginTop: '1.5rem'}}>
+              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: `2px solid ${colors.border}`, paddingTop: '1rem', marginTop: '1.5rem'}}>
                 <div className="filter-item" style={{flex: 1}}>
-                  <label className="filter-label" style={{lineHeight: '1'}}>Enter PO Numbers</label>
                   <textarea
                     value={poInput}
                     onChange={(e) => setPoInput(e.target.value)}
-                    placeholder="e.g., PO0004 PO0001,PO0002"
+                    placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
                     rows={1}
                     className="filter-select"
                     style={{width: '100%', height: '40px', overflow: 'hidden'}}
@@ -1332,9 +1351,9 @@ function App() {
           color: ${colors.textDark};
           display: flex;
           flex-direction: column;
-          width: 100%; /* Fit to screen fully */
+          width: 100%;
           margin: 0;
-          padding: 0; /* Remove padding to maximize width */
+          padding: 0;
         }
 
         .app-container.light {
@@ -1692,7 +1711,7 @@ function App() {
         .content-wrapper {
           flex: 1;
           padding: 1.5rem;
-          width: 100%; /* Fit to screen fully */
+          width: 100%;
           margin: 0;
           background: ${colors.cardBg};
           border-radius: 1rem;
@@ -1948,7 +1967,7 @@ function App() {
 
         .data-table {
           width: 100%;
-          border-collapse: separate;
+          border-collapse: collapse;
           border-spacing: 0;
           font-size: 0.875rem;
           min-width: 1000px;
@@ -1966,7 +1985,7 @@ function App() {
         }
 
         .data-table th {
-          padding: 0.75rem 1rem;
+          padding: 0 0.5rem;
           text-align: left;
           font-weight: 600;
           font-size: 0.8125rem;
@@ -1994,19 +2013,20 @@ function App() {
         }
 
         .data-table td {
-          padding: 0.75rem 1rem;
+          padding: 0 0.5rem;
           vertical-align: middle;
+          line-height: 1.1;
         }
 
         /* Special cell styles */
         .image-cell {
-          padding: 0.5rem !important;
+          padding: 0 !important;
         }
 
         .product-image {
           width: 100%;
           height: auto;
-          max-height: 100px;
+          max-height: 120px;
           object-fit: contain;
           border-radius: 0.5rem;
           cursor: pointer;
@@ -2020,7 +2040,7 @@ function App() {
 
         .no-image {
           width: 100%;
-          height: 100px;
+          height: 120px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2235,13 +2255,13 @@ function App() {
         /* Printable Sheets */
         .printable-sheet {
           width: 210mm;
-          height: 297mm;
-          margin: 0 auto;
+          max-height: 297mm;
+          margin: 0;
           padding: 5mm;
           box-sizing: border-box;
           font-size: 8pt;
-          page-break-after: auto;
-          border: 1px solid #000;
+          page-break-after: always;
+          page-break-inside: avoid;
         }
 
         .printable-sheet table {
@@ -2260,6 +2280,7 @@ function App() {
           vertical-align: top;
           text-align: left;
           font-size: 8pt;
+          font-weight: normal;
         }
 
         .table th {
@@ -2286,7 +2307,7 @@ function App() {
         }
 
         .image-cell {
-          height: 50mm;
+          height: 70mm;
         }
 
         .image-cell img {
@@ -2303,7 +2324,7 @@ function App() {
         }
 
         .main-data {
-          font-weight: bold;
+          font-weight: normal;
           color: #000;
         }
 
@@ -2321,6 +2342,11 @@ function App() {
 
         /* Hide non-printable elements during print */
         @media print {
+          body {
+            margin: 0;
+            padding: 0;
+          }
+
           body * {
             visibility: hidden;
           }
@@ -2345,7 +2371,11 @@ function App() {
             min-height: initial;
             box-shadow: initial;
             background: initial;
-            page-break-after: auto;
+            page-break-after: always;
+          }
+
+          .printable-sheet:last-child {
+            page-break-after: avoid;
           }
 
           @page {
@@ -2353,279 +2383,280 @@ function App() {
             margin: 0;
           }
         }
+
+        /* Mobile Header Stats */
+        @media (max-width: 768px) {
+          .nav-stats {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+          }
+          .nav-stat-item {
+            flex-shrink: 0;
+          }
+        }
       `}</style>
     </div>
   );
+}
 
-  // Helper function to get color codes
-  function getColorCode(color) {
-    if (!color) return "#7C3AED";
-    const colorLower = color.toLowerCase();
-    if (colorLower.includes("red")) return "#EF4444";
-    if (colorLower.includes("blue")) return "#3B82F6";
-    if (colorLower.includes("green")) return "#22C55E";
-    if (colorLower.includes("black")) return "#111827";
-    if (colorLower.includes("white")) return "#E5E7EB";
-    if (colorLower.includes("pink")) return "#EC4899";
-    if (colorLower.includes("yellow")) return "#F59E0B";
-    if (colorLower.includes("purple")) return "#7C3AED";
-    if (colorLower.includes("gray") || colorLower.includes("grey")) return "#6B7280";
-    if (colorLower.includes("navy")) return "#1E40AF";
-    if (colorLower.includes("teal")) return "#0D9488";
-    if (colorLower.includes("orange")) return "#F97316";
-    return "#7C3AED";
-  }
+const getColorCode = (color) => {
+  if (!color) return "#7C3AED";
+  const colorLower = color.toLowerCase();
+  if (colorLower.includes("red")) return "#EF4444";
+  if (colorLower.includes("blue")) return "#3B82F6";
+  if (colorLower.includes("green")) return "#22C55E";
+  if (colorLower.includes("black")) return "#111827";
+  if (colorLower.includes("white")) return "#E5E7EB";
+  if (colorLower.includes("pink")) return "#EC4899";
+  if (colorLower.includes("yellow")) return "#F59E0B";
+  if (colorLower.includes("purple")) return "#7C3AED";
+  if (colorLower.includes("gray") || colorLower.includes("grey")) return "#6B7280";
+  if (colorLower.includes("navy")) return "#1E40AF";
+  if (colorLower.includes("teal")) return "#0D9488";
+  if (colorLower.includes("orange")) return "#F97316";
+  return "#7C3AED";
+};
 
-  function DocketSheet({ selectedData }) {
-    const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-    const maxPOs = 6;
-    const numPOs = Math.min(selectedData.length, maxPOs);
-    const paddedData = selectedData.slice(0, numPOs);
-
-    return (
-      <div className="printable-sheet">
-        <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center', color: 'green'}}>DOCKET SHEET</div>
-        <table className="table">
-          <tbody>
-            {paddedData.map((row, i) => (
-              <tr key={i}>
-                <td>{row["H-NUMBER"] || ""}</td>
-                <td colSpan={7}>{row["DESCRIPTION"] || ""}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="delivery-info">
-          Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
-        </div>
-
-        <table className="table">
-          <tbody>
-            <tr>
-              <td className="image-cell" colSpan={8}>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', overflow: 'hidden'}}>
-                  {Array.from({length: 6}).map((_, i) => (
-                    <div key={i} style={{overflow: 'hidden'}}>
-                      {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
-                    </div>
-                  ))}
-                </div>
-              </td>
+const DocketSheet = ({ selectedData }) => {
+  const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+  const maxPOs = 6;
+  const numPOs = Math.min(selectedData.length, maxPOs);
+  const paddedData = selectedData.slice(0, numPOs);
+  return (
+    <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
+      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>DOCKET SHEET</div>
+      <table className="table" style={{border: '1px solid #000'}}>
+        <tbody>
+          {paddedData.map((row, i) => (
+            <tr key={i}>
+              <td>{row["H-NUMBER"] || ""}</td>
+              <td colSpan={7}>{row["DESCRIPTION"] || ""}</td>
             </tr>
-          </tbody>
-        </table>
-
-        <table className="table">
-          <thead>
-            <tr>
-              <th>PO Number</th>
-              <th>Style #</th>
-              <th>Colour</th>
-              <th>Department</th>
-              <th>Units</th>
-              <th>H Number</th>
-              <th>Type</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paddedData.map((row, i) => (
-              <tr key={i}>
-                <td className="main-data">{row["PO NUMBER"] || ""}</td>
-                <td>{row["STYLE NUMBER"] || ""}</td>
-                <td className="main-data">{row["COLOUR"] || ""}</td>
-                <td>{row["DEPARTMENT"] || "-"}</td>
-                <td>{row["TOTAL UNITS"] || ""}</td>
-                <td>{row["H-NUMBER"] || ""}</td>
-                <td>{row["TYPE"] || ""}</td>
-                {i === 0 && (
-                  <td rowSpan={numPOs} className="merged-total">
-                    {totalUnits}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <table className="table">
-          <colgroup>
-            <col style={{width: '10%'}} />
-            {paddedData.map((_, i) => (
-              <col key={i} style={{width: `${90 / numPOs}%`}} />
-            ))}
-          </colgroup>
-          <thead>
-            <tr>
-              <th>SIZES</th>
-              {paddedData.map((row, i) => (
-                <th key={i}>{row["TYPE"] || ""} {row["PO NUMBER"] || ""}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {["4", "6", "8", "10", "12", "14", "16", "18"].map(size => (
-              <tr key={size}>
-                <td>UK {size}</td>
-                {paddedData.map((row, j) => (
-                  <td key={j}>{row[size] || ""}</td>
-                ))}
-              </tr>
-            ))}
-            <tr className="total-row">
-              <td>TOTAL : -</td>
-              {paddedData.map((row, i) => (
-                <td key={i}>{row["TOTAL UNITS"] || ""}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-
-        <table className="notes-section">
-          <tbody>
-            <tr>
-              <td>NOTES : -</td>
-            </tr>
-            {Array.from({length: 8}).map((_, i) => (
-              <tr key={i}>
-                <td></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  function CuttingSheet({ selectedData }) {
-    const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-    const maxPOs = 6;
-    const numPOs = Math.min(selectedData.length, maxPOs);
-    const paddedData = selectedData.slice(0, numPOs);
-    const sizes = ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"];
-
-    const totalBySize = sizes.reduce((acc, size) => {
-      acc[size] = selectedData.reduce((sum, row) => sum + parseInt(row[size] || 0), 0);
-      return acc;
-    }, {});
-
-    return (
-      <div className="printable-sheet">
-        <div style={{fontSize: '12pt', fontWeight: 'bold', textAlign: 'center', color: 'red'}}>CUTTING SHEET</div>
-
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
-          {Array.from({length: 6}).map((_, i) => (
-            <div key={i} style={{overflow: 'hidden'}}>
-              {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
-            </div>
           ))}
-        </div>
+        </tbody>
+      </table>
 
-        <table className="table">
-          <tbody>
-            <tr>
-              <th>Fabric Name 1:</th>
-              <th>Fabric Name 2:</th>
-              <th>Fabric Name 3:</th>
-              <th style={{color: 'red'}}>Binding details</th>
+      <div className="delivery-info">
+        Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
+      </div>
+
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
+        {Array.from({length: 6}).map((_, i) => (
+          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm', border: '1px dashed #000'}}>
+            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+          </div>
+        ))}
+      </div>
+
+      <table className="table" style={{border: '1px solid #000'}}>
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Style #</th>
+            <th style={{width: '20%'}}>Colour</th>
+            <th>Department</th>
+            <th>Units</th>
+            <th>H Number</th>
+            <th>Type</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {paddedData.map((row, i) => (
+            <tr key={i}>
+              <td className="main-data">{row["PO NUMBER"] || ""}</td>
+              <td>{row["STYLE NUMBER"] || ""}</td>
+              <td className="main-data">{row["COLOUR"] || ""}</td>
+              <td>{row["DEPARTMENT"] || "-"}</td>
+              <td>{row["TOTAL UNITS"] || ""}</td>
+              <td>{row["H-NUMBER"] || ""}</td>
+              <td>{row["TYPE"] || ""}</td>
+              {i === 0 && (
+                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
+                  {totalUnits}
+                </td>
+              )}
             </tr>
-            <tr>
-              <td style={{height: '20mm'}}></td>
-              <td style={{height: '20mm'}}></td>
-              <td style={{height: '20mm'}}></td>
-              <td style={{height: '20mm'}}></td>
+          ))}
+        </tbody>
+      </table>
+
+      <table className="table" style={{border: '1px solid #000'}}>
+        <colgroup>
+          <col style={{width: '10%'}} />
+          {paddedData.map((_, i) => (
+            <col key={i} style={{width: `${90 / numPOs}%`}} />
+          ))}
+        </colgroup>
+        <thead>
+          <tr>
+            <th>SIZES</th>
+            {paddedData.map((row, i) => (
+              <th key={i}>{row["TYPE"] || ""} {row["PO NUMBER"] || ""}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {["4", "6", "8", "10", "12", "14", "16", "18"].map(size => (
+            <tr key={size}>
+              <td>UK {size}</td>
+              {paddedData.map((row, j) => (
+                <td key={j}>{row[size] || ""}</td>
+              ))}
             </tr>
-            <tr>
-              <td>Width:</td>
-              <td>Width:</td>
-              <td>Width:</td>
+          ))}
+          <tr className="total-row">
+            <td>TOTAL : -</td>
+            {paddedData.map((row, i) => (
+              <td key={i}>{row["TOTAL UNITS"] || ""}</td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+
+      <table className="notes-section">
+        <tbody>
+          <tr>
+            <td>NOTES : -</td>
+          </tr>
+          {Array.from({length: 3}).map((_, i) => (
+            <tr key={i}>
               <td></td>
             </tr>
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
-        <table className="table">
-          <thead>
-            <tr>
-              <th>PO Number</th>
-              <th>Style #</th>
-              <th>Colour</th>
-              <th>Department</th>
-              <th>Units</th>
-              <th>H Number</th>
-              <th>Type</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paddedData.map((row, i) => (
-              <tr key={i}>
-                <td className="main-data">{row["PO NUMBER"] || ""}</td>
-                <td>{row["STYLE NUMBER"] || ""}</td>
-                <td className="main-data">{row["COLOUR"] || ""}</td>
-                <td>{row["DEPARTMENT"] || "-"}</td>
-                <td>{row["TOTAL UNITS"] || ""}</td>
-                <td>{row["H-NUMBER"] || ""}</td>
-                <td>{row["TYPE"] || ""}</td>
-                {i === 0 && (
-                  <td rowSpan={numPOs} className="merged-total">
-                    {totalUnits}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+const CuttingSheet = ({ selectedData }) => {
+  const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+  const maxPOs = 6;
+  const numPOs = Math.min(selectedData.length, maxPOs);
+  const paddedData = selectedData.slice(0, numPOs);
+  const sizes = ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"];
+  const totalBySize = sizes.reduce((acc, size) => {
+    acc[size] = selectedData.reduce((sum, row) => sum + parseInt(row[size] || 0), 0);
+    return acc;
+  }, {});
 
-        <table className="table sizes-table">
-          <colgroup>
-            <col style={{width: '10%'}} />
-            <col style={{width: '15%'}} />
-            {sizes.map((_, i) => (
-              <col key={i} style={{width: '5%'}} />
-            ))}
-          </colgroup>
-          <thead>
-            <tr>
-              <th>PO Number</th>
-              <th>Colour</th>
-              {sizes.map(size => <th key={size}>{size}</th>)}
+  return (
+    <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
+      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
+
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
+        {Array.from({length: 6}).map((_, i) => (
+          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm', border: '1px dashed #000'}}>
+            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+          </div>
+        ))}
+      </div>
+
+      <table className="table" style={{border: '1px solid #000'}}>
+        <tbody>
+          <tr>
+            <th>Fabric Name 1:</th>
+            <th>Fabric Name 2:</th>
+            <th>Fabric Name 3:</th>
+            <th style={{color: 'red'}}>Binding details</th>
+          </tr>
+          <tr>
+            <td style={{height: '20mm'}}></td>
+            <td style={{height: '20mm'}}></td>
+            <td style={{height: '20mm'}}></td>
+            <td style={{height: '20mm'}}></td>
+          </tr>
+          <tr>
+            <td>Width:</td>
+            <td>Width:</td>
+            <td>Width:</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table className="table" style={{border: '1px solid #000'}}>
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Style #</th>
+            <th style={{width: '20%'}}>Colour</th>
+            <th>Department</th>
+            <th>Units</th>
+            <th>H Number</th>
+            <th>Type</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {paddedData.map((row, i) => (
+            <tr key={i}>
+              <td className="main-data">{row["PO NUMBER"] || ""}</td>
+              <td>{row["STYLE NUMBER"] || ""}</td>
+              <td className="main-data">{row["COLOUR"] || ""}</td>
+              <td>{row["DEPARTMENT"] || "-"}</td>
+              <td>{row["TOTAL UNITS"] || ""}</td>
+              <td>{row["H-NUMBER"] || ""}</td>
+              <td>{row["TYPE"] || ""}</td>
+              {i === 0 && (
+                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
+                  {totalUnits}
+                </td>
+              )}
             </tr>
-          </thead>
-          <tbody>
-            {paddedData.map((row, i) => (
-              <tr key={i}>
-                <td className="main-data">{row["PO NUMBER"] || ""}</td>
-                <td className="main-data">{row["COLOUR"] || ""}</td>
-                {sizes.map(size => (
-                  <td key={size}>{row[size] || ""}</td>
-                ))}
-              </tr>
-            ))}
-            <tr className="total-row">
-              <td colSpan={2}>Total:</td>
+          ))}
+        </tbody>
+      </table>
+
+      <table className="table sizes-table" style={{border: '1px solid #000'}}>
+        <colgroup>
+          <col style={{width: '10%'}} />
+          <col style={{width: '15%'}} />
+          {sizes.map((_, i) => (
+            <col key={i} style={{width: '5%'}} />
+          ))}
+        </colgroup>
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Colour</th>
+            {sizes.map(size => <th key={size}>{size}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {paddedData.map((row, i) => (
+            <tr key={i}>
+              <td className="main-data">{row["PO NUMBER"] || ""}</td>
+              <td className="main-data">{row["COLOUR"] || ""}</td>
               {sizes.map(size => (
-                <td key={size}>{totalBySize[size]}</td>
+                <td key={size}>{row[size] || ""}</td>
               ))}
             </tr>
-          </tbody>
-        </table>
-        <table className="ratio-section">
-          <tbody>
-            <tr>
-              <td>RATIO:.</td>
-            </tr>
-            {Array.from({length: 10}).map((_, i) => (
-              <tr key={i}>
-                <td></td>
-              </tr>
+          ))}
+          <tr className="total-row">
+            <td colSpan={2}>Total:</td>
+            {sizes.map(size => (
+              <td key={size}>{totalBySize[size]}</td>
             ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-}
+          </tr>
+        </tbody>
+      </table>
+      <table className="ratio-section">
+        <tbody>
+          <tr>
+            <td>RATIO:.</td>
+          </tr>
+          {Array.from({length: 3}).map((_, i) => (
+            <tr key={i}>
+              <td></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 export default App;
