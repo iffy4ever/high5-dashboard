@@ -4,9 +4,10 @@ import {
   FiTruck, FiCalendar, FiClock, FiAlertCircle, 
   FiDatabase, FiDownload, FiFilter, FiSearch, FiExternalLink,
   FiImage, FiFileText, FiDollarSign, FiUsers, FiCheckCircle,
-  FiLayers, FiShoppingBag, FiPrinter
+  FiLayers, FiShoppingBag, FiPrinter, FiBell, FiMoon, FiSun
 } from 'react-icons/fi';
 import { FaCircle } from 'react-icons/fa';
+import './App.css';
 
 const formatDate = (value) => {
   if (!value) return "";
@@ -54,8 +55,22 @@ const getGoogleDriveThumbnail = (url) => {
   }
 };
 
+const getGoogleDriveViewLink = (url) => {
+  if (!url) return "";
+  try {
+    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+    if (!fileId) {
+      console.warn("No valid file ID found in URL:", url);
+      return "";
+    }
+    return `https://drive.google.com/file/d/${fileId}/view`;
+  } catch (e) {
+    console.error("Error generating view URL:", e);
+    return "";
+  }
+};
+
 function App() {
-  // State declarations
   const [data, setData] = useState({
     sales_po: [],
     fabric_po: [],
@@ -151,19 +166,13 @@ function App() {
     statCardBorder: "#E5E7EB",
   };
 
-  // Form links with icons
+  // Form links with icons (removed Fit Status Form)
   const formLinks = [
     {
       label: "Development Form",
       url: "https://forms.gle/hq1pgP4rz1BSjiCc6",
       icon: <FiFileText size={16} />,
       color: colors.primary
-    },
-    {
-      label: "Fit Status Form",
-      url: "https://forms.gle/5BxFQWWTubZTq21g9",
-      icon: <FiCheckCircle size={16} />,
-      color: colors.secondary
     },
     {
       label: "Insert Pattern Form",
@@ -292,16 +301,25 @@ function App() {
     return sizes.map(s => row[s] ? `${s}-${row[s]}` : "").filter(Boolean).join(", ");
   };
 
-  const getGoogleDriveDownloadLink = (url) => {
+  const getGoogleDriveViewLink = (url) => {
     if (!url) return "";
-    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    return fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : "";
+    try {
+      const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+      if (!fileId) {
+        console.warn("No valid file ID found in URL:", url);
+        return "";
+      }
+      return `https://drive.google.com/file/d/${fileId}/view`;
+    } catch (e) {
+      console.error("Error generating view URL:", e);
+      return "";
+    }
   };
 
   const handleMouseEnter = (imageUrl, e) => {
     const windowHeight = window.innerHeight;
     const mouseY = e.clientY;
-    const showAbove = mouseY > windowHeight * 0.7;
+    const showAbove = mouseY > window.innerHeight * 0.7;
     setPreviewImage({
       url: getGoogleDriveThumbnail(imageUrl).replace("w200", "w800"),
       visible: true,
@@ -341,7 +359,7 @@ function App() {
       dataToExport = filteredDevelopments;
       columnOrder = [
         "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
-        "SIDE IMAGE", "PATTERN IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
+        "SIDE IMAGE", "PATTERN IMAGE", "FIT SAMPLE", "TOTAL GARMENT PRICE", "CMT PRICE", "COSTING LINK"
       ];
     }
 
@@ -352,7 +370,7 @@ function App() {
                             key === "FIT SAMPLE" ? "FIT SAMPLE" : 
                             key === "TIMESTAMP" ? "Timestamp" : key;
         if (originalKey in row) {
-          if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE", "TOTAL COST"].includes(originalKey)) {
+          if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE", "TOTAL GARMENT PRICE"].includes(originalKey)) {
             newRow[key] = formatCurrency(row[originalKey]);
           } else if (["XFACT DD", "REAL DD", "DATE", "TIMESTAMP"].includes(originalKey)) {
             newRow[key] = formatDate(row[originalKey]);
@@ -436,7 +454,7 @@ function App() {
     return data.fabric_po
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
       .filter(row => Object.entries(fabricFilters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
-      .sort((a, b) => parseFloat(b["NO."] || 0) - parseFloat(a["NO."] || 0));
+      .sort((a, b) => getDateValue(b["DATE"]) - getDateValue(a["DATE"]));
   }, [data.fabric_po, search, fabricFilters]);
 
   const filteredDevelopments = useMemo(() => {
@@ -581,7 +599,7 @@ function App() {
               className="notification-button"
               onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
             >
-              <FiShoppingBag size={18} />
+              <FiBell size={18} />
               {notifications.filter(n => !n.read).length > 0 && (
                 <span className="notification-badge">
                   {notifications.filter(n => !n.read).length}
@@ -813,6 +831,7 @@ function App() {
                                     src={getGoogleDriveThumbnail(row.IMAGE)}
                                     alt="Product"
                                     className="product-image"
+                                    loading="lazy"
                                   />
                                 </a>
                               </div>
@@ -862,7 +881,7 @@ function App() {
                           <td>
                             {row["PACKING LIST"] ? (
                               <a
-                                href={getGoogleDriveDownloadLink(row["PACKING LIST"])}
+                                href={getGoogleDriveViewLink(row["PACKING LIST"])}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="download-button"
@@ -885,7 +904,7 @@ function App() {
 
           {/* Fabric PO Tab */}
           {activeTab === "fabric" && (
-            <>
+            <React.Fragment>
               <div className="filter-grid">
                 {Object.keys(fabricFilters).map((key) => (
                   <div key={key} className="filter-item">
@@ -893,7 +912,7 @@ function App() {
                       {key}
                     </label>
                     <select
-                      value={fabricFilters[key] || ""}
+                      value={fabricFilters[key]}
                       onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
                       className="filter-select"
                     >
@@ -958,11 +977,14 @@ function App() {
                                     src={getGoogleDriveThumbnail(getMatchingSalesImage(row["ORDER REF"]))}
                                     alt="Product"
                                     className="product-image"
+                                    loading="lazy"
                                   />
                                 </a>
                               </div>
                             ) : (
-                              <div className="no-image">No Image</div>
+                              <div className="no-image">
+                                No Image
+                              </div>
                             )}
                           </td>
                           <td className="nowrap">{formatDate(row["DATE"])}</td>
@@ -992,7 +1014,7 @@ function App() {
                           <td>
                             {row["FABRIC PO LINKS"] ? (
                               <a
-                                href={row["FABRIC PO LINKS"]}
+                                href={getGoogleDriveViewLink(row["FABRIC PO LINKS"])}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="view-button"
@@ -1009,18 +1031,18 @@ function App() {
                   </tbody>
                 </table>
               </div>
-            </>
+            </React.Fragment>
           )}
 
           {/* Developments Tab */}
           {activeTab === "developments" && (
-            <>
+            <React.Fragment>
               <div className="filter-grid">
                 {["STYLE TYPE", "CUSTOMER NAME", "FIT SAMPLE"].map((key) => (
                   <div key={key} className="filter-item">
                     <label className="filter-label">{key === "STYLE TYPE" ? "TYPE" : key}</label>
                     <select
-                      value={filters[key] || ""}
+                      value={filters[key]}
                       onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
                       className="filter-select"
                     >
@@ -1090,6 +1112,7 @@ function App() {
                                     src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
                                     alt="Front"
                                     className="product-image"
+                                    loading="lazy"
                                   />
                                 </a>
                               </div>
@@ -1110,6 +1133,7 @@ function App() {
                                     src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
                                     alt="Back"
                                     className="product-image"
+                                    loading="lazy"
                                   />
                                 </a>
                               </div>
@@ -1130,6 +1154,7 @@ function App() {
                                     src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
                                     alt="Side"
                                     className="product-image"
+                                    loading="lazy"
                                   />
                                 </a>
                               </div>
@@ -1150,6 +1175,7 @@ function App() {
                                     src={getGoogleDriveThumbnail(row["PATTERN IMAGE"])}
                                     alt="Pattern"
                                     className="product-image"
+                                    loading="lazy"
                                   />
                                 </a>
                               </div>
@@ -1165,7 +1191,7 @@ function App() {
                           <td>
                             {row["COSTING LINK"] ? (
                               <a
-                                href={row["COSTING LINK"]}
+                                href={getGoogleDriveViewLink(row["COSTING LINK"])}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="view-button"
@@ -1182,7 +1208,7 @@ function App() {
                   </tbody>
                 </table>
               </div>
-            </>
+            </React.Fragment>
           )}
 
           {/* Production Sheets Tab */}
@@ -1261,1144 +1287,11 @@ function App() {
           </div>
         </footer>
       </div>
-
-      {/* Global styles */}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-        
-        body {
-          font-family: 'Inter', sans-serif;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-          line-height: 1.6;
-        }
-        
-        input, select, button {
-          font-family: inherit;
-          font-size: inherit;
-        }
-        
-        a {
-          text-decoration: none;
-          color: inherit;
-        }
-        
-        button {
-          cursor: pointer;
-          background: none;
-          border: none;
-        }
-        
-        /* Scrollbar styles */
-        ::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: ${darkMode ? '#2D3748' : '#F3F4F6'};
-          border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: ${darkMode ? '#6B7280' : '#D1D5DB'};
-          border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: ${darkMode ? '#9CA3AF' : '#9CA3AF'};
-        }
-        
-        /* Modern focus styles */
-        *:focus-visible {
-          outline: 2px solid ${colors.primary};
-          outline-offset: 2px;
-        }
-        
-        /* Smooth transitions */
-        a, button, input, select {
-          transition: all 0.2s ease;
-        }
-
-        /* Animation */
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .spin {
-          animation: spin 1.5s linear infinite;
-        }
-      `}</style>
-
-      {/* Component styles */}
-      <style jsx>{`
-        .app-container {
-          min-height: 100vh;
-          background-color: ${colors.background};
-          color: ${colors.textDark};
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          margin: 0;
-          padding: 0;
-        }
-
-        .app-container.light {
-          --shadow-color: rgba(0, 0, 0, 0.1);
-          --hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .app-container.dark {
-          --shadow-color: rgba(0, 0, 0, 0.3);
-          --hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Loading Screen */
-        .loading-screen {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          background-color: ${colors.background};
-        }
-
-        .loading-content {
-          text-align: center;
-          max-width: 400px;
-          padding: 2rem;
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .spinner {
-          margin-bottom: 1rem;
-          color: ${colors.primary};
-        }
-
-        .loading-content h2 {
-          font-size: 1.75rem;
-          margin-bottom: 0.5rem;
-          color: ${colors.textDark};
-        }
-
-        .loading-content p {
-          color: ${colors.textMedium};
-          font-size: 0.875rem;
-        }
-
-        /* Error Screen */
-        .error-screen {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          background-color: ${colors.background};
-        }
-
-        .error-content {
-          text-align: center;
-          max-width: 400px;
-          padding: 2rem;
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .error-icon {
-          color: ${colors.danger};
-          margin-bottom: 1rem;
-        }
-
-        .error-content h2 {
-          font-size: 1.75rem;
-          margin-bottom: 0.5rem;
-          color: ${colors.textDark};
-        }
-
-        .error-content p {
-          color: ${colors.textMedium};
-          margin-bottom: 1rem;
-          font-size: 0.875rem;
-        }
-
-        .retry-button {
-          background-color: ${colors.primary};
-          color: ${colors.textLight};
-          padding: 0.5rem 1.25rem;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: all 0.2s;
-        }
-
-        .retry-button:hover {
-          background-color: ${colors.primaryDark};
-          transform: translateY(-1px);
-        }
-
-        /* Main Content Styles */
-        .main-content {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* Top Navigation */
-        .top-nav {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 2rem;
-          background: ${colors.headerBg};
-          color: ${colors.headerText};
-          box-shadow: 0 2px 8px var(--shadow-color);
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        .nav-left {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .top-nav h1 {
-          font-size: 1.25rem;
-          font-weight: 700;
-        }
-
-        .theme-toggle {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: ${colors.headerText};
-          font-size: 0.875rem;
-          padding: 0.5rem;
-          border-radius: 0.5rem;
-        }
-
-        .theme-toggle:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .toggle-icon {
-          font-size: 1rem;
-        }
-
-        .nav-stats {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          flex: 1;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        .nav-stat-item {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.5rem;
-          transition: all 0.2s;
-          font-size: 0.8rem;
-          white-space: nowrap;
-        }
-
-        .nav-stat-item:hover {
-          background: rgba(255, 255, 255, 0.1);
-          transform: translateY(-1px);
-        }
-
-        .nav-stat-icon {
-          display: flex;
-          align-items: center;
-        }
-
-        .nav-stat-content {
-          display: flex;
-          flex-direction: row;
-          gap: 0.25rem;
-          align-items: center;
-        }
-
-        .nav-stat-value {
-          font-size: 0.8rem;
-          font-weight: 600;
-        }
-
-        .nav-stat-title {
-          font-size: 0.7rem;
-          opacity: 0.8;
-        }
-
-        .nav-stat-divider {
-          width: 1px;
-          height: 16px;
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .nav-right {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .notification-button {
-          position: relative;
-          color: ${colors.headerText};
-          transition: all 0.2s;
-        }
-
-        .notification-button:hover {
-          color: ${colors.primaryLight};
-        }
-
-        .notification-badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          background-color: ${colors.danger};
-          color: white;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.6rem;
-          font-weight: 600;
-        }
-
-        .user-menu {
-          display: flex;
-          align-items: center;
-        }
-
-        .user-avatar {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          background-color: ${colors.primary};
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 0.875rem;
-          cursor: pointer;
-        }
-
-        /* Notification Dropdown */
-        .notification-dropdown {
-          position: absolute;
-          top: 60px;
-          right: 2rem;
-          width: 280px;
-          background-color: ${colors.cardBg};
-          border-radius: 0.75rem;
-          box-shadow: 0 8px 20px var(--shadow-color);
-          z-index: 110;
-          overflow: hidden;
-          animation: fadeIn 0.2s ease-out;
-          border: 1px solid ${colors.border};
-        }
-
-        .notification-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem;
-          border-bottom: 1px solid ${colors.border};
-        }
-
-        .notification-header h3 {
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: ${colors.textDark};
-        }
-
-        .mark-all-read {
-          font-size: 0.75rem;
-          color: ${colors.primary};
-          background: none;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .mark-all-read:hover {
-          color: ${colors.primaryDark};
-        }
-
-        .notification-list {
-          max-height: 240px;
-          overflow-y: auto;
-        }
-
-        .notification-item {
-          display: flex;
-          padding: 0.75rem;
-          gap: 0.5rem;
-          transition: all 0.2s;
-        }
-
-        .notification-item.unread {
-          background-color: ${colors.primary}05;
-        }
-
-        .notification-item:hover {
-          background-color: ${colors.primary}10;
-        }
-
-        .notification-icon {
-          display: flex;
-          align-items: flex-start;
-          padding-top: 0.25rem;
-        }
-
-        .notification-icon svg {
-          color: ${colors.primary};
-        }
-
-        .notification-content {
-          flex: 1;
-        }
-
-        .notification-message {
-          font-size: 0.8125rem;
-          color: ${colors.textDark};
-          margin-bottom: 0.25rem;
-        }
-
-        .notification-time {
-          font-size: 0.75rem;
-          color: ${colors.textMedium};
-        }
-
-        .notification-footer {
-          padding: 0.5rem 0.75rem;
-          text-align: center;
-          border-top: 1px solid ${colors.border};
-        }
-
-        .notification-footer a {
-          font-size: 0.75rem;
-          color: ${colors.primary};
-          transition: all 0.2s;
-        }
-
-        .notification-footer a:hover {
-          color: ${colors.primaryDark};
-        }
-
-        /* Content Wrapper */
-        .content-wrapper {
-          flex: 1;
-          padding: 1.5rem;
-          width: 100%;
-          margin: 0;
-          background: ${colors.cardBg};
-          border-radius: 1rem;
-          box-shadow: 0 4px 16px var(--shadow-color);
-          margin-top: 1rem;
-          transition: all 0.3s ease;
-        }
-
-        /* Form Links Grid */
-        .form-links-grid {
-          display: flex;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-          flex-wrap: wrap;
-        }
-
-        .form-link {
-          flex: 1;
-          min-width: 200px;
-          max-width: 300px;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          border-radius: 0.5rem;
-          color: white;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 6px var(--shadow-color);
-        }
-
-        .form-link:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--hover-shadow);
-        }
-
-        .form-icon {
-          width: 32px;
-          height: 32px;
-          border-radius: 6px;
-          background-color: rgba(255, 255, 255, 0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.875rem;
-        }
-
-        .form-content {
-          flex: 1;
-        }
-
-        .form-label {
-          font-size: 0.875rem;
-          font-weight: 600;
-          margin-bottom: 0.25rem;
-        }
-
-        .form-subtext {
-          font-size: 0.75rem;
-          opacity: 0.9;
-        }
-
-        /* Tab Container */
-        .tab-container {
-          margin-bottom: 1.5rem;
-          border-bottom: 2px solid ${colors.border};
-        }
-
-        .tabs {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .tab-button {
-          padding: 0.75rem 1.25rem;
-          background-color: transparent;
-          color: ${colors.inactiveTab};
-          border: none;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 0.875rem;
-          transition: all 0.2s;
-          border-radius: 0.5rem 0.5rem 0 0;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .tab-button:hover {
-          color: ${colors.primary};
-          background: ${colors.primary}05;
-        }
-
-        .tab-button.active {
-          color: ${colors.activeTab};
-          background: ${colors.activeTab}10;
-          border-bottom: 2px solid ${colors.activeTab};
-        }
-
-        /* Search and Filter Container */
-        .search-filter-container {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 1.5rem;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-
-        .search-box {
-          flex: 1;
-          position: relative;
-          min-width: 280px;
-          max-width: 500px;
-        }
-
-        .search-icon {
-          position: absolute;
-          left: 1rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: ${colors.textMedium};
-        }
-
-        .search-input {
-          padding: 0.75rem 1rem 0.75rem 2.5rem;
-          width: 100%;
-          border: 1px solid ${colors.border};
-          border-radius: 0.75rem;
-          font-size: 0.875rem;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-          background: ${colors.cardBg};
-          color: ${colors.textDark};
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color: ${colors.primary};
-          box-shadow: 0 0 0 3px ${colors.primary}20;
-        }
-
-        .action-buttons {
-          display: flex;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-        }
-
-        .primary-button {
-          background-color: ${colors.actionButton};
-          color: ${colors.textLight};
-          padding: 0.5rem 1.25rem;
-          border-radius: 0.75rem;
-          font-weight: 600;
-          font-size: 0.875rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          box-shadow: 0 2px 6px ${colors.actionButton}30;
-        }
-
-        .primary-button:hover {
-          background-color: ${colors.success};
-          transform: translateY(-1px);
-        }
-
-        .secondary-button {
-          background-color: ${colors.cardBg};
-          color: ${colors.textMedium};
-          padding: 0.5rem 1.25rem;
-          border: 1px solid ${colors.border};
-          border-radius: 0.75rem;
-          font-weight: 600;
-          font-size: 0.875rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .secondary-button:hover {
-          background-color: ${colors.primary}05;
-          color: ${colors.primary};
-          border-color: ${colors.primary};
-        }
-
-        /* PO Input Container */
-        .po-input-container {
-          display: flex;
-          gap: 1rem;
-          align-items: flex-end;
-        }
-
-        .po-buttons {
-          display: flex;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-        }
-
-        /* Filter Grid */
-        .filter-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-          padding: 1rem;
-          border-radius: 0.75rem;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-          border: 1px solid ${colors.border};
-        }
-
-        .filter-item {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .filter-label {
-          margin-bottom: 0.5rem;
-          font-weight: 600;
-          color: ${colors.textDark};
-          font-size: 0.8125rem;
-        }
-
-        .filter-select {
-          padding: 0.5rem 2rem 0.5rem 0.75rem;
-          border: 1px solid ${colors.border};
-          border-radius: 0.5rem;
-          background-color: ${colors.cardBg};
-          font-size: 0.875rem;
-          cursor: pointer;
-          appearance: none;
-          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(colors.textMedium)}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-          background-repeat: no-repeat;
-          background-position: right 0.5rem center;
-          background-size: 0.875rem;
-          color: ${colors.textDark};
-        }
-
-        .filter-select:hover {
-          border-color: ${colors.primary};
-        }
-
-        .filter-select:focus {
-          outline: none;
-          border-color: ${colors.primary};
-          box-shadow: 0 0 0 3px ${colors.primary}20;
-        }
-
-        /* Table Container */
-        .table-container {
-          overflow-x: auto;
-          border-radius: 0.75rem;
-          box-shadow: 0 4px 12px var(--shadow-color);
-          background: ${colors.cardBg};
-          border: 1px solid ${colors.border};
-        }
-
-        .data-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          font-size: 0.875rem;
-          min-width: 1000px;
-        }
-
-        .developments-table {
-          table-layout: fixed;
-        }
-
-        .data-table thead tr {
-          background: ${colors.headerBg};
-          color: ${colors.headerText};
-          position: sticky;
-          top: 0;
-        }
-
-        .data-table th {
-          padding: 0.5rem 1rem;
-          text-align: left;
-          font-weight: 600;
-          font-size: 0.8125rem;
-          border-bottom: 2px solid ${colors.primary};
-        }
-
-        .header-content {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .data-table tbody tr {
-          background-color: ${colors.rowEven};
-          transition: all 0.2s;
-        }
-
-        .data-table tbody tr:nth-child(odd) {
-          background-color: ${colors.rowOdd};
-        }
-
-        .data-table tbody tr:hover {
-          background-color: ${darkMode ? '#2D3748' : '#F0F7FF'};
-          transform: translateY(-1px);
-        }
-
-        .data-table td {
-          padding: 0.25rem 1rem;
-          vertical-align: middle;
-          line-height: 1.1;
-        }
-
-        /* Special cell styles */
-        .image-cell {
-          padding: 0.25rem !important;
-        }
-
-        .product-image {
-          width: 100%;
-          height: auto;
-          max-height: 80px;
-          object-fit: contain;
-          border-radius: 0.5rem;
-          cursor: pointer;
-          transition: transform 0.2s;
-          border: 1px solid ${colors.border};
-        }
-
-        .product-image:hover {
-          transform: scale(1.05);
-        }
-
-        .no-image {
-          width: 100%;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-style: italic;
-          color: ${colors.textMedium};
-          background-color: ${darkMode ? '#374151' : '#F3F4F6'};
-          border-radius: 0.5rem;
-          border: 1px dashed ${colors.border};
-          font-size: 0.75rem;
-        }
-
-        .highlight-cell {
-          font-weight: 600;
-          color: ${colors.primary};
-        }
-
-        .bold-cell {
-          font-weight: 600;
-        }
-
-        .nowrap {
-          white-space: nowrap;
-        }
-
-        .color-cell {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .color-dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-
-        .status-badge {
-          padding: 0.375rem 0.75rem;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          font-size: 0.75rem;
-          display: inline-block;
-        }
-
-        .status-badge.success {
-          background: ${colors.success}15;
-          color: ${colors.success};
-        }
-
-        .status-badge.warning {
-          background: ${colors.warning}15;
-          color: ${colors.warning};
-        }
-
-        .status-badge.info {
-          background: ${colors.info}15;
-          color: ${colors.info};
-        }
-
-        .type-badge {
-          padding: 0.375rem 0.75rem;
-          border-radius: 0.5rem;
-          background: ${colors.primary}15;
-          color: ${colors.primary};
-          font-weight: 600;
-          font-size: 0.75rem;
-        }
-
-        .download-button, .view-button {
-          background-color: ${colors.secondary};
-          color: white;
-          padding: 0.375rem 0.75rem;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          font-size: 0.75rem;
-          transition: all 0.2s;
-        }
-
-        .download-button:hover, .view-button:hover {
-          background-color: ${colors.secondaryDark};
-          transform: translateY(-1px);
-        }
-
-        .na-text {
-          font-style: italic;
-          color: ${colors.textMedium};
-        }
-
-        .sizes-cell {
-          font-size: 0.75rem;
-          color: ${colors.textMedium};
-        }
-
-        .price-cell {
-          color: ${colors.success};
-          font-weight: 600;
-        }
-
-        /* Empty state */
-        .empty-state td {
-          padding: 2rem;
-          text-align: center;
-          color: ${colors.textMedium};
-          font-style: italic;
-          background-color: ${colors.cardBg};
-        }
-
-        .empty-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .empty-content svg {
-          opacity: 0.5;
-          margin-bottom: 0.5rem;
-        }
-
-        .empty-content div {
-          font-size: 1rem;
-          font-weight: 600;
-          color: ${colors.textDark};
-        }
-
-        .empty-content p {
-          font-size: 0.875rem;
-          color: ${colors.textMedium};
-        }
-
-        /* Image preview */
-        .image-preview {
-          position: fixed;
-          z-index: 1000;
-          width: 300px;
-          background-color: ${colors.cardBg};
-          padding: 0.75rem;
-          border-radius: 0.75rem;
-          box-shadow: 0 8px 20px var(--shadow-color);
-          transform: translateX(-50%);
-          border: 1px solid ${colors.border};
-        }
-
-        .image-preview.below {
-          top: 0;
-        }
-
-        .image-preview.above {
-          bottom: 0;
-          transform: translateX(-50%) translateY(-100%);
-        }
-
-        .preview-image {
-          width: 100%;
-          height: auto;
-          max-height: 360px;
-          object-fit: contain;
-          border-radius: 0.5rem;
-          border: 1px solid ${colors.border};
-        }
-
-        .preview-arrow {
-          position: absolute;
-          width: 1rem;
-          height: 1rem;
-          background-color: ${colors.cardBg};
-          transform: rotate(45deg);
-          border-right: 1px solid ${colors.border};
-          z-index: -1;
-        }
-
-        .image-preview.below .preview-arrow {
-          top: -0.5rem;
-          left: 50%;
-          transform: translateX(-50%) rotate(45deg);
-          border-bottom: 1px solid ${colors.border};
-        }
-
-        .image-preview.above .preview-arrow {
-          bottom: -0.5rem;
-          left: 50%;
-          transform: translateX(-50%) rotate(45deg);
-          border-top: 1px solid ${colors.border};
-        }
-
-        /* Footer */
-        .app-footer {
-          background: ${colors.cardBg};
-          color: ${colors.textMedium};
-          padding: 1rem 1.5rem;
-          border-top: 1px solid ${colors.border};
-          margin-top: auto;
-        }
-
-        .footer-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 0.75rem;
-          width: 100%;
-          margin: 0;
-        }
-
-        /* Sheets Container */
-        .sheets-container {
-          display: flex;
-          gap: 1rem;
-          margin-top: 20px;
-        }
-
-        /* Printable Sheets */
-        .printable-sheet {
-          width: 210mm;
-          max-height: 297mm;
-          margin: 0;
-          padding: 5mm;
-          box-sizing: border-box;
-          font-size: 8pt;
-          page-break-after: always;
-          page-break-inside: avoid;
-        }
-
-        .printable-sheet table {
-          margin-bottom: 3mm;
-        }
-
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-          table-layout: fixed;
-        }
-
-        .table th, .table td {
-          border: 1px solid #000;
-          padding: 1mm;
-          vertical-align: top;
-          text-align: left;
-          font-size: 8pt;
-          font-weight: normal;
-        }
-
-        .table th {
-          background-color: #f0f0f0;
-        }
-
-        .merged-total {
-          background-color: #ffff00;
-          text-align: center;
-          vertical-align: middle;
-          font-size: 48pt;
-          font-weight: bold;
-          line-height: 1;
-        }
-
-        .notes-section, .ratio-section {
-          border: none;
-          width: 100%;
-        }
-
-        .notes-section td, .ratio-section td {
-          border: none;
-          height: 5mm;
-        }
-
-        .image-cell {
-          height: 70mm;
-        }
-
-        .image-cell img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-
-        .sizes-table td {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          font-size: 7pt;
-        }
-
-        .main-data {
-          font-weight: normal;
-          color: #000;
-        }
-
-        .delivery-info {
-          margin: 2mm 0;
-          font-size: 16pt;
-          color: red;
-        }
-
-        .total-row {
-          color: red;
-          font-size: 12pt;
-          font-weight: normal;
-        }
-
-        /* Hide non-printable elements during print */
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-          }
-
-          body * {
-            visibility: hidden;
-          }
-
-          .sheets-container, .sheets-container * {
-            visibility: visible;
-          }
-
-          .sheets-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            display: block;
-          }
-
-          .printable-sheet {
-            margin: 0;
-            border: initial;
-            border-radius: initial;
-            width: initial;
-            min-height: initial;
-            box-shadow: initial;
-            background: initial;
-            page-break-after: always;
-          }
-
-          .printable-sheet:last-child {
-            page-break-after: avoid;
-          }
-
-          @page {
-            size: A4 portrait;
-            margin: 0;
-          }
-        }
-
-        /* Mobile Header Stats */
-        @media (max-width: 768px) {
-          .nav-stats {
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            justify-content: flex-start;
-          }
-          .nav-stat-item {
-            flex-shrink: 0;
-          }
-        }
-      `}</style>
     </div>
   );
 }
 
-const getColorCode = (color) => {
+function getColorCode(color) {
   if (!color) return "#7C3AED";
   const colorLower = color.toLowerCase();
   if (colorLower.includes("red")) return "#EF4444";
@@ -2416,14 +1309,15 @@ const getColorCode = (color) => {
   return "#7C3AED";
 };
 
-const DocketSheet = ({ selectedData }) => {
+function DocketSheet({ selectedData }) {
   const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
   const maxPOs = 6;
   const numPOs = Math.min(selectedData.length, maxPOs);
-  const paddedData = selectedData.slice(0, numPOs);
+  const paddedData = [...selectedData.slice(0, numPOs), ...Array(maxPOs - numPOs).fill({})]; // Pad with empty objects for consistency
+
   return (
-    <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
-      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745'}}>DOCKET SHEET</div>
+    <div className="printable-sheet docket-sheet">
+      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>DOCKET SHEET</div>
       <table className="table" style={{border: '1px solid #000'}}>
         <tbody>
           {paddedData.map((row, i) => (
@@ -2440,9 +1334,9 @@ const DocketSheet = ({ selectedData }) => {
       </div>
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
-        {Array.from({length: 6}).map((_, i) => (
+        {paddedData.map((row, i) => (
           <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm', border: '1px dashed #000'}}>
-            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+            {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"] || ""} style={{width: '100%', height: '100%', objectFit: 'contain'}} loading="lazy" /> : 'No Image'}
           </div>
         ))}
       </div>
@@ -2471,7 +1365,7 @@ const DocketSheet = ({ selectedData }) => {
               <td>{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
+                <td rowSpan={maxPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
                   {totalUnits}
                 </td>
               )}
@@ -2484,7 +1378,7 @@ const DocketSheet = ({ selectedData }) => {
         <colgroup>
           <col style={{width: '10%'}} />
           {paddedData.map((_, i) => (
-            <col key={i} style={{width: `${90 / numPOs}%`}} />
+            <col key={i} style={{width: `${90 / maxPOs}%`}} />
           ))}
         </colgroup>
         <thead>
@@ -2529,11 +1423,11 @@ const DocketSheet = ({ selectedData }) => {
   );
 };
 
-const CuttingSheet = ({ selectedData }) => {
+function CuttingSheet({ selectedData }) {
   const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
   const maxPOs = 6;
   const numPOs = Math.min(selectedData.length, maxPOs);
-  const paddedData = selectedData.slice(0, numPOs);
+  const paddedData = [...selectedData.slice(0, numPOs), ...Array(maxPOs - numPOs).fill({})];
   const sizes = ["4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26"];
   const totalBySize = sizes.reduce((acc, size) => {
     acc[size] = selectedData.reduce((sum, row) => sum + parseInt(row[size] || 0), 0);
@@ -2541,13 +1435,13 @@ const CuttingSheet = ({ selectedData }) => {
   }, {});
 
   return (
-    <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
-      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545'}}>CUTTING SHEET</div>
+    <div className="printable-sheet cutting-sheet">
+      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
-        {Array.from({length: 6}).map((_, i) => (
+        {paddedData.map((row, i) => (
           <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm', border: '1px dashed #000'}}>
-            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+            {row.IMAGE ? <img src={getGoogleDriveThumbnail(row.IMAGE)} alt={row["DESCRIPTION"] || ""} style={{width: '100%', height: '100%', objectFit: 'contain'}} loading="lazy" /> : 'No Image'}
           </div>
         ))}
       </div>
@@ -2599,7 +1493,7 @@ const CuttingSheet = ({ selectedData }) => {
               <td>{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
+                <td rowSpan={maxPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
                   {totalUnits}
                 </td>
               )}
