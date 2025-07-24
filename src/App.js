@@ -4,7 +4,7 @@ import {
   FiTruck, FiCalendar, FiClock, FiAlertCircle, 
   FiDatabase, FiDownload, FiFilter, FiSearch, FiExternalLink,
   FiImage, FiFileText, FiDollarSign, FiUsers, FiCheckCircle,
-  FiLayers, FiShoppingBag, FiPrinter
+  FiLayers, FiShoppingBag, FiPrinter, FiBarChart2
 } from 'react-icons/fi';
 import { FaCircle } from 'react-icons/fa';
 
@@ -89,64 +89,65 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [poInput, setPoInput] = useState("");
   const [selectedPOs, setSelectedPOs] = useState([]);
+  const [showStats, setShowStats] = useState(false);
 
-  // Premium Color Scheme with dark mode support
+  // Modern Color Scheme with dark mode support
   const colors = darkMode ? {
-    primary: "#60A5FA",
-    primaryLight: "#DBEAFE",
-    primaryDark: "#2563EB",
-    secondary: "#A78BFA",
-    secondaryLight: "#EDE9FE",
-    secondaryDark: "#7C3AED",
-    accent: "#F472B6",
-    accentLight: "#FBCFE8",
-    accentDark: "#DB2777",
-    danger: "#FCA5A5",
-    success: "#4ADE80",
-    warning: "#FBBF24",
-    info: "#38BDF8",
+    primary: "#6366F1",
+    primaryLight: "#818CF8",
+    primaryDark: "#4F46E5",
+    secondary: "#EC4899",
+    secondaryLight: "#F472B6",
+    secondaryDark: "#DB2777",
+    accent: "#F59E0B",
+    accentLight: "#FBBF24",
+    accentDark: "#D97706",
+    danger: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    info: "#3B82F6",
     textDark: "#F3F4F6",
     textMedium: "#9CA3AF",
-    textLight: "#111827",
-    background: "#1F2937",
-    cardBg: "#374151",
-    border: "#4B5563",
-    rowEven: "#374151",
-    rowOdd: "#2D3748",
-    headerBg: "#2563EB",
+    textLight: "#1F2937",
+    background: "#111827",
+    cardBg: "#1F2937",
+    border: "#374151",
+    rowEven: "#1F2937",
+    rowOdd: "#111827",
+    headerBg: "#1F2937",
     headerText: "#F3F4F6",
-    activeTab: "#A78BFA",
+    activeTab: "#6366F1",
     inactiveTab: "#6B7280",
-    actionButton: "#4ADE80",
-    statCardBg: "#374151",
-    statCardBorder: "#4B5563",
+    actionButton: "#10B981",
+    statCardBg: "#1F2937",
+    statCardBorder: "#374151",
   } : {
-    primary: "#2563EB",
-    primaryLight: "#60A5FA",
-    primaryDark: "#1E40AF",
-    secondary: "#7C3AED",
-    secondaryLight: "#A78BFA",
-    secondaryDark: "#5B21B6",
-    accent: "#DB2777",
-    accentLight: "#F472B6",
-    accentDark: "#BE185D",
+    primary: "#6366F1",
+    primaryLight: "#818CF8",
+    primaryDark: "#4F46E5",
+    secondary: "#EC4899",
+    secondaryLight: "#F472B6",
+    secondaryDark: "#DB2777",
+    accent: "#F59E0B",
+    accentLight: "#FBBF24",
+    accentDark: "#D97706",
     danger: "#EF4444",
-    success: "#22C55E",
+    success: "#10B981",
     warning: "#F59E0B",
-    info: "#0EA5E9",
-    textDark: "#111827",
+    info: "#3B82F6",
+    textDark: "#1F2937",
     textMedium: "#6B7280",
-    textLight: "#FFFFFF",
+    textLight: "#F9FAFB",
     background: "#F9FAFB",
     cardBg: "#FFFFFF",
     border: "#E5E7EB",
     rowEven: "#FFFFFF",
     rowOdd: "#F9FAFB",
-    headerBg: "#2563EB",
-    headerText: "#FFFFFF",
-    activeTab: "#7C3AED",
+    headerBg: "#FFFFFF",
+    headerText: "#1F2937",
+    activeTab: "#6366F1",
     inactiveTab: "#9CA3AF",
-    actionButton: "#22C55E",
+    actionButton: "#10B981",
     statCardBg: "#FFFFFF",
     statCardBorder: "#E5E7EB",
   };
@@ -160,16 +161,10 @@ function App() {
       color: colors.primary
     },
     {
-      label: "Fit Status Form",
-      url: "https://forms.gle/5BxFQWWTubZTq21g9",
-      icon: <FiCheckCircle size={16} />,
-      color: colors.secondary
-    },
-    {
       label: "Insert Pattern Form",
       url: "https://forms.gle/LBQwrpMjJuFzLTsC8",
       icon: <FiLayers size={16} />,
-      color: colors.accent
+      color: colors.secondary
     }
   ];
 
@@ -349,8 +344,8 @@ function App() {
       const newRow = {};
       columnOrder.forEach(key => {
         const originalKey = key === "FABRIC/TRIM PRICE" ? "FABRIC/TRIM PRICE" : 
-                            key === "FIT SAMPLE" ? "FIT SAMPLE" : 
-                            key === "TIMESTAMP" ? "Timestamp" : key;
+                          key === "FIT SAMPLE" ? "FIT SAMPLE" : 
+                          key === "TIMESTAMP" ? "Timestamp" : key;
         if (originalKey in row) {
           if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE", "TOTAL COST"].includes(originalKey)) {
             newRow[key] = formatCurrency(row[originalKey]);
@@ -491,92 +486,18 @@ function App() {
               onClick={() => setDarkMode(!darkMode)}
             >
               <span className="toggle-icon">
-                {darkMode ? '' : ''}
+                {darkMode ? '☀️' : '🌙'}
               </span>
             </button>
           </div>
-          <div className="nav-stats">
-            {[
-              {
-                title: "Total Orders",
-                value: productionStats.totalOrders,
-                icon: <FiShoppingBag size={16} />,
-                color: colors.primary,
-              },
-              {
-                title: "Delivered (30d)",
-                value: productionStats.deliveredLast30Days,
-                icon: <FiTruck size={16} />,
-                color: colors.success,
-              },
-              {
-                title: "Units Delivered (30d)",
-                value: productionStats.deliveredUnitsLast30Days,
-                icon: <FiShoppingBag size={16} />,
-                color: colors.success,
-              },
-              {
-                title: "Units Del. Last Qtr",
-                value: productionStats.unitsDeliveredLastQuarter,
-                icon: <FiTruck size={16} />,
-                color: colors.success,
-              },
-              {
-                title: "Units Del. Curr Year",
-                value: productionStats.unitsDeliveredCurrentYear,
-                icon: <FiTruck size={16} />,
-                color: colors.success,
-              },
-              {
-                title: "Last Delivery",
-                value: productionStats.lastDeliveryDateFormatted,
-                icon: <FiCalendar size={16} />,
-                color: colors.secondary,
-              },
-              {
-                title: "In Production",
-                value: productionStats.inProduction,
-                icon: <FiClock size={16} />,
-                color: colors.accent,
-              },
-              {
-                title: "Fabric Ordered",
-                value: productionStats.fabricOrdered,
-                icon: <FiDatabase size={16} />,
-                color: colors.info,
-              },
-              {
-                title: "Not Delivered",
-                value: productionStats.notDelivered,
-                icon: <FiAlertCircle size={16} />,
-                color: colors.warning,
-              },
-              {
-                title: "Pending Units",
-                value: productionStats.pendingUnits,
-                icon: <FiAlertCircle size={16} />,
-                color: colors.warning,
-              },
-              {
-                title: "GS Sent",
-                value: productionStats.gsSent,
-                icon: <FiCheckCircle size={16} />,
-                color: colors.success,
-              }
-            ].map((metric, index) => (
-              <div key={index} className="nav-stat-item">
-                <div className="nav-stat-icon" style={{ color: metric.color }}>
-                  {metric.icon}
-                </div>
-                <div className="nav-stat-content">
-                  <div className="nav-stat-value">{metric.value}</div>
-                  <div className="nav-stat-title">{metric.title}</div>
-                </div>
-                {index < 10 && <div className="nav-stat-divider"></div>}
-              </div>
-            ))}
-          </div>
           <div className="nav-right">
+            <button 
+              className="stats-toggle"
+              onClick={() => setShowStats(!showStats)}
+              style={{ color: colors.primary }}
+            >
+              <FiBarChart2 size={18} />
+            </button>
             <button 
               className="notification-button"
               onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
@@ -588,11 +509,76 @@ function App() {
                 </span>
               )}
             </button>
-            <div className="user-menu">
-              <div className="user-avatar">A</div>
-            </div>
           </div>
         </header>
+
+        {/* Stats Panel */}
+        {showStats && (
+          <div className="stats-panel no-print">
+            <div className="stats-grid">
+              {[
+                {
+                  title: "Total Orders",
+                  value: productionStats.totalOrders,
+                  icon: <FiShoppingBag size={16} />,
+                  color: colors.primary,
+                },
+                {
+                  title: "Delivered (30d)",
+                  value: productionStats.deliveredLast30Days,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "Units (30d)",
+                  value: productionStats.deliveredUnitsLast30Days,
+                  icon: <FiShoppingBag size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "In Production",
+                  value: productionStats.inProduction,
+                  icon: <FiClock size={16} />,
+                  color: colors.accent,
+                },
+                {
+                  title: "Fabric Ordered",
+                  value: productionStats.fabricOrdered,
+                  icon: <FiDatabase size={16} />,
+                  color: colors.info,
+                },
+                {
+                  title: "Pending Units",
+                  value: productionStats.pendingUnits,
+                  icon: <FiAlertCircle size={16} />,
+                  color: colors.warning,
+                },
+                {
+                  title: "GS Sent",
+                  value: productionStats.gsSent,
+                  icon: <FiCheckCircle size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "Last Delivery",
+                  value: productionStats.lastDeliveryDateFormatted,
+                  icon: <FiCalendar size={16} />,
+                  color: colors.secondary,
+                }
+              ].map((metric, index) => (
+                <div key={index} className="stat-card">
+                  <div className="stat-icon" style={{ backgroundColor: `${metric.color}20`, color: metric.color }}>
+                    {metric.icon}
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{metric.value}</div>
+                    <div className="stat-title">{metric.title}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Notification Dropdown */}
         {notifications.filter(n => !n.read).length > 0 && (
@@ -1500,108 +1486,78 @@ function App() {
           font-size: 1rem;
         }
 
-        .nav-stats {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          flex: 1;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        .nav-stat-item {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.5rem;
-          transition: all 0.2s;
-          font-size: 0.8rem;
-          white-space: nowrap;
-        }
-
-        .nav-stat-item:hover {
-          background: rgba(255, 255, 255, 0.1);
-          transform: translateY(-1px);
-        }
-
-        .nav-stat-icon {
-          display: flex;
-          align-items: center;
-        }
-
-        .nav-stat-content {
-          display: flex;
-          flex-direction: row;
-          gap: 0.25rem;
-          align-items: center;
-        }
-
-        .nav-stat-value {
-          font-size: 0.8rem;
-          font-weight: 600;
-        }
-
-        .nav-stat-title {
-          font-size: 0.7rem;
-          opacity: 0.8;
-        }
-
-        .nav-stat-divider {
-          width: 1px;
-          height: 16px;
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-
         .nav-right {
           display: flex;
           align-items: center;
           gap: 1rem;
         }
 
-        .notification-button {
-          position: relative;
-          color: ${colors.headerText};
+        .stats-toggle {
+          color: ${colors.textMedium};
+          transition: all 0.2s;
+          padding: 0.5rem;
+          border-radius: 0.5rem;
+        }
+
+        .stats-toggle:hover {
+          color: ${colors.primary};
+          background: ${colors.primary}10;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+          background: ${colors.cardBg};
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 12px var(--shadow-color);
+          margin: 1rem;
+          padding: 1rem;
+          border: 1px solid ${colors.border};
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 1rem;
+        }
+
+        .stat-card {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          background: ${colors.cardBg};
           transition: all 0.2s;
         }
 
-        .notification-button:hover {
-          color: ${colors.primaryLight};
+        .stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--hover-shadow);
         }
 
-        .notification-badge {
-          position: absolute;
-          top: -4px;
-          right: -4px;
-          background-color: ${colors.danger};
-          color: white;
-          width: 14px;
-          height: 14px;
+        .stat-icon {
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.6rem;
-          font-weight: 600;
+          font-size: 1rem;
         }
 
-        .user-menu {
-          display: flex;
-          align-items: center;
+        .stat-content {
+          flex: 1;
         }
 
-        .user-avatar {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          background-color: ${colors.primary};
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 0.875rem;
-          cursor: pointer;
+        .stat-value {
+          font-size: 1rem;
+          font-weight: 700;
+          color: ${colors.textDark};
+        }
+
+        .stat-title {
+          font-size: 0.75rem;
+          color: ${colors.textMedium};
         }
 
         /* Notification Dropdown */
@@ -2013,9 +1969,10 @@ function App() {
         }
 
         .data-table td {
-          padding: 0 0.5rem;
+          padding: 0.1rem 0.3rem;
           vertical-align: middle;
           line-height: 1.1;
+          height: 1.5rem;
         }
 
         /* Special cell styles */
@@ -2026,12 +1983,11 @@ function App() {
         .product-image {
           width: 100%;
           height: auto;
-          max-height: 120px;
+          max-height: 80px;
           object-fit: contain;
           border-radius: 0.5rem;
           cursor: pointer;
           transition: transform 0.2s;
-          border: 1px solid ${colors.border};
         }
 
         .product-image:hover {
@@ -2040,7 +1996,7 @@ function App() {
 
         .no-image {
           width: 100%;
-          height: 120px;
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2048,7 +2004,6 @@ function App() {
           color: ${colors.textMedium};
           background-color: ${darkMode ? '#374151' : '#F3F4F6'};
           border-radius: 0.5rem;
-          border: 1px dashed ${colors.border};
           font-size: 0.75rem;
         }
 
@@ -2079,7 +2034,7 @@ function App() {
         }
 
         .status-badge {
-          padding: 0.375rem 0.75rem;
+          padding: 0.25rem 0.5rem;
           border-radius: 0.5rem;
           font-weight: 600;
           font-size: 0.75rem;
@@ -2102,7 +2057,7 @@ function App() {
         }
 
         .type-badge {
-          padding: 0.375rem 0.75rem;
+          padding: 0.25rem 0.5rem;
           border-radius: 0.5rem;
           background: ${colors.primary}15;
           color: ${colors.primary};
@@ -2113,7 +2068,7 @@ function App() {
         .download-button, .view-button {
           background-color: ${colors.secondary};
           color: white;
-          padding: 0.375rem 0.75rem;
+          padding: 0.25rem 0.5rem;
           border-radius: 0.5rem;
           font-weight: 600;
           font-size: 0.75rem;
@@ -2200,7 +2155,6 @@ function App() {
           max-height: 360px;
           object-fit: contain;
           border-radius: 0.5rem;
-          border: 1px solid ${colors.border};
         }
 
         .preview-arrow {
@@ -2386,13 +2340,8 @@ function App() {
 
         /* Mobile Header Stats */
         @media (max-width: 768px) {
-          .nav-stats {
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            justify-content: flex-start;
-          }
-          .nav-stat-item {
-            flex-shrink: 0;
+          .stats-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
           }
         }
       `}</style>
@@ -2441,9 +2390,9 @@ const DocketSheet = ({ selectedData }) => {
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden'}}>
         {Array.from({length: 6}).map((_, i) => (
-          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm', border: '1px dashed #000'}}>
+          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm'}}>
             {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
           </div>
         ))}
@@ -2452,14 +2401,14 @@ const DocketSheet = ({ selectedData }) => {
       <table className="table" style={{border: '1px solid #000'}}>
         <thead>
           <tr>
-            <th>PO Number</th>
-            <th>Style #</th>
+            <th style={{width: '15%'}}>PO Number</th>
+            <th style={{width: '25%'}}>Style #</th>
             <th style={{width: '20%'}}>Colour</th>
-            <th>Department</th>
-            <th>Units</th>
-            <th>H Number</th>
-            <th>Type</th>
-            <th>Total</th>
+            <th style={{width: '10%'}}>Department</th>
+            <th style={{width: '10%'}}>Units</th>
+            <th style={{width: '10%'}}>H Number</th>
+            <th style={{width: '10%'}}>Type</th>
+            <th style={{width: '10%'}}>Total</th>
           </tr>
         </thead>
         <tbody>
@@ -2546,9 +2495,9 @@ const CuttingSheet = ({ selectedData }) => {
     <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
       <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', border: '1px solid #000', padding: '1mm', overflow: 'hidden'}}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden'}}>
         {Array.from({length: 6}).map((_, i) => (
-          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm', border: '1px dashed #000'}}>
+          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30mm'}}>
             {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
           </div>
         ))}
@@ -2580,14 +2529,14 @@ const CuttingSheet = ({ selectedData }) => {
       <table className="table" style={{border: '1px solid #000'}}>
         <thead>
           <tr>
-            <th>PO Number</th>
-            <th>Style #</th>
+            <th style={{width: '15%'}}>PO Number</th>
+            <th style={{width: '25%'}}>Style #</th>
             <th style={{width: '20%'}}>Colour</th>
-            <th>Department</th>
-            <th>Units</th>
-            <th>H Number</th>
-            <th>Type</th>
-            <th>Total</th>
+            <th style={{width: '10%'}}>Department</th>
+            <th style={{width: '10%'}}>Units</th>
+            <th style={{width: '10%'}}>H Number</th>
+            <th style={{width: '10%'}}>Type</th>
+            <th style={{width: '10%'}}>Total</th>
           </tr>
         </thead>
         <tbody>
