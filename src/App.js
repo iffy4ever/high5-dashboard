@@ -173,22 +173,28 @@ function App() {
     const now = new Date();
     const oneMonthAgo = new Date(now);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const lastQuarterStart = new Date('2025-04-01');
-    const lastQuarterEnd = new Date('2025-06-30');
-    const currentYearStart = new Date('2024-07-01');
-    const currentYearEnd = new Date('2025-06-30');
+    const lastQuarterStart = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    const lastQuarterEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const currentFiscalYear = now.getFullYear() - (now.getMonth() < 6 ? 1 : 0);
+    const currentYearStart = new Date(currentFiscalYear, 6, 1);
+    const currentYearEnd = new Date(currentFiscalYear + 1, 5, 30);
+    const lastYearStart = new Date(currentFiscalYear - 1, 6, 1);
+    const lastYearEnd = new Date(currentFiscalYear, 5, 30);
 
     let stats = {
       totalOrders: 0,
+      totalUnits: 0,
       deliveredLast30Days: 0,
       deliveredUnitsLast30Days: 0,
       unitsDeliveredLastQuarter: 0,
       unitsDeliveredCurrentYear: 0,
+      unitsDeliveredLastYear: 0,
+      ordersLastYear: 0,
       pendingUnits: 0,
       inProduction: 0,
       fabricOrdered: 0,
       notDelivered: 0,
-      gsSent: 0,
+      goldSealSent: 0,
       lastDeliveryDate: null,
       statusDistribution: {},
       colorDistribution: {},
@@ -201,6 +207,7 @@ function App() {
       const color = order["COLOUR"] || "Unknown";
       const customer = order["CUSTOMER NAME"] || "Unknown";
       
+      stats.totalUnits += totalUnits;
       stats.statusDistribution[status] = (stats.statusDistribution[status] || 0) + 1;
       stats.colorDistribution[color] = (stats.colorDistribution[color] || 0) + 1;
       stats.customerDistribution[customer] = (stats.customerDistribution[customer] || 0) + 1;
@@ -234,6 +241,11 @@ function App() {
         if (deliveryDate >= currentYearStart && deliveryDate <= currentYearEnd) {
           stats.unitsDeliveredCurrentYear += totalUnits;
         }
+
+        if (deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd) {
+          stats.unitsDeliveredLastYear += totalUnits;
+          stats.ordersLastYear++;
+        }
         
         if (!stats.lastDeliveryDate || deliveryDate > stats.lastDeliveryDate) {
           stats.lastDeliveryDate = deliveryDate;
@@ -251,7 +263,7 @@ function App() {
       }
 
       if (String(order["FIT STATUS"] || "").toUpperCase().trim() === "GS SENT") {
-        stats.gsSent++;
+        stats.goldSealSent++;
       }
     });
 
@@ -290,7 +302,7 @@ function App() {
   const getGoogleDriveDownloadLink = (url) => {
     if (!url) return "";
     const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    return fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : "";
+    return fileId ? `https://drive.google.com/file/d/${fileId}/view` : "";
   };
 
   const handleMouseEnter = (imageUrl, e) => {
@@ -524,6 +536,12 @@ function App() {
                   color: colors.primary,
                 },
                 {
+                  title: "Total Units",
+                  value: productionStats.totalUnits,
+                  icon: <FiShoppingBag size={16} />,
+                  color: colors.primary,
+                },
+                {
                   title: "Delivered (30d)",
                   value: productionStats.deliveredLast30Days,
                   icon: <FiTruck size={16} />,
@@ -554,8 +572,8 @@ function App() {
                   color: colors.warning,
                 },
                 {
-                  title: "GS Sent",
-                  value: productionStats.gsSent,
+                  title: "GOLD SEAL SENT",
+                  value: productionStats.goldSealSent,
                   icon: <FiCheckCircle size={16} />,
                   color: colors.success,
                 },
@@ -564,7 +582,19 @@ function App() {
                   value: productionStats.lastDeliveryDateFormatted,
                   icon: <FiCalendar size={16} />,
                   color: colors.secondary,
-                }
+                },
+                {
+                  title: "Orders Last Year",
+                  value: productionStats.ordersLastYear,
+                  icon: <FiBarChart2 size={16} />,
+                  color: colors.secondary,
+                },
+                {
+                  title: "Units Last Year",
+                  value: productionStats.unitsDeliveredLastYear,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
               ].map((metric, index) => (
                 <div key={index} className="stat-card">
                   <div className="stat-icon" style={{ backgroundColor: `${metric.color}20`, color: metric.color }}>
@@ -851,9 +881,9 @@ function App() {
                                 href={getGoogleDriveDownloadLink(row["PACKING LIST"])}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="download-button"
+                                className="view-button"
                               >
-                                Download
+                                View PL
                               </a>
                             ) : (
                               <span className="na-text">N/A</span>
