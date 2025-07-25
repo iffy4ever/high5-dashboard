@@ -267,6 +267,17 @@ function App() {
       }
     });
 
+    const lastQuarterMonth = lastQuarterStart.toLocaleString('en-GB', { month: 'short' });
+    const lastQuarterEndMonth = lastQuarterEnd.toLocaleString('en-GB', { month: 'short' });
+    const lastQuarterYear = lastQuarterStart.getFullYear();
+    const lastQuarterLabel = `Units (${lastQuarterMonth}-${lastQuarterEndMonth} ${lastQuarterYear})`;
+
+    const currentYearLabel = `Units (FY${currentFiscalYear})`;
+
+    const lastYearLabel = `Units (FY${currentFiscalYear-1})`;
+
+    const lastYearOrdersLabel = `Orders (FY${currentFiscalYear-1})`;
+
     return {
       ...stats,
       lastDeliveryDateFormatted: stats.lastDeliveryDate 
@@ -278,7 +289,11 @@ function App() {
         : "No Deliveries Yet",
       topCustomers: Object.entries(stats.customerDistribution)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, 5),
+      lastQuarterLabel,
+      currentYearLabel,
+      lastYearLabel,
+      lastYearOrdersLabel
     };
   }, [data.sales_po]);
 
@@ -542,37 +557,43 @@ function App() {
                   color: colors.primary,
                 },
                 {
-                  title: "Delivered (30d)",
+                  title: "Orders (Last 30d)",
                   value: productionStats.deliveredLast30Days,
                   icon: <FiTruck size={16} />,
                   color: colors.success,
                 },
                 {
-                  title: "Units (30d)",
+                  title: "Units (Last 30d)",
                   value: productionStats.deliveredUnitsLast30Days,
                   icon: <FiShoppingBag size={16} />,
                   color: colors.success,
                 },
                 {
-                  title: "In Production",
+                  title: productionStats.lastQuarterLabel,
+                  value: productionStats.unitsDeliveredLastQuarter,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "In Prod.",
                   value: productionStats.inProduction,
                   icon: <FiClock size={16} />,
                   color: colors.accent,
                 },
                 {
-                  title: "Fabric Ordered",
+                  title: "Fabric Ord.",
                   value: productionStats.fabricOrdered,
                   icon: <FiDatabase size={16} />,
                   color: colors.info,
                 },
                 {
-                  title: "Pending Units",
+                  title: "Pend. Units",
                   value: productionStats.pendingUnits,
                   icon: <FiAlertCircle size={16} />,
                   color: colors.warning,
                 },
                 {
-                  title: "GOLD SEAL SENT",
+                  title: "Gold Seal Sent",
                   value: productionStats.goldSealSent,
                   icon: <FiCheckCircle size={16} />,
                   color: colors.success,
@@ -584,14 +605,20 @@ function App() {
                   color: colors.secondary,
                 },
                 {
-                  title: "Orders Last Year",
+                  title: productionStats.lastYearOrdersLabel,
                   value: productionStats.ordersLastYear,
                   icon: <FiBarChart2 size={16} />,
                   color: colors.secondary,
                 },
                 {
-                  title: "Units Last Year",
+                  title: productionStats.lastYearLabel,
                   value: productionStats.unitsDeliveredLastYear,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: productionStats.currentYearLabel,
+                  value: productionStats.unitsDeliveredCurrentYear,
                   icon: <FiTruck size={16} />,
                   color: colors.success,
                 },
@@ -1540,21 +1567,21 @@ function App() {
           border-radius: 0.75rem;
           box-shadow: 0 4px 12px var(--shadow-color);
           margin: 1rem;
-          padding: 1rem;
+          padding: 0.5rem;
           border: 1px solid ${colors.border};
         }
 
         .stats-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 1rem;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 0.5rem;
         }
 
         .stat-card {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem;
+          gap: 0.5rem;
+          padding: 0.5rem;
           border-radius: 0.5rem;
           background: ${colors.cardBg};
           transition: all 0.2s;
@@ -1566,13 +1593,13 @@ function App() {
         }
 
         .stat-icon {
-          width: 36px;
-          height: 36px;
+          width: 28px;
+          height: 28px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1rem;
+          font-size: 0.875rem;
         }
 
         .stat-content {
@@ -1580,13 +1607,13 @@ function App() {
         }
 
         .stat-value {
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-weight: 700;
           color: ${colors.textDark};
         }
 
         .stat-title {
-          font-size: 0.75rem;
+          font-size: 0.65rem;
           color: ${colors.textMedium};
         }
 
