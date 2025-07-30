@@ -47,33 +47,9 @@ const getGoogleDriveThumbnail = (url) => {
       console.warn("No valid file ID found in URL:", url);
       return "";
     }
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
   } catch (e) {
     console.error("Error generating thumbnail URL:", e);
-    return "";
-  }
-};
-
-const getGoogleDriveDownloadLink = (url, po = "") => {
-  if (!url) return "";
-  try {
-    // Check for file ID
-    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    if (fileId) {
-      return `https://drive.google.com/file/d/${fileId}/view`;
-    }
-
-    // Check for folder ID
-    const folderId = url.match(/\/folders\/([^?]+)/)?.[1];
-    if (folderId && po) {
-      const searchQuery = encodeURIComponent(`'${folderId}' in parents and name contains '${po}' and name contains 'packing list'`);
-      return `https://drive.google.com/drive/search?q=${searchQuery}`;
-    }
-
-    console.warn("No valid file or folder ID found in URL:", url);
-    return "";
-  } catch (e) {
-    console.error("Error generating download URL:", e);
     return "";
   }
 };
@@ -338,46 +314,22 @@ function App() {
     return sizes.map(s => row[s] ? `${s}-${row[s]}` : "").filter(Boolean).join(", ");
   };
 
+  const getGoogleDriveDownloadLink = (url) => {
+    if (!url) return "";
+    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+    return fileId ? `https://drive.google.com/file/d/${fileId}/view` : "";
+  };
+
   const handleMouseEnter = (imageUrl, e) => {
     const windowHeight = window.innerHeight;
-    const windowWidth = window.innerWidth;
     const mouseY = e.clientY;
-    const mouseX = e.clientX;
-    
-    // Determine direction (above or below) based on mouse position
     const showAbove = mouseY > windowHeight * 0.7;
-    
-    // Calculate position to ensure preview stays within viewport
-    let left = mouseX;
-    let top = showAbove ? mouseY - 320 : mouseY + 20;
-    
-    // Adjust if preview would go off the right side of the screen
-    if (left + 300 > windowWidth) {
-      left = windowWidth - 320;
-    }
-    
-    // Adjust if preview would go off the left side of the screen
-    if (left < 20) {
-      left = 20;
-    }
-    
-    // Adjust if preview would go off the top of the screen
-    if (showAbove && top < 20) {
-      top = 20;
-      setPreviewImage({
-        url: getGoogleDriveThumbnail(imageUrl).replace("w400", "w600"),
-        visible: true,
-        position: { x: left, y: top },
-        direction: 'below'
-      });
-    } else {
-      setPreviewImage({
-        url: getGoogleDriveThumbnail(imageUrl).replace("w400", "w600"),
-        visible: true,
-        position: { x: left, y: top },
-        direction: showAbove ? 'above' : 'below'
-      });
-    }
+    setPreviewImage({
+      url: getGoogleDriveThumbnail(imageUrl).replace("w200", "w800"),
+      visible: true,
+      position: { x: e.clientX, y: e.clientY },
+      direction: showAbove ? 'above' : 'below'
+    });
   };
 
   const handleMouseLeave = () => {
@@ -953,7 +905,7 @@ function App() {
                           <td>
                             {row["PACKING LIST"] ? (
                               <a
-                                href={getGoogleDriveDownloadLink(row["PACKING LIST"], row["PO NUMBER"])}
+                                href={getGoogleDriveDownloadLink(row["PACKING LIST"])}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="view-button"
@@ -1357,7 +1309,7 @@ function App() {
 
       {/* Global styles */}
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         * {
           box-sizing: border-box;
@@ -1366,7 +1318,7 @@ function App() {
         }
         
         body {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Inter', sans-serif;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
           line-height: 1.6;
@@ -1955,7 +1907,7 @@ function App() {
           border-color: ${colors.primary};
         }
 
-        /* PO input Container */
+        /* PO Input Container */
         .po-input-container {
           display: flex;
           gap: 1rem;
@@ -2062,7 +2014,6 @@ function App() {
         .data-table tbody tr {
           background-color: ${colors.rowEven};
           transition: all 0.2s;
-          border-bottom: 1px solid ${darkMode ? '#374151' : '#E5E7EB'};
         }
 
         .data-table tbody tr:nth-child(odd) {
@@ -2084,14 +2035,14 @@ function App() {
         /* Special cell styles */
         .image-cell {
           padding: 0 !important;
-          width: 120px;
-          height: 120px;
         }
 
         .product-image {
           width: 100%;
-          height: 100%;
+          height: auto;
+          max-height: 80px;
           object-fit: contain;
+          border-radius: 0.5rem;
           cursor: pointer;
           transition: transform 0.2s;
         }
@@ -2102,13 +2053,14 @@ function App() {
 
         .no-image {
           width: 100%;
-          height: 120px;
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-style: italic;
           color: ${colors.textMedium};
           background-color: ${darkMode ? '#374151' : '#F3F4F6'};
+          border-radius: 0.5rem;
           font-size: 0.75rem;
         }
 
@@ -2257,7 +2209,7 @@ function App() {
         .preview-image {
           width: 100%;
           height: auto;
-          max-height: 300px;
+          max-height: 360px;
           object-fit: contain;
           border-radius: 0.5rem;
         }
@@ -2318,39 +2270,41 @@ function App() {
           margin: 0;
           padding: 5mm;
           box-sizing: border-box;
-          font-size: 10px;
+          font-size: 8pt;
           page-break-after: always;
           page-break-inside: avoid;
-          background-color: white !important;
-          color: black !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
 
         .printable-sheet table {
           margin-bottom: 3mm;
-          width: 100%;
-          border-collapse: collapse;
         }
 
-        .printable-sheet th, .printable-sheet td {
+        .table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+
+        .table th, .table td {
           border: 1px solid #000;
-          padding: 2mm;
+          padding: 1mm;
           vertical-align: top;
           text-align: left;
-          font-size: 10px;
+          font-size: 8pt;
           font-weight: normal;
         }
 
-        .printable-sheet th {
-          background-color: #f0f0f0 !important;
-          color: black !important;
-          font-size: 11px;
+        .table th {
+          background-color: #f0f0f0;
         }
 
         .merged-total {
-          background-color: #ffff00 !important;
+          background-color: #ffff00;
           text-align: center;
           vertical-align: middle;
-          font-size: 24pt;
+          font-size: 48pt;
           font-weight: bold;
           line-height: 1;
         }
@@ -2379,7 +2333,7 @@ function App() {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          font-size: 9px;
+          font-size: 7pt;
         }
 
         .main-data {
@@ -2389,15 +2343,14 @@ function App() {
 
         .delivery-info {
           margin: 2mm 0;
-          font-size: 16px;
-          color: red;
-          font-weight: bold;
+          font-size: 16pt;
+          color: #FF0000;
         }
 
         .total-row {
-          color: red;
-          font-size: 12px;
-          font-weight: bold;
+          color: #000;
+          font-size: 12pt;
+          font-weight: normal;
         }
 
         /* Hide non-printable elements during print */
@@ -2405,7 +2358,6 @@ function App() {
           body {
             margin: 0;
             padding: 0;
-            font-family: 'Roboto', sans-serif;
           }
 
           body * {
@@ -2431,8 +2383,7 @@ function App() {
             width: initial;
             min-height: initial;
             box-shadow: initial;
-            background: white !important;
-            color: black !important;
+            background: initial;
             page-break-after: always;
           }
 
@@ -2482,23 +2433,23 @@ const DocketSheet = ({ selectedData }) => {
   const paddedData = selectedData.slice(0, numPOs);
   return (
     <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
-      <div style={{fontSize: '16px', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '3mm', borderRadius: '4px', marginBottom: '3mm', border: '1px solid #000'}}>DOCKET SHEET</div>
-      <table className="table" style={{border: '1px solid #000', width: '100%'}}>
+      <div style={{fontSize: '16pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>DOCKET SHEET</div>
+      <table className="table" style={{border: '1px solid #000'}}>
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td style={{width: '15%'}}>{row["H-NUMBER"] || ""}</td>
-              <td colSpan={7} style={{width: '85%'}}>{row["DESCRIPTION"] || ""}</td>
+              <td className="red-text">{row["H-NUMBER"] || ""}</td>
+              <td colSpan={7}>{row["DESCRIPTION"] || ""}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="delivery-info">
+      <div className="delivery-info" style={{color: '#FF0000', fontSize: '18pt'}}>
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000', padding: '2mm'}}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000'}}>
         {Array.from({length: 6}).map((_, i) => (
           <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm'}}>
             {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
@@ -2506,7 +2457,7 @@ const DocketSheet = ({ selectedData }) => {
         ))}
       </div>
 
-      <table className="table" style={{border: '1px solid #000', width: '100%'}}>
+      <table className="table" style={{border: '1px solid #000'}}>
         <thead>
           <tr>
             <th style={{width: '15%'}}>PO Number</th>
@@ -2522,15 +2473,15 @@ const DocketSheet = ({ selectedData }) => {
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data">{row["PO NUMBER"] || ""}</td>
+              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
               <td>{row["STYLE NUMBER"] || ""}</td>
               <td className="main-data">{row["COLOUR"] || ""}</td>
               <td>{row["DEPARTMENT"] || "-"}</td>
               <td>{row["TOTAL UNITS"] || ""}</td>
-              <td>{row["H-NUMBER"] || ""}</td>
+              <td className="red-text">{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
+                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle'}}>
                   {totalUnits}
                 </td>
               )}
@@ -2539,7 +2490,7 @@ const DocketSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <table className="table" style={{border: '1px solid #000', width: '100%'}}>
+      <table className="table" style={{border: '1px solid #000'}}>
         <colgroup>
           <col style={{width: '10%'}} />
           {paddedData.map((_, i) => (
@@ -2563,7 +2514,7 @@ const DocketSheet = ({ selectedData }) => {
               ))}
             </tr>
           ))}
-          <tr className="total-row">
+          <tr className="total-row" style={{color: '#000'}}>
             <td>TOTAL : -</td>
             {paddedData.map((row, i) => (
               <td key={i}>{row["TOTAL UNITS"] || ""}</td>
@@ -2572,12 +2523,12 @@ const DocketSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <table className="notes-section" style={{width: '100%'}}>
+      <table className="notes-section">
         <tbody>
           <tr>
             <td>NOTES : -</td>
           </tr>
-          {Array.from({length: 3}).map((_, i) => (
+          {Array.from({length: 1}).map((_, i) => (
             <tr key={i}>
               <td></td>
             </tr>
@@ -2601,9 +2552,13 @@ const CuttingSheet = ({ selectedData }) => {
 
   return (
     <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
-      <div style={{fontSize: '16px', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '3mm', borderRadius: '4px', marginBottom: '3mm', border: '1px solid #000'}}>CUTTING SHEET</div>
+      <div style={{fontSize: '16pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000', padding: '2mm'}}>
+      <div className="delivery-info" style={{color: '#FF0000', fontSize: '18pt'}}>
+        Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
+      </div>
+
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000'}}>
         {Array.from({length: 6}).map((_, i) => (
           <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm'}}>
             {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
@@ -2611,19 +2566,19 @@ const CuttingSheet = ({ selectedData }) => {
         ))}
       </div>
 
-      <table className="table" style={{border: '1px solid #000', width: '100%'}}>
+      <table className="table" style={{border: '1px solid #000'}}>
         <tbody>
           <tr>
             <th>Fabric Name 1:</th>
             <th>Fabric Name 2:</th>
             <th>Fabric Name 3:</th>
-            <th style={{color: 'red'}}>Binding details</th>
+            <th style={{color: '#000'}}>Binding details</th>
           </tr>
           <tr>
-            <td style={{height: '25mm'}}></td>
-            <td style={{height: '25mm'}}></td>
-            <td style={{height: '25mm'}}></td>
-            <td style={{height: '25mm'}}></td>
+            <td style={{height: '20mm'}}></td>
+            <td style={{height: '20mm'}}></td>
+            <td style={{height: '20mm'}}></td>
+            <td style={{height: '20mm'}}></td>
           </tr>
           <tr>
             <td>Width:</td>
@@ -2634,7 +2589,7 @@ const CuttingSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <table className="table" style={{border: '1px solid #000', width: '100%'}}>
+      <table className="table" style={{border: '1px solid #000'}}>
         <thead>
           <tr>
             <th style={{width: '15%'}}>PO Number</th>
@@ -2650,15 +2605,15 @@ const CuttingSheet = ({ selectedData }) => {
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data">{row["PO NUMBER"] || ""}</td>
+              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
               <td>{row["STYLE NUMBER"] || ""}</td>
               <td className="main-data">{row["COLOUR"] || ""}</td>
               <td>{row["DEPARTMENT"] || "-"}</td>
               <td>{row["TOTAL UNITS"] || ""}</td>
-              <td>{row["H-NUMBER"] || ""}</td>
+              <td className="red-text">{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center'}}>
+                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle'}}>
                   {totalUnits}
                 </td>
               )}
@@ -2667,7 +2622,7 @@ const CuttingSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <table className="table sizes-table" style={{border: '1px solid #000', width: '100%'}}>
+      <table className="table sizes-table" style={{border: '1px solid #000'}}>
         <colgroup>
           <col style={{width: '10%'}} />
           <col style={{width: '15%'}} />
@@ -2685,14 +2640,14 @@ const CuttingSheet = ({ selectedData }) => {
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data">{row["PO NUMBER"] || ""}</td>
+              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
               <td className="main-data">{row["COLOUR"] || ""}</td>
               {sizes.map(size => (
                 <td key={size}>{row[size] || ""}</td>
               ))}
             </tr>
           ))}
-          <tr className="total-row">
+          <tr className="total-row" style={{color: '#000'}}>
             <td colSpan={2}>Total:</td>
             {sizes.map(size => (
               <td key={size}>{totalBySize[size]}</td>
@@ -2700,12 +2655,12 @@ const CuttingSheet = ({ selectedData }) => {
           </tr>
         </tbody>
       </table>
-      <table className="ratio-section" style={{width: '100%'}}>
+      <table className="ratio-section">
         <tbody>
           <tr>
             <td>RATIO:.</td>
           </tr>
-          {Array.from({length: 3}).map((_, i) => (
+          {Array.from({length: 1}).map((_, i) => (
             <tr key={i}>
               <td></td>
             </tr>
