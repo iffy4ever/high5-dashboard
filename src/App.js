@@ -1309,7 +1309,7 @@ function App() {
 
       {/* Global styles */}
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
         
         * {
           box-sizing: border-box;
@@ -1318,7 +1318,8 @@ function App() {
         }
         
         body {
-          font-family: 'Inter', sans-serif;
+          font-family: 'Roboto', sans-serif;
+          font-weight: 300;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
           line-height: 1.6;
@@ -1991,8 +1992,8 @@ function App() {
         }
 
         .data-table thead tr {
-          background: ${colors.headerBg};
-          color: ${colors.headerText};
+          background: ${colors.primaryLight};
+          color: #ffffff;
           position: sticky;
           top: 0;
         }
@@ -2224,14 +2225,14 @@ function App() {
           z-index: -1;
         }
 
-        .image-preview.below .preview-arrow {
+        .image-preview.below . preview-arrow {
           top: -0.5rem;
           left: 50%;
           transform: translateX(-50%) rotate(45deg);
           border-bottom: 1px solid ${colors.border};
         }
 
-        .image-preview.above .preview-arrow {
+        .image-preview.above . preview-arrow {
           bottom: -0.5rem;
           left: 50%;
           transform: translateX(-50%) rotate(45deg);
@@ -2433,7 +2434,7 @@ const DocketSheet = ({ selectedData }) => {
   const paddedData = selectedData.slice(0, numPOs);
   return (
     <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
-      <div style={{fontSize: '16pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>DOCKET SHEET</div>
+      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>DOCKET SHEET</div>
       <table className="table" style={{border: '1px solid #000'}}>
         <tbody>
           {paddedData.map((row, i) => (
@@ -2445,7 +2446,7 @@ const DocketSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <div className="delivery-info" style={{color: '#FF0000', fontSize: '18pt'}}>
+      <div className="delivery-info" style={{color: '#FF0000'}}>
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
@@ -2552,9 +2553,9 @@ const CuttingSheet = ({ selectedData }) => {
 
   return (
     <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
-      <div style={{fontSize: '16pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
+      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
 
-      <div className="delivery-info" style={{color: '#FF0000', fontSize: '18pt'}}>
+      <div className="delivery-info" style={{color: '#FF0000'}}>
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
