@@ -2041,7 +2041,7 @@ function App() {
         .product-image {
           width: 100%;
           height: auto;
-          max-height: 80px;
+          max-height: 120px;
           object-fit: contain;
           border-radius: 0.5rem;
           cursor: pointer;
@@ -2054,7 +2054,7 @@ function App() {
 
         .no-image {
           width: 100%;
-          height: 80px;
+          height: 120px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2225,14 +2225,14 @@ function App() {
           z-index: -1;
         }
 
-        .image-preview.below . preview-arrow {
+        .image-preview.below .preview-arrow {
           top: -0.5rem;
           left: 50%;
           transform: translateX(-50%) rotate(45deg);
           border-bottom: 1px solid ${colors.border};
         }
 
-        .image-preview.above . preview-arrow {
+        .image-preview.above .preview-arrow {
           bottom: -0.5rem;
           left: 50%;
           transform: translateX(-50%) rotate(45deg);
@@ -2286,10 +2286,11 @@ function App() {
           width: 100%;
           border-collapse: collapse;
           table-layout: fixed;
+          border-width: 0.5pt;
         }
 
         .table th, .table td {
-          border: 1px solid #000;
+          border: 0.5pt solid #000;
           padding: 1mm;
           vertical-align: top;
           text-align: left;
@@ -2339,7 +2340,7 @@ function App() {
 
         .main-data {
           font-weight: normal;
-          color: #000;
+          color: #000000;
         }
 
         .delivery-info {
@@ -2349,9 +2350,13 @@ function App() {
         }
 
         .total-row {
-          color: #000;
+          color: #000000;
           font-size: 12pt;
           font-weight: normal;
+        }
+
+        .red-text {
+          color: #FF0000;
         }
 
         /* Hide non-printable elements during print */
@@ -2395,6 +2400,9 @@ function App() {
           @page {
             size: A4 portrait;
             margin: 0;
+          }
+          .table, .table th, .table td {
+            border-width: 0.5pt !important;
           }
         }
 
@@ -2515,7 +2523,7 @@ const DocketSheet = ({ selectedData }) => {
               ))}
             </tr>
           ))}
-          <tr className="total-row" style={{color: '#000'}}>
+          <tr className="total-row" style={{color: '#000000'}}>
             <td>TOTAL : -</td>
             {paddedData.map((row, i) => (
               <td key={i}>{row["TOTAL UNITS"] || ""}</td>
@@ -2573,7 +2581,7 @@ const CuttingSheet = ({ selectedData }) => {
             <th>Fabric Name 1:</th>
             <th>Fabric Name 2:</th>
             <th>Fabric Name 3:</th>
-            <th style={{color: '#000'}}>Binding details</th>
+            <th style={{color: '#000000'}}>Binding details</th>
           </tr>
           <tr>
             <td style={{height: '20mm'}}></td>
@@ -2648,7 +2656,7 @@ const CuttingSheet = ({ selectedData }) => {
               ))}
             </tr>
           ))}
-          <tr className="total-row" style={{color: '#000'}}>
+          <tr className="total-row" style={{color: '#000000'}}>
             <td colSpan={2}>Total:</td>
             {sizes.map(size => (
               <td key={size}>{totalBySize[size]}</td>
