@@ -1,76 +1,22 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import * as XLSX from 'xlsx';
 import {
   FiTruck, FiCalendar, FiClock, FiAlertCircle, 
   FiDatabase, FiDownload, FiFilter, FiSearch, FiExternalLink,
-  FiImage, FiFileText, FiDollarSign, FiUsers, FiCheckCircle,
-  FiLayers, FiShoppingBag, FiPrinter, FiBarChart2
+  FiFileText, FiUsers, FiCheckCircle, FiLayers, FiShoppingBag, FiPrinter, FiBarChart2
 } from 'react-icons/fi';
-import { FaCircle } from 'react-icons/fa';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
-import StatsPanel from './components/StatsPanel';
-import Notifications from './components/Notifications';
 import DocketSheet from './components/DocketSheet';
 import CuttingSheet from './components/CuttingSheet';
+import { formatDate, getDateValue, formatCurrency, compactSizes } from './utils';
+import { useData } from './useData';
 import './styles.css';
 
-const formatDate = (value) => {
-  if (!value) return "";
-  try {
-    let date;
-    if (typeof value === 'number') {
-      date = new Date((value - 25569) * 86400 * 1000);
-    } else {
-      date = new Date(value);
-    }
-    if (isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  } catch {
-    return String(value);
-  }
-};
-
-const getDateValue = (value) => {
-  if (!value) return 0;
-  let date;
-  if (typeof value === 'number') {
-    date = new Date((value - 25569) * 86400 * 1000);
-  } else {
-    date = new Date(value);
-  }
-  return isNaN(date.getTime()) ? 0 : date.getTime();
-};
-
-const getGoogleDriveThumbnail = (url) => {
-  if (!url) return "";
-  try {
-    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    if (!fileId) {
-      console.warn("No valid file ID found in URL:", url);
-      return "";
-    }
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-  } catch (e) {
-    console.error("Error generating thumbnail URL:", e);
-    return "";
-  }
-};
-
 function App() {
-  const [data, setData] = useState({
-    sales_po: [],
-    fabric_po: [],
-    insert_pattern: []
-  });
+  const { data, loading, error } = useData();
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     TYPE: "",
     "STYLE TYPE": "",
@@ -92,14 +38,17 @@ function App() {
     position: { x: 0, y: 0 },
     direction: 'below'
   });
-  const [notifications, setNotifications] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
   const [poInput, setPoInput] = useState("");
   const [selectedPOs, setSelectedPOs] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Log for debugging filter panels
+  console.log('Rendering App: showStats=', showStats, 'activeTab=', activeTab);
+
+  // Modern Color Scheme with dark mode support
   const colors = darkMode ? {
     primary: "#6366F1",
     primaryLight: "#818CF8",
@@ -114,16 +63,16 @@ function App() {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
-    textDark: "#000000",
+    textDark: "#F3F4F6",
     textMedium: "#9CA3AF",
-    textLight: "#000000",
+    textLight: "#1F2937",
     background: "#111827",
     cardBg: "#1F2937",
     border: "#374151",
     rowEven: "#1F2937",
     rowOdd: "#111827",
     headerBg: "#1F2937",
-    headerText: "#000000",
+    headerText: "#F3F4F6",
     activeTab: "#6366F1",
     inactiveTab: "#6B7280",
     actionButton: "#10B981",
@@ -143,16 +92,16 @@ function App() {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
-    textDark: "#000000",
+    textDark: "#1F2937",
     textMedium: "#6B7280",
-    textLight: "#000000",
+    textLight: "#F9FAFB",
     background: "#F9FAFB",
     cardBg: "#FFFFFF",
     border: "#E5E7EB",
     rowEven: "#FFFFFF",
     rowOdd: "#F9FAFB",
     headerBg: "#FFFFFF",
-    headerText: "#000000",
+    headerText: "#1F2937",
     activeTab: "#6366F1",
     inactiveTab: "#9CA3AF",
     actionButton: "#10B981",
@@ -160,6 +109,7 @@ function App() {
     statCardBorder: "#E5E7EB",
   };
 
+  // Form links with icons, including PD & KAIIA Dashboard link
   const formLinks = [
     {
       label: "Development Form",
@@ -172,9 +122,16 @@ function App() {
       url: "https://forms.gle/LBQwrpMjJuFzLTsC8",
       icon: <FiLayers size={16} />,
       color: colors.secondary
+    },
+    {
+      label: "PD & KAIIA Dashboard",
+      url: "/pd-kaiia",
+      icon: <FiUsers size={16} />,
+      color: colors.accent
     }
   ];
 
+  // Calculate production statistics
   const productionStats = useMemo(() => {
     const now = new Date();
     const oneMonthAgo = new Date(now);
@@ -303,34 +260,41 @@ function App() {
     };
   }, [data.sales_po]);
 
-  const formatCurrency = (value) => {
-    if (!value) return "£0.00";
-    const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(number);
-  };
-
-  const compactSizes = (row) => {
-    const sizes = ["4", "6", "8", "10", "12", "14", "16", "18"];
-    return sizes.map(s => row[s] ? `${s}-${row[s]}` : "").filter(Boolean).join(", ");
-  };
-
+  // Utility Functions
   const getGoogleDriveDownloadLink = (url) => {
     if (!url) return "";
     const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
     return fileId ? `https://drive.google.com/file/d/${fileId}/view` : "";
   };
 
+  const getGoogleDriveThumbnail = (url) => {
+    if (!url) {
+      console.warn("No URL provided for thumbnail");
+      return "/fallback-image.png";
+    }
+    try {
+      const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+      if (!fileId) {
+        console.warn("No valid file ID found in URL:", url);
+        return "/fallback-image.png";
+      }
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+      console.log("Generated thumbnail URL:", thumbnailUrl);
+      return thumbnailUrl;
+    } catch (e) {
+      console.error("Error generating thumbnail URL:", e.message, "URL:", url);
+      return "/fallback-image.png";
+    }
+  };
+
   const handleMouseEnter = (imageUrl, e) => {
     const windowHeight = window.innerHeight;
     const mouseY = e.clientY;
     const showAbove = mouseY > windowHeight * 0.7;
+    const previewUrl = imageUrl ? getGoogleDriveThumbnail(imageUrl).replace("w200", "w400") : "/fallback-image.png";
+    console.log("Preview image URL:", previewUrl);
     setPreviewImage({
-      url: getGoogleDriveThumbnail(imageUrl).replace("w200", "w800"),
+      url: previewUrl,
       visible: true,
       position: { x: e.clientX, y: e.clientY },
       direction: showAbove ? 'above' : 'below'
@@ -368,7 +332,7 @@ function App() {
       dataToExport = filteredDevelopments;
       columnOrder = [
         "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
-        "SIDE IMAGE", "PATTERN IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
+        "SIDE IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
       ];
     }
 
@@ -401,104 +365,7 @@ function App() {
     XLSX.writeFile(wb, fileName);
   };
 
-  const generateNotifications = useCallback(() => {
-    const statuses = ["DELAYED", "URGENT", "NEW ORDER", "FABRIC RECEIVED"];
-    const customers = ["Customer A", "Customer B", "Customer C", "Customer D"];
-    const now = new Date();
-    return Array.from({ length: 5 }, (_, i) => ({
-      id: i,
-      type: statuses[i % statuses.length],
-      message: `Order #${1000 + i} from ${customers[i % customers.length]} is ${statuses[i % statuses.length]}`,
-      time: new Date(now.getTime() - (i * 3600000)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      read: false
-    }));
-  }, []);
-
-  const fetchDataWithRetry = async (retries = 3, delay = 1000) => {
-    const scriptUrl = `https://script.google.com/macros/s/AKfycbwdQGsEV8yYmE9FyS47oyARI5wLpfnoa1ZO2SNi6LUuhcLtMDgwSz_84qT5FERrEE0lkQ/exec`;
-    
-    const fetchData = () => new Promise((resolve, reject) => {
-      // Set up JSONP callback
-      const callbackName = 'jsonpCallback_' + Math.round(100000 * Math.random());
-      window[callbackName] = (fetched) => {
-        try {
-          console.log('JSONP data received from:', scriptUrl, fetched);
-          if (!fetched || typeof fetched !== 'object') {
-            throw new Error('Invalid JSONP response: Data is not an object');
-          }
-          setData({
-            sales_po: Array.isArray(fetched.sales_po) ? fetched.sales_po : [],
-            fabric_po: Array.isArray(fetched.fabric_po) ? fetched.fabric_po : [],
-            insert_pattern: Array.isArray(fetched.insert_pattern) ? fetched.insert_pattern : []
-          });
-          setNotifications(generateNotifications());
-          resolve();
-        } catch (e) {
-          console.error('Error parsing JSONP data:', e);
-          reject(new Error(`Error parsing JSONP data: ${e.message}`));
-        } finally {
-          delete window[callbackName];
-        }
-      };
-
-      // Create script element
-      const script = document.createElement("script");
-      script.src = `${scriptUrl}?callback=${callbackName}`;
-      script.async = true;
-      script.onerror = (err) => {
-        console.error('Script loading error for URL:', scriptUrl, err);
-        reject(new Error(`Failed to load script: ${err.message || 'Network error'}`));
-      };
-      document.body.appendChild(script);
-
-      // Timeout for JSONP request
-      const timeout = setTimeout(() => {
-        console.error('JSONP request timed out for URL:', scriptUrl);
-        reject(new Error('JSONP request timed out after 10 seconds'));
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-        delete window[callbackName];
-      }, 10000);
-
-      // Cleanup on success
-      script.onload = () => {
-        clearTimeout(timeout);
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-      };
-    });
-
-    for (let i = 0; i < retries; i++) {
-      try {
-        await fetchData();
-        console.log(`Data fetch successful on attempt ${i + 1}`);
-        setLoading(false);
-        return;
-      } catch (e) {
-        console.warn(`Retry ${i + 1}/${retries} failed for ${scriptUrl}:`, e.message);
-        if (i < retries - 1) {
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        setError(`Failed to load data after ${retries} attempts: ${e.message}`);
-        setLoading(false);
-      }
-    }
-  };
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    console.log('Initiating data fetch...');
-    fetchDataWithRetry().catch(err => {
-      console.error('Data fetch failed:', err);
-      setError(`Failed to initialize data fetch: ${err.message}`);
-      setLoading(false);
-    });
-  }, [generateNotifications]);
-
+  // Filtered Data
   const filteredSales = useMemo(() => {
     return data.sales_po
       .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
@@ -521,21 +388,7 @@ function App() {
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
   }, [data.insert_pattern, search, filters]);
 
-  const paginatedSales = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredSales.slice(start, start + itemsPerPage);
-  }, [filteredSales, currentPage]);
-
-  const paginatedFabric = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredFabric.slice(start, start + itemsPerPage);
-  }, [filteredFabric, currentPage]);
-
-  const paginatedDevelopments = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredDevelopments.slice(start, start + itemsPerPage);
-  }, [filteredDevelopments, currentPage]);
-
+  // Loading State
   if (loading) return (
     <div className="loading-screen">
       <div className="loading-content">
@@ -548,6 +401,7 @@ function App() {
     </div>
   );
 
+  // Error State
   if (error) return (
     <div className="error-screen">
       <div className="error-content">
@@ -557,34 +411,26 @@ function App() {
         <h2>Error Loading Data</h2>
         <p>{error}</p>
         <button
-          onClick={() => {
-            setLoading(true);
-            setError(null);
-            console.log('Retrying data fetch...');
-            fetchDataWithRetry().catch(err => {
-              console.error('Retry failed:', err);
-              setError(`Retry failed: ${err.message}`);
-              setLoading(false);
-            });
-          }}
+          onClick={() => window.location.reload()}
           className="retry-button"
         >
-          <FiShoppingBag size={16} /> Retry
+          <FiShoppingBag size={16} /> Try Again
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className={`app-container ${darkMode ? 'dark' : 'light'}`} role="main">
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+      {/* Main Content */}
       <div className="main-content">
+        {/* Top Navigation */}
         <header className="top-nav no-print">
           <div className="nav-left">
             <h1>High5 Production Dashboard</h1>
             <button 
               className="theme-toggle"
               onClick={() => setDarkMode(!darkMode)}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               <span className="toggle-icon">
                 {darkMode ? '☀️' : '🌙'}
@@ -595,20 +441,114 @@ function App() {
             <button 
               className="stats-toggle"
               onClick={() => setShowStats(!showStats)}
-              aria-label="Toggle statistics panel"
               style={{ color: colors.primary }}
             >
               <FiBarChart2 size={18} />
             </button>
-            <Notifications notifications={notifications} setNotifications={setNotifications} colors={colors} />
           </div>
         </header>
 
+        {/* Stats Panel */}
         {showStats && (
-          <StatsPanel productionStats={productionStats} colors={colors} />
+          <div className="stats-panel no-print">
+            <div className="stats-grid">
+              {[
+                {
+                  title: "Total Orders",
+                  value: productionStats.totalOrders,
+                  icon: <FiShoppingBag size={16} />,
+                  color: colors.primary,
+                },
+                {
+                  title: "Total Units",
+                  value: productionStats.totalUnits,
+                  icon: <FiShoppingBag size={16} />,
+                  color: colors.primary,
+                },
+                {
+                  title: "Orders (Last 30d)",
+                  value: productionStats.deliveredLast30Days,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "Units (Last 30d)",
+                  value: productionStats.deliveredUnitsLast30Days,
+                  icon: <FiShoppingBag size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: productionStats.lastQuarterLabel,
+                  value: productionStats.unitsDeliveredLastQuarter,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "In Prod.",
+                  value: productionStats.inProduction,
+                  icon: <FiClock size={16} />,
+                  color: colors.accent,
+                },
+                {
+                  title: "Fabric Ord.",
+                  value: productionStats.fabricOrdered,
+                  icon: <FiDatabase size={16} />,
+                  color: colors.info,
+                },
+                {
+                  title: "Pend. Units",
+                  value: productionStats.pendingUnits,
+                  icon: <FiAlertCircle size={16} />,
+                  color: colors.warning,
+                },
+                {
+                  title: "Gold Seal Sent",
+                  value: productionStats.goldSealSent,
+                  icon: <FiCheckCircle size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: "Last Delivery",
+                  value: productionStats.lastDeliveryDateFormatted,
+                  icon: <FiCalendar size={16} />,
+                  color: colors.secondary,
+                },
+                {
+                  title: productionStats.lastYearOrdersLabel,
+                  value: productionStats.ordersLastYear,
+                  icon: <FiBarChart2 size={16} />,
+                  color: colors.secondary,
+                },
+                {
+                  title: productionStats.lastYearLabel,
+                  value: productionStats.unitsDeliveredLastYear,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+                {
+                  title: productionStats.currentYearLabel,
+                  value: productionStats.unitsDeliveredCurrentYear,
+                  icon: <FiTruck size={16} />,
+                  color: colors.success,
+                },
+              ].map((metric, index) => (
+                <div key={index} className="stat-card">
+                  <div className="stat-icon" style={{ backgroundColor: `${metric.color}20`, color: metric.color }}>
+                    {metric.icon}
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{metric.value}</div>
+                    <div className="stat-title">{metric.title}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
+        {/* Dashboard Content */}
         <div className="content-wrapper no-print">
+          {/* Form Buttons Row */}
           <div className="form-links-grid">
             {formLinks.map((form, index) => (
               <a
@@ -618,18 +558,18 @@ function App() {
                 rel="noopener noreferrer"
                 className="form-link"
                 style={{ backgroundColor: form.color }}
-                aria-label={`Open ${form.label}`}
               >
                 <div className="form-icon">{form.icon}</div>
                 <div className="form-content">
                   <div className="form-label">{form.label}</div>
-                  <div className="form-subtext">Submit</div>
+                  <div className="form-subtext">Open</div>
                 </div>
                 <FiExternalLink size={14} />
               </a>
             ))}
           </div>
 
+          {/* Tabs */}
           <div className="tab-container">
             <div className="tabs">
               {[
@@ -640,12 +580,8 @@ function App() {
               ].map(tab => (
                 <button 
                   key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setCurrentPage(1);
-                  }}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-                  aria-label={`Switch to ${tab.label} tab`}
                 >
                   {tab.icon}
                   {tab.label}
@@ -654,6 +590,7 @@ function App() {
             </div>
           </div>
 
+          {/* Search and Filters */}
           <div className="search-filter-container">
             <div className="search-box">
               <FiSearch className="search-icon" size={16} />
@@ -662,7 +599,6 @@ function App() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="search-input"
-                aria-label="Search orders"
               />
             </div>
             
@@ -690,92 +626,154 @@ function App() {
                     });
                   }
                   setSearch("");
-                  setCurrentPage(1);
                 }}
                 className="secondary-button"
-                aria-label="Clear filters"
               >
-                <FiFilter size={14} />
-                Clear Filters
+                <FiFilter size={14} /> Clear Filters
               </button>
 
               <button
                 onClick={exportToExcel}
                 className="primary-button"
-                aria-label="Export to Excel"
               >
-                <FiDownload size={14} />
-                Export
+                <FiDownload size={14} /> Export
               </button>
 
               <button
                 onClick={() => window.print()}
                 className="secondary-button"
-                aria-label="Print"
               >
-                <FiPrinter size={14} />
-                Print
+                <FiPrinter size={14} /> Print
               </button>
             </div>
           </div>
 
+          {/* Sales PO Tab */}
           {activeTab === "dashboard" && (
-            <SalesTable
-              data={paginatedSales}
-              filters={filters}
-              setFilters={setFilters}
-              colors={colors}
-              handleMouseEnter={handleMouseEnter}
-              handleMouseLeave={handleMouseLeave}
-              getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-              getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
-              formatCurrency={formatCurrency}
-              formatDate={formatDate}
-              compactSizes={compactSizes}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalItems={filteredSales.length}
-              itemsPerPage={itemsPerPage}
-            />
+            <div className="tab-content">
+              <div className="filter-grid">
+                {Object.keys(filters).filter(key => key !== "STYLE TYPE" && key !== "CUSTOMER NAME" && key !== "FIT SAMPLE").map((key) => (
+                  <div key={key} className="filter-item">
+                    <label className="filter-label">{key}</label>
+                    <select
+                      value={filters[key]}
+                      onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
+                      className="filter-select"
+                    >
+                      <option value="">All {key}</option>
+                      {[...new Set(data.sales_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
+                        <option key={i} value={value}>{value}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="table-container">
+                <SalesTable
+                  data={filteredSales}
+                  filters={filters}
+                  setFilters={setFilters}
+                  colors={colors}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                  getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                  compactSizes={compactSizes}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalItems={filteredSales.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            </div>
           )}
 
+          {/* Fabric PO Tab */}
           {activeTab === "fabric" && (
-            <FabricTable
-              data={paginatedFabric}
-              fabricFilters={fabricFilters}
-              setFabricFilters={setFabricFilters}
-              colors={colors}
-              handleMouseEnter={handleMouseEnter}
-              handleMouseLeave={handleMouseLeave}
-              getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-              getMatchingSalesImage={getMatchingSalesImage}
-              formatCurrency={formatCurrency}
-              formatDate={formatDate}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalItems={filteredFabric.length}
-              itemsPerPage={itemsPerPage}
-            />
+            <div className="tab-content">
+              <div className="filter-grid">
+                {Object.keys(fabricFilters).map((key) => (
+                  <div key={key} className="filter-item">
+                    <label className="filter-label">{key}</label>
+                    <select
+                      value={fabricFilters[key] || ""}
+                      onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
+                      className="filter-select"
+                    >
+                      <option value="">All {key}</option>
+                      {[...new Set(data.fabric_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
+                        <option key={i} value={value}>{value}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="table-container">
+                <FabricTable
+                  data={filteredFabric}
+                  fabricFilters={fabricFilters}
+                  setFabricFilters={setFabricFilters}
+                  colors={colors}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                  getMatchingSalesImage={getMatchingSalesImage}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalItems={filteredFabric.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            </div>
           )}
 
+          {/* Developments Tab */}
           {activeTab === "developments" && (
-            <DevelopmentsTable
-              data={paginatedDevelopments}
-              filters={filters}
-              setFilters={setFilters}
-              colors={colors}
-              handleMouseEnter={handleMouseEnter}
-              handleMouseLeave={handleMouseLeave}
-              getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-              formatCurrency={formatCurrency}
-              formatDate={formatDate}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalItems={filteredDevelopments.length}
-              itemsPerPage={itemsPerPage}
-            />
+            <div className="tab-content">
+              <div className="filter-grid">
+                {["STYLE TYPE", "CUSTOMER NAME", "FIT SAMPLE"].map((key) => (
+                  <div key={key} className="filter-item">
+                    <label className="filter-label">{key === "STYLE TYPE" ? "TYPE" : key}</label>
+                    <select
+                      value={filters[key] || ""}
+                      onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
+                      className="filter-select"
+                    >
+                      <option value="">All {key === "STYLE TYPE" ? "Types" : key}</option>
+                      {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
+                        <option key={i} value={value}>{value}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <div className="table-container">
+                <DevelopmentsTable
+                  data={filteredDevelopments}
+                  filters={filters}
+                  setFilters={setFilters}
+                  colors={colors}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalItems={filteredDevelopments.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            </div>
           )}
 
+          {/* Production Sheets Tab */}
           {activeTab === "production" && (
             <div className="tab-content no-print">
               <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: `2px solid ${colors.border}`, paddingTop: '1rem', marginTop: '1.5rem'}}>
@@ -787,7 +785,6 @@ function App() {
                     rows={1}
                     className="filter-select"
                     style={{width: '100%', height: '40px', overflow: 'hidden'}}
-                    aria-label="Enter PO Numbers"
                   />
                 </div>
                 <div className="po-buttons" style={{display: 'flex', gap: '0.75rem'}}>
@@ -797,11 +794,10 @@ function App() {
                       setSelectedPOs(pos);
                     }}
                     className="primary-button"
-                    aria-label="Generate Production Sheets"
                   >
                     Generate Sheets
                   </button>
-                  <button onClick={() => window.print()} className="primary-button" aria-label="Print Sheets">
+                  <button onClick={() => window.print()} className="primary-button">
                     <FiPrinter size={14} /> Print Sheets
                   </button>
                 </div>
@@ -809,15 +805,15 @@ function App() {
 
               {selectedPOs.length > 0 && (
                 <div className="sheets-container" style={{marginTop: '20px'}}>
-                  <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} formatDate={formatDate} getGoogleDriveThumbnail={getGoogleDriveThumbnail} />
-                  <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} formatDate={formatDate} getGoogleDriveThumbnail={getGoogleDriveThumbnail} />
+                  <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                  <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                 </div>
               )}
             </div>
           )}
-
         </div>
 
+        {/* Image Preview */}
         {previewImage.visible && (
           <div 
             className={`image-preview ${previewImage.direction} no-print`}
@@ -826,18 +822,18 @@ function App() {
               [previewImage.direction === 'below' ? 'top' : 'bottom']: 
                 `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
             }}
-            aria-hidden="true"
           >
             <img 
               src={previewImage.url} 
-              alt="Image Preview" 
+              alt="Preview"
               className="preview-image"
-              loading="lazy"
+              onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Preview image failed to load:", previewImage.url); }}
             />
             <div className="preview-arrow"></div>
           </div>
         )}
 
+        {/* Footer */}
         <footer className="app-footer no-print">
           <div className="footer-content">
             <div>High5 Production Dashboard © {new Date().getFullYear()}</div>

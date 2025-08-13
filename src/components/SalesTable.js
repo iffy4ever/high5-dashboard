@@ -1,7 +1,6 @@
-// src/components/SalesTable.js
 import React from 'react';
 import { FiAlertCircle, FiImage, FiUsers, FiDollarSign, FiFileText } from 'react-icons/fi';
-import { getColorCode } from '../utils/index';
+import { getColorCode } from '../utils';
 
 const SalesTable = ({
   data,
@@ -27,12 +26,13 @@ const SalesTable = ({
       <div className="filter-grid">
         {Object.keys(filters).filter(key => key !== "STYLE TYPE" && key !== "CUSTOMER NAME" && key !== "FIT SAMPLE").map((key) => (
           <div key={key} className="filter-item">
-            <label className="filter-label">{key}</label>
+            <label className="filter-label">
+              {key}
+            </label>
             <select
               value={filters[key]}
               onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
               className="filter-select"
-              aria-label={`Filter by ${key}`}
             >
               <option value="">All {key}</option>
               {[...new Set(data.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
@@ -95,12 +95,11 @@ const SalesTable = ({
                         onMouseEnter={(e) => handleMouseEnter(row.IMAGE, e)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
+                        <a href={row.IMAGE} target="_blank" rel="noopener noreferrer">
                           <img
                             src={getGoogleDriveThumbnail(row.IMAGE)}
                             alt="Product"
                             className="product-image"
-                            loading="lazy"
                           />
                         </a>
                       </div>
@@ -150,7 +149,6 @@ const SalesTable = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="view-button"
-                        aria-label="View packing list"
                       >
                         View PL
                       </a>
@@ -172,16 +170,14 @@ const SalesTable = ({
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="pagination-button"
-            aria-label="Previous page"
           >
             Previous
           </button>
-          <span aria-live="polite">{`Page ${currentPage} of ${totalPages}`}</span>
+          <span>{`Page ${currentPage} of ${totalPages}`}</span>
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="pagination-button"
-            aria-label="Next page"
           >
             Next
           </button>

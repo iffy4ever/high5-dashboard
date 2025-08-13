@@ -1,7 +1,6 @@
-// src/components/FabricTable.js
 import React from 'react';
 import { FiAlertCircle, FiImage, FiDollarSign } from 'react-icons/fi';
-import { getColorCode } from '../utils/index';
+import { getColorCode } from '../utils';
 
 const FabricTable = ({
   data,
@@ -26,12 +25,13 @@ const FabricTable = ({
       <div className="filter-grid">
         {Object.keys(fabricFilters).map((key) => (
           <div key={key} className="filter-item">
-            <label className="filter-label">{key}</label>
+            <label className="filter-label">
+              {key}
+            </label>
             <select
               value={fabricFilters[key] || ""}
               onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
               className="filter-select"
-              aria-label={`Filter by ${key}`}
             >
               <option value="">All {key}</option>
               {[...new Set(data.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
@@ -89,12 +89,11 @@ const FabricTable = ({
                         onMouseEnter={(e) => handleMouseEnter(getMatchingSalesImage(row["ORDER REF"]), e)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <a href={getMatchingSalesImage(row["ORDER REF"])} target="_blank" rel="noopener noreferrer" aria-label="View product image">
+                        <a href={getMatchingSalesImage(row["ORDER REF"])} target="_blank" rel="noopener noreferrer">
                           <img
                             src={getGoogleDriveThumbnail(getMatchingSalesImage(row["ORDER REF"]))}
                             alt="Product"
                             className="product-image"
-                            loading="lazy"
                           />
                         </a>
                       </div>
@@ -106,7 +105,9 @@ const FabricTable = ({
                   <td className="highlight-cell">{row["H-NUMBER"]}</td>
                   <td>{row["ORDER REF"]}</td>
                   <td>
-                    <span className="type-badge">{row["TYPE"]}</span>
+                    <span className="type-badge">
+                      {row["TYPE"]}
+                    </span>
                   </td>
                   <td>{row["DESCRIPTION"]}</td>
                   <td>
@@ -129,7 +130,6 @@ const FabricTable = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="view-button"
-                        aria-label="View fabric PO"
                       >
                         View PO
                       </a>
@@ -150,16 +150,14 @@ const FabricTable = ({
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="pagination-button"
-            aria-label="Previous page"
           >
             Previous
           </button>
-          <span aria-live="polite">{`Page ${currentPage} of ${totalPages}`}</span>
+          <span>{`Page ${currentPage} of ${totalPages}`}</span>
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="pagination-button"
-            aria-label="Next page"
           >
             Next
           </button>
