@@ -1,24 +1,31 @@
 @echo off
-REM ==============================
-REM Git Auto Commit & Push Script
-REM ==============================
+REM =====================================
+REM  Git Auto Commit & Push Full Project
+REM =====================================
 
-REM Change to your repo folder (adjust the path below)
+REM Change to the folder where this script lives (your repo root)
 cd /d "%~dp0"
 
-REM Ensure you're on the correct branch (replace 'main' if needed)
+REM Make sure we are on main branch (change if your repo uses 'master' or another branch)
 git checkout main
 
-REM Pull latest changes in case others pushed since last run
+REM Get the latest updates from GitHub first
 git pull origin main
 
-REM Stage all changes
-git add .
+REM Stage ALL changes (new, modified, deleted)
+git add --all
 
-REM Commit with timestamp (or change to prompt for a message)
-git commit -m "Auto update - %date% %time%"
+REM Optional: ask user for a custom commit message
+set /p COMMIT_MSG=Enter commit message (or leave blank for auto): 
+if "%COMMIT_MSG%"=="" (
+    set COMMIT_MSG=Auto update - %date% %time%
+)
 
-REM Push to GitHub
+REM Create commit
+git commit -m "%COMMIT_MSG%"
+
+REM Push changes to GitHub
 git push origin main
 
+REM Keep window open so you can see any errors
 pause
