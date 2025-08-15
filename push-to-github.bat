@@ -1,18 +1,24 @@
 @echo off
-:: Batch file to push updates to GitHub
-:: Save this as 'push-to-github.bat' in your project folder
+REM ==============================
+REM Git Auto Commit & Push Script
+REM ==============================
 
-echo Starting Git operations...
-
-:: Navigate to your project directory (if running from elsewhere)
+REM Change to your repo folder (adjust the path below)
 cd /d "%~dp0"
 
-:: Git commands
+REM Ensure you're on the correct branch (replace 'main' if needed)
+git checkout main
+
+REM Pull latest changes in case others pushed since last run
+git pull origin main
+
+REM Stage all changes
 git add .
-git commit -m "Auto-update: %date% %time%"
+
+REM Commit with timestamp (or change to prompt for a message)
+git commit -m "Auto update - %date% %time%"
+
+REM Push to GitHub
 git push origin main
 
-echo.
-echo Git push completed!
-echo Repository: https://github.com/iffy4ever/high5-dashboard
 pause
