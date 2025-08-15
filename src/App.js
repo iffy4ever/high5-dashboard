@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import * as XLSX from 'xlsx';
 import {
   FiTruck, FiCalendar, FiClock, FiAlertCircle, 
@@ -10,6 +10,7 @@ import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
 import DocketSheet from './components/DocketSheet';
 import CuttingSheet from './components/CuttingSheet';
+import CustomerPage from './components/CustomerPage';
 import { formatDate, getDateValue, formatCurrency, compactSizes } from './utils';
 import { useData } from './useData';
 import './styles.css';
@@ -45,8 +46,10 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Log for debugging filter panels
-  console.log('Rendering App: showStats=', showStats, 'activeTab=', activeTab);
+  // Log initial data state
+  useEffect(() => {
+    console.log('Initial data from useData:', data, 'loading:', loading, 'error:', error);
+  }, [data, loading, error]);
 
   // Modern Color Scheme with dark mode support
   const colors = darkMode ? {
@@ -164,7 +167,7 @@ function App() {
       customerDistribution: {}
     };
 
-    data.sales_po.forEach(order => {
+    data.sales_po?.forEach(order => {
       const status = String(order["LIVE STATUS"] || "").toUpperCase().trim();
       const totalUnits = parseInt(order["TOTAL UNITS"] || 0);
       const color = order["COLOUR"] || "Unknown";
@@ -250,7 +253,7 @@ function App() {
             year: 'numeric' 
           }) 
         : "No Deliveries Yet",
-      topCustomers: Object.entries(stats.customerDistribution)
+      topCustomers: Object.entries(stats.customerDistribution || {})
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5),
       lastQuarterLabel,
@@ -306,7 +309,7 @@ function App() {
   };
 
   const getMatchingSalesImage = (orderRef) => {
-    const matchingSales = data.sales_po.find(sales => sales["PO NUMBER"] === orderRef);
+    const matchingSales = data.sales_po?.find(sales => sales["PO NUMBER"] === orderRef);
     return matchingSales ? matchingSales.IMAGE : null;
   };
 
@@ -332,7 +335,7 @@ function App() {
       dataToExport = filteredDevelopments;
       columnOrder = [
         "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
-        "SIDE IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
+        "SIDE IMAGE", "PATTERN IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
       ];
     }
 
@@ -365,28 +368,62 @@ function App() {
     XLSX.writeFile(wb, fileName);
   };
 
-  // Filtered Data
+  // Filtered Data with default empty array and logging
   const filteredSales = useMemo(() => {
-    return data.sales_po
-      .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
+    console.log('Filtering sales_po:', data?.sales_po);
+    return (data.sales_po || []).filter(row => row && row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
+      .filter(row => {
+        return (
+          !filters["LIVE STATUS"] || (row["LIVE STATUS"] || "").toLowerCase() === filters["LIVE STATUS"].toLowerCase()
+        ) && (
+          !filters["FIT STATUS"] || (row["FIT STATUS"] || "").toLowerCase() === filters["FIT STATUS"].toLowerCase()
+        ) && (
+          !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase()
+        );
+      })
       .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
-  }, [data.sales_po, search, filters]);
+  }, [data?.sales_po, search, filters]);
 
   const filteredFabric = useMemo(() => {
-    return data.fabric_po
-      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(fabricFilters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
+    console.log('Filtering fabric_po:', data?.fabric_po); // Log to debug
+    return (data.fabric_po || []).filter(row => row && Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+      .filter(row => {
+        return (
+          !fabricFilters["TYPE"] || (row["TYPE"] || "").toLowerCase() === fabricFilters["TYPE"].toLowerCase()
+        ) && (
+          !fabricFilters["COLOUR"] || (row["COLOUR"] || "").toLowerCase() === fabricFilters["COLOUR"].toLowerCase()
+        ) && (
+          !fabricFilters["SUPPLIER"] || (row["SUPPLIER"] || "").toLowerCase() === fabricFilters["SUPPLIER"].toLowerCase()
+        );
+      })
       .sort((a, b) => getDateValue(b["DATE"]) - getDateValue(a["DATE"]));
-  }, [data.fabric_po, search, fabricFilters]);
+  }, [data?.fabric_po, search, fabricFilters]);
 
   const filteredDevelopments = useMemo(() => {
-    return data.insert_pattern
+    console.log('Filtering insert_pattern:', data?.insert_pattern);
+    return (data.insert_pattern || []).filter(row => 
+      row && typeof row === 'object' && 
+      row["TIMESTAMP"] && row["H-NUMBER"] && row["CUSTOMER NAME"] && 
+      row["STYLE TYPE"] && row["CUSTOMER CODE"] && 
+      (row["FRONT IMAGE"] || row["BACK IMAGE"] || row["SIDE IMAGE"] || row["PATTERN IMAGE"]) && 
+      row["FIT SAMPLE"] && row["TOTAL COST"] && row["CMT PRICE"] && (row["COSTING LINK"] || true)
+    )
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
+      .filter(row => {
+        return (
+          !filters["STYLE TYPE"] || (row["STYLE TYPE"] || "").toLowerCase() === filters["STYLE TYPE"].toLowerCase()
+        ) && (
+          !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase()
+        ) && (
+          !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase()
+        );
+      })
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
-  }, [data.insert_pattern, search, filters]);
+  }, [data?.insert_pattern, search, filters]);
+
+  // Log after initialization
+  console.log('Rendering App: showStats=', showStats, 'activeTab=', activeTab, 'data=', data, 'filteredDevelopments=', filteredDevelopments);
 
   // Loading State
   if (loading) return (
@@ -450,7 +487,7 @@ function App() {
 
         {/* Stats Panel */}
         {showStats && (
-          <div className="stats-panel no-print">
+          <div className={`stats-panel ${showStats ? 'active' : ''} no-print`}>
             <div className="stats-grid">
               {[
                 {
@@ -605,26 +642,6 @@ function App() {
             <div className="action-buttons">
               <button
                 onClick={() => {
-                  if (activeTab === "dashboard") {
-                    setFilters({
-                      TYPE: "",
-                      COLOUR: "",
-                      "LIVE STATUS": "",
-                      "FIT STATUS": ""
-                    });
-                  } else if (activeTab === "fabric") {
-                    setFabricFilters({
-                      TYPE: "",
-                      COLOUR: "",
-                      SUPPLIER: ""
-                    });
-                  } else if (activeTab === "developments") {
-                    setFilters({
-                      "STYLE TYPE": "",
-                      "CUSTOMER NAME": "",
-                      "FIT SAMPLE": ""
-                    });
-                  }
                   setSearch("");
                 }}
                 className="secondary-button"
@@ -652,16 +669,16 @@ function App() {
           {activeTab === "dashboard" && (
             <div className="tab-content">
               <div className="filter-grid">
-                {Object.keys(filters).filter(key => key !== "STYLE TYPE" && key !== "CUSTOMER NAME" && key !== "FIT SAMPLE").map((key) => (
+                {["LIVE STATUS", "FIT STATUS", "CUSTOMER NAME"].map((key) => (
                   <div key={key} className="filter-item">
                     <label className="filter-label">{key}</label>
                     <select
-                      value={filters[key]}
+                      value={filters[key] || ""}
                       onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
                       className="filter-select"
                     >
                       <option value="">All {key}</option>
-                      {[...new Set(data.sales_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
+                      {[...new Set(data.sales_po?.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
                         <option key={i} value={value}>{value}</option>
                       ))}
                     </select>
@@ -671,9 +688,7 @@ function App() {
 
               <div className="table-container">
                 <SalesTable
-                  data={filteredSales}
-                  filters={filters}
-                  setFilters={setFilters}
+                  data={filteredSales || []}
                   colors={colors}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
@@ -684,7 +699,7 @@ function App() {
                   compactSizes={compactSizes}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalItems={filteredSales.length}
+                  totalItems={filteredSales?.length || 0}
                   itemsPerPage={itemsPerPage}
                 />
               </div>
@@ -695,7 +710,7 @@ function App() {
           {activeTab === "fabric" && (
             <div className="tab-content">
               <div className="filter-grid">
-                {Object.keys(fabricFilters).map((key) => (
+                {["TYPE", "COLOUR", "SUPPLIER"].map((key) => (
                   <div key={key} className="filter-item">
                     <label className="filter-label">{key}</label>
                     <select
@@ -704,7 +719,7 @@ function App() {
                       className="filter-select"
                     >
                       <option value="">All {key}</option>
-                      {[...new Set(data.fabric_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
+                      {[...new Set(data.fabric_po?.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
                         <option key={i} value={value}>{value}</option>
                       ))}
                     </select>
@@ -713,22 +728,30 @@ function App() {
               </div>
 
               <div className="table-container">
-                <FabricTable
-                  data={filteredFabric}
-                  fabricFilters={fabricFilters}
-                  setFabricFilters={setFabricFilters}
-                  colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  getMatchingSalesImage={getMatchingSalesImage}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredFabric.length}
-                  itemsPerPage={itemsPerPage}
-                />
+                {filteredFabric && filteredFabric.length > 0 ? (
+                  <FabricTable
+                    data={filteredFabric || []}
+                    colors={colors}
+                    handleMouseEnter={handleMouseEnter}
+                    handleMouseLeave={handleMouseLeave}
+                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                    getMatchingSalesImage={getMatchingSalesImage}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalItems={filteredFabric?.length || 0}
+                    itemsPerPage={itemsPerPage}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <div className="empty-content">
+                      <FiAlertCircle size={28} />
+                      <div>No Fabric Data Available</div>
+                      <p>Try Adjusting Your Search Or Filters</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -746,18 +769,17 @@ function App() {
                       className="filter-select"
                     >
                       <option value="">All {key === "STYLE TYPE" ? "Types" : key}</option>
-                      {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
+                      {[...new Set(filteredDevelopments.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
                         <option key={i} value={value}>{value}</option>
                       ))}
                     </select>
                   </div>
                 ))}
               </div>
+
               <div className="table-container">
                 <DevelopmentsTable
-                  data={filteredDevelopments}
-                  filters={filters}
-                  setFilters={setFilters}
+                  data={filteredDevelopments || []}
                   colors={colors}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
@@ -766,7 +788,7 @@ function App() {
                   formatDate={formatDate}
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
-                  totalItems={filteredDevelopments.length}
+                  totalItems={filteredDevelopments?.length || 0}
                   itemsPerPage={itemsPerPage}
                 />
               </div>
@@ -776,18 +798,18 @@ function App() {
           {/* Production Sheets Tab */}
           {activeTab === "production" && (
             <div className="tab-content no-print">
-              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: `2px solid ${colors.border}`, paddingTop: '1rem', marginTop: '1.5rem'}}>
-                <div className="filter-item" style={{flex: 1}}>
+              <div className="po-input-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: `2px solid ${colors.border}`, paddingTop: '1rem', marginTop: '1.5rem' }}>
+                <div className="filter-item" style={{ flex: 1 }}>
                   <textarea
                     value={poInput}
                     onChange={(e) => setPoInput(e.target.value)}
                     placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
                     rows={1}
                     className="filter-select"
-                    style={{width: '100%', height: '40px', overflow: 'hidden'}}
+                    style={{ width: '100%', height: '40px', overflow: 'hidden' }}
                   />
                 </div>
-                <div className="po-buttons" style={{display: 'flex', gap: '0.75rem'}}>
+                <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     onClick={() => {
                       const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
@@ -804,7 +826,7 @@ function App() {
               </div>
 
               {selectedPOs.length > 0 && (
-                <div className="sheets-container" style={{marginTop: '20px'}}>
+                <div className="sheets-container" style={{ marginTop: '20px' }}>
                   <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                   <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                 </div>
@@ -812,6 +834,19 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* PD & KAIIA Dashboard */}
+        {activeTab === "pd-kaiia" && (
+          <CustomerPage
+            data={data}
+            loading={loading}
+            error={error}
+            getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+            getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
+            formatCurrency={formatCurrency}
+            formatDate={formatDate}
+          />
+        )}
 
         {/* Image Preview */}
         {previewImage.visible && (

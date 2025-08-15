@@ -282,7 +282,7 @@
   gap: 0.75rem;
 }
 
-.primary-button, .secondary-button {
+.primary-button, .secondary-button, .pagination-button, .retry-button, .view-button {
   padding: 0.75rem 1.5rem;
   border-radius: 0.375rem;
   font-weight: 500;
@@ -290,7 +290,7 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: white;
+  color: white; /* Changed to white for all buttons */
 }
 
 .primary-button {
@@ -323,9 +323,10 @@
 /* Filter Grid */
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Adjusted to narrower, professional width */
   gap: 1rem;
   margin-bottom: 1.5rem;
+  max-width: 800px; /* Limit total width for professionalism */
 }
 
 .filter-item {
@@ -390,6 +391,7 @@
   padding: 0.75rem 1rem;
   text-align: left;
   font-size: 0.9rem;
+  white-space: nowrap; /* Default to no wrapping for all cells */
 }
 
 .data-table th {
@@ -431,6 +433,14 @@
 
 .data-table tr:last-child td {
   border-bottom: none;
+}
+
+/* Specific Column Wrapping */
+.data-table td:nth-child(7), /* Description */
+.data-table td:nth-child(8), /* Colour */
+.data-table td:nth-child(17) /* Sizes */ {
+  white-space: normal; /* Allow wrapping for these columns */
+  word-break: break-word;
 }
 
 /* Table Cells */
@@ -507,10 +517,8 @@
 }
 
 .sizes-cell {
-  white-space: nowrap;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal; /* Allow wrapping for Sizes */
+  word-break: break-word;
 }
 
 .na-text {
