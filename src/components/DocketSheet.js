@@ -1,16 +1,15 @@
 import React from 'react';
-import { formatDate, getGoogleDriveThumbnail } from '../utils';
 
-function DocketSheet({ selectedData }) {
+const DocketSheet = ({ selectedData, formatDate, getGoogleDriveThumbnail }) => {
   const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
   const maxPOs = 6;
   const numPOs = Math.min(selectedData.length, maxPOs);
   const paddedData = selectedData.slice(0, numPOs);
 
   return (
-    <div className="printable-sheet">
+    <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
       <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>DOCKET SHEET</div>
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table" style={{border: '1px solid #000000', color: '#000000'}}>
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
@@ -25,15 +24,15 @@ function DocketSheet({ selectedData }) {
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000'}}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000000'}}>
         {Array.from({length: 6}).map((_, i) => (
-          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm'}}>
-            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm', color: '#000000'}}>
+            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} loading="lazy" /> : 'No Image'}
           </div>
         ))}
       </div>
 
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table" style={{border: '1px solid #000000', color: '#000000'}}>
         <thead>
           <tr>
             <th style={{width: '15%'}}>PO Number</th>
@@ -57,7 +56,7 @@ function DocketSheet({ selectedData }) {
               <td className="red-text">{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle'}}>
+                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle', color: '#000000'}}>
                   {totalUnits}
                 </td>
               )}
@@ -66,7 +65,7 @@ function DocketSheet({ selectedData }) {
         </tbody>
       </table>
 
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table" style={{border: '1px solid #000000', color: '#000000'}}>
         <colgroup>
           <col style={{width: '10%'}} />
           {paddedData.map((_, i) => (
@@ -99,7 +98,7 @@ function DocketSheet({ selectedData }) {
         </tbody>
       </table>
 
-      <table className="notes-section">
+      <table className="notes-section" style={{color: '#000000'}}>
         <tbody>
           <tr>
             <td>NOTES : -</td>
@@ -113,6 +112,6 @@ function DocketSheet({ selectedData }) {
       </table>
     </div>
   );
-}
+};
 
 export default DocketSheet;

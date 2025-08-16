@@ -1,7 +1,7 @@
+// src/components/CuttingSheet.js
 import React from 'react';
-import { formatDate, getGoogleDriveThumbnail } from '../utils';
 
-function CuttingSheet({ selectedData }) {
+const CuttingSheet = ({ selectedData, formatDate, getGoogleDriveThumbnail }) => {
   const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
   const maxPOs = 6;
   const numPOs = Math.min(selectedData.length, maxPOs);
@@ -13,28 +13,28 @@ function CuttingSheet({ selectedData }) {
   }, {});
 
   return (
-    <div className="printable-sheet">
+    <div className="printable-sheet" style={{backgroundColor: '#ffffff'}}>
       <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
 
       <div className="delivery-info" style={{color: '#FF0000'}}>
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000'}}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000000', color: '#000000'}}>
         {Array.from({length: 6}).map((_, i) => (
-          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm'}}>
-            {i <numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm', color: '#000000'}}>
+            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} loading="lazy" /> : 'No Image'}
           </div>
         ))}
       </div>
 
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table" style={{border: '1px solid #000000', color: '#000000'}}>
         <tbody>
           <tr>
             <th>Fabric Name 1:</th>
             <th>Fabric Name 2:</th>
             <th>Fabric Name 3:</th>
-            <th style={{color: '#000000'}}>Binding details</th>
+            <th>Binding details</th>
           </tr>
           <tr>
             <td style={{height: '20mm'}}></td>
@@ -51,7 +51,7 @@ function CuttingSheet({ selectedData }) {
         </tbody>
       </table>
 
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table" style={{border: '1px solid #000000', color: '#000000'}}>
         <thead>
           <tr>
             <th style={{width: '15%'}}>PO Number</th>
@@ -75,7 +75,7 @@ function CuttingSheet({ selectedData }) {
               <td className="red-text">{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle'}}>
+                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle', color: '#000000'}}>
                   {totalUnits}
                 </td>
               )}
@@ -84,7 +84,7 @@ function CuttingSheet({ selectedData }) {
         </tbody>
       </table>
 
-      <table className="table sizes-table" style={{border: '1px solid #000'}}>
+      <table className="table sizes-table" style={{border: '1px solid #000000', color: '#000000'}}>
         <colgroup>
           <col style={{width: '10%'}} />
           <col style={{width: '15%'}} />
@@ -117,7 +117,7 @@ function CuttingSheet({ selectedData }) {
           </tr>
         </tbody>
       </table>
-      <table className="ratio-section">
+      <table className="ratio-section" style={{color: '#000000'}}>
         <tbody>
           <tr>
             <td>RATIO:.</td>
@@ -131,6 +131,6 @@ function CuttingSheet({ selectedData }) {
       </table>
     </div>
   );
-}
+};
 
 export default CuttingSheet;

@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign, FiFileText } from 'react-icons/fi';
+import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign } from 'react-icons/fi';
 import { useData } from '../useData';
 import '../styles.css';
 
@@ -15,32 +15,67 @@ const getDateValue = (value) => {
   return isNaN(date.getTime()) ? 0 : date.getTime();
 };
 
-const CustomerPage = ({
-  data,
-  error,
-  getGoogleDriveThumbnail,
-  getGoogleDriveDownloadLink,
-  formatCurrency,
-  formatDate
-}) => {
+const formatDate = (value) => {
+  if (!value) return "";
+  try {
+    let date;
+    if (typeof value === 'number') {
+      date = new Date((value - 25569) * 86400 * 1000);
+    } else {
+      date = new Date(value);
+    }
+    if (isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return String(value);
+  }
+};
+
+const formatCurrency = (value) => {
+  if (!value) return "£0.00";
+  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
+};
+
+const getGoogleDriveThumbnail = (url) => {
+  if (!url) {
+    console.warn("No URL provided for thumbnail");
+    return "/fallback-image.png";
+  }
+  try {
+    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+    if (!fileId) {
+      console.warn("No valid file ID found in URL:", url);
+      return "/fallback-image.png";
+    }
+    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+    console.log("Generated thumbnail URL:", thumbnailUrl);
+    return thumbnailUrl;
+  } catch (e) {
+    console.error("Error generating thumbnail URL:", e.message, "URL:", url);
+    return "/fallback-image.png";
+  }
+};
+
+const CustomerPage = () => {
+  const { data, loading, error } = useData();
   const [activeTab, setActiveTab] = useState("developments");
   const [search, setSearch] = useState("");
   const [customerNameFilter, setCustomerNameFilter] = useState("");
   const [fitSampleFilter, setFitSampleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // Timeout to log if data doesn't load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!data) {
-        console.warn('Data not loaded after 10 seconds, rendering empty state');
-      }
-    }, 10000); // 10-second timeout
-    return () => clearTimeout(timer);
-  }, [data]);
-
   const filteredDevelopments = useMemo(() => {
-    if (!data || !data.insert_pattern) return [];
+    if (!data.insert_pattern) return [];
     return data.insert_pattern
       .filter(row => {
         const customer = (row["CUSTOMER NAME"] || "").toLowerCase();
@@ -50,18 +85,18 @@ const CustomerPage = ({
       .filter(row => !customerNameFilter || (row["CUSTOMER NAME"] || "").toLowerCase() === customerNameFilter.toLowerCase())
       .filter(row => !fitSampleFilter || (row["FIT SAMPLE"] || "").toLowerCase() === fitSampleFilter.toLowerCase())
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
-  }, [data?.insert_pattern, search, customerNameFilter, fitSampleFilter]);
+  }, [data.insert_pattern, search, customerNameFilter, fitSampleFilter]);
 
   const filteredOrders = useMemo(() => {
-    if (!data || !data.sales_po) return [];
+    if (!data.sales_po) return [];
     return data.sales_po
       .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
       .filter(row => !statusFilter || (row["LIVE STATUS"] || "").toLowerCase() === statusFilter.toLowerCase())
       .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
-  }, [data?.sales_po, search, statusFilter]);
+  }, [data.sales_po, search, statusFilter]);
 
-  if (!data) return (
+  if (loading) return (
     <div className="loading-screen">
       <div className="loading-content">
         <div className="spinner">
@@ -267,18 +302,16 @@ const CustomerPage = ({
                   <th>PO NUMBER</th>
                   <th>STYLE NUMBER</th>
                   <th>DESCRIPTION</th>
-                  <th>COLOUR</th>
                   <th>TOTAL UNITS</th>
                   <th>XFACT DD</th>
                   <th>REAL DD</th>
                   <th>LIVE STATUS</th>
-                  <th>PACKING LIST</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr className="empty-state">
-                    <td colSpan="13">
+                    <td colSpan="11">
                       <div className="empty-content">
                         <FiAlertCircle size={28} />
                         <div>No Matching Orders Found</div>
@@ -312,7 +345,6 @@ const CustomerPage = ({
                       <td>{row["PO NUMBER"]}</td>
                       <td>{row["STYLE NUMBER"]}</td>
                       <td>{row["DESCRIPTION"]}</td>
-                      <td>{row["COLOUR"]}</td>
                       <td className="bold-cell">{row["TOTAL UNITS"]}</td>
                       <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
                       <td className="nowrap">{formatDate(row["REAL DD"])}</td>
@@ -323,20 +355,6 @@ const CustomerPage = ({
                         }`}>
                           {row["LIVE STATUS"]}
                         </span>
-                      </td>
-                      <td>
-                        {row["PACKING LIST"] ? (
-                          <a
-                            href={getGoogleDriveDownloadLink(row["PACKING LIST"])}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="view-button"
-                          >
-                            View PL
-                          </a>
-                        ) : (
-                          <span className="na-text">N/A</span>
-                        )}
                       </td>
                     </tr>
                   ))
@@ -354,12 +372,7 @@ CustomerPage.propTypes = {
   data: PropTypes.shape({
     sales_po: PropTypes.arrayOf(PropTypes.object),
     insert_pattern: PropTypes.arrayOf(PropTypes.object)
-  }).isRequired,
-  error: PropTypes.string,
-  getGoogleDriveThumbnail: PropTypes.func.isRequired,
-  getGoogleDriveDownloadLink: PropTypes.func.isRequired,
-  formatCurrency: PropTypes.func.isRequired,
-  formatDate: PropTypes.func.isRequired
+  })
 };
 
 export default CustomerPage;
