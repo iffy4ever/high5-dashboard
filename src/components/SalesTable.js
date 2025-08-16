@@ -1,4 +1,3 @@
-// src/components/SalesTable.js
 import React from 'react';
 import { FiAlertCircle, FiImage, FiUsers, FiDollarSign, FiFileText } from 'react-icons/fi';
 import { getColorCode } from '../utils/index';

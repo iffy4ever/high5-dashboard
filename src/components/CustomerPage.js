@@ -47,21 +47,16 @@ const formatCurrency = (value) => {
 };
 
 const getGoogleDriveThumbnail = (url) => {
-  if (!url) {
-    console.warn("No URL provided for thumbnail");
-    return "/fallback-image.png";
-  }
+  if (!url) return "";
   try {
     const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
     if (!fileId) {
       console.warn("No valid file ID found in URL:", url);
       return "/fallback-image.png";
     }
-    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-    console.log("Generated thumbnail URL:", thumbnailUrl);
-    return thumbnailUrl;
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
   } catch (e) {
-    console.error("Error generating thumbnail URL:", e.message, "URL:", url);
+    console.error("Error generating thumbnail URL:", e);
     return "/fallback-image.png";
   }
 };
@@ -230,7 +225,7 @@ const CustomerPage = () => {
                             alt="Front"
                             className="product-image"
                             loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Front image failed to load:", row["FRONT IMAGE"]); }}
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         ) : (
                           <div className="no-image">No Image</div>
@@ -243,7 +238,7 @@ const CustomerPage = () => {
                             alt="Back"
                             className="product-image"
                             loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Back image failed to load:", row["BACK IMAGE"]); }}
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         ) : (
                           <div className="no-image">No Image</div>
@@ -256,7 +251,7 @@ const CustomerPage = () => {
                             alt="Side"
                             className="product-image"
                             loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Side image failed to load:", row["SIDE IMAGE"]); }}
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         ) : (
                           <div className="no-image">No Image</div>
@@ -329,7 +324,7 @@ const CustomerPage = () => {
                             alt="Product"
                             className="product-image"
                             loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Order image failed to load:", row.IMAGE); }}
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         ) : (
                           <div className="no-image">No Image</div>
