@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign } from 'react-icons/fi';
+import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign, FiImage, FiExternalLink } from 'react-icons/fi';
 import { useData } from '../useData';
 import '../styles.css';
 
@@ -47,21 +47,16 @@ const formatCurrency = (value) => {
 };
 
 const getGoogleDriveThumbnail = (url) => {
-  if (!url) {
-    console.warn("No URL provided for thumbnail");
-    return "/fallback-image.png";
-  }
+  if (!url) return "";
   try {
     const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
     if (!fileId) {
       console.warn("No valid file ID found in URL:", url);
       return "/fallback-image.png";
     }
-    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-    console.log("Generated thumbnail URL:", thumbnailUrl);
-    return thumbnailUrl;
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
   } catch (e) {
-    console.error("Error generating thumbnail URL:", e.message, "URL:", url);
+    console.error("Error generating thumbnail URL:", e);
     return "/fallback-image.png";
   }
 };
@@ -73,6 +68,7 @@ const CustomerPage = () => {
   const [customerNameFilter, setCustomerNameFilter] = useState("");
   const [fitSampleFilter, setFitSampleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [darkMode, setDarkMode] = useState(false); // Added darkMode state
 
   const filteredDevelopments = useMemo(() => {
     if (!data.insert_pattern) return [];
@@ -127,243 +123,309 @@ const CustomerPage = () => {
   );
 
   return (
-    <div className="customer-page">
-      <h1>PD & KAIIA Dashboard</h1>
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+      <div className="main-content">
+        <header className="top-nav no-print">
+          <div className="nav-left">
+            <h1>PD & KAIIA Dashboard</h1>
+            <button 
+              className="theme-toggle"
+              onClick={() => setDarkMode(!darkMode)}
+            >
+              <span className="toggle-icon">
+                {darkMode ? '☀️' : '🌙'}
+              </span>
+            </button>
+          </div>
+        </header>
 
-      <div className="tab-container">
-        <div className="tabs">
-          <button
-            onClick={() => setActiveTab("developments")}
-            className={`tab-button ${activeTab === "developments" ? 'active' : ''}`}
-          >
-            All Developments
-          </button>
-          <button
-            onClick={() => setActiveTab("orders")}
-            className={`tab-button ${activeTab === "orders" ? 'active' : ''}`}
-          >
-            All Order Status
-          </button>
+        <div className="content-wrapper no-print">
+          <div className="tab-container">
+            <div className="tabs">
+              {[
+                { id: "developments", label: "Developments" },
+                { id: "orders", label: "Orders" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="search-filter-container">
+            <div className="search-box">
+              <FiSearch className="search-icon" size={16} />
+              <input
+                placeholder="Search H-Numbers, Styles, Colors..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            {activeTab === "developments" && (
+              <div className="action-buttons">
+                <div className="filter-item">
+                  <label className="filter-label">Customer Name</label>
+                  <select
+                    value={customerNameFilter}
+                    onChange={(e) => setCustomerNameFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="">All</option>
+                    <option value="public desire">Public Desire</option>
+                    <option value="kaiia">Kaiia</option>
+                  </select>
+                </div>
+                <div className="filter-item">
+                  <label className="filter-label">Fit Sample</label>
+                  <select
+                    value={fitSampleFilter}
+                    onChange={(e) => setFitSampleFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="">All</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            {activeTab === "orders" && (
+              <div className="action-buttons">
+                <div className="filter-item">
+                  <label className="filter-label">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="">All</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="in production">In Production</option>
+                    <option value="fabric ordered">Fabric Ordered</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {activeTab === "developments" && (
+            <div className="tab-content">
+              <div className="table-container">
+                <table className="data-table developments-table">
+                  <thead>
+                    <tr>
+                      {[
+                        { label: "TIMESTAMP" },
+                        { label: "H-NUMBER" },
+                        { label: "CUSTOMER NAME" },
+                        { label: "TYPE" },
+                        { label: "CUSTOMER CODE" },
+                        { label: "FRONT IMAGE", icon: <FiImage size={14} /> },
+                        { label: "BACK IMAGE", icon: <FiImage size={14} /> },
+                        { label: "SIDE IMAGE", icon: <FiImage size={14} /> },
+                        { label: "PATTERN IMAGE", icon: <FiImage size={14} /> },
+                        { label: "FIT SAMPLE" },
+                        { label: "TOTAL COST", icon: <FiDollarSign size={14} /> },
+                        { label: "CMT PRICE", icon: <FiDollarSign size={14} /> },
+                        { label: "COSTING LINK", icon: <FiExternalLink size={14} /> }
+                      ].map((header, index) => (
+                        <th key={index}>
+                          <div className="header-content">
+                            {header.icon && <span className="header-icon">{header.icon}</span>}
+                            {header.label}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDevelopments.length === 0 ? (
+                      <tr className="empty-state">
+                        <td colSpan="13">
+                          <div className="empty-content">
+                            <FiAlertCircle size={28} />
+                            <div>No Matching Patterns Found</div>
+                            <p>Try Adjusting Your Search Or Filters</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredDevelopments.map((row, i) => (
+                        <tr key={i}>
+                          <td className="nowrap">{formatDate(row["Timestamp"])}</td>
+                          <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                          <td>{row["CUSTOMER NAME"] || "N/A"}</td>
+                          <td>{row["STYLE TYPE"]}</td>
+                          <td>{row["CUSTOMER CODE"] || "N/A"}</td>
+                          <td className="image-cell">
+                            {row["FRONT IMAGE"] ? (
+                              <img
+                                src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
+                                alt="Front"
+                                className="product-image"
+                                loading="lazy"
+                                onError={(e) => { e.target.src = "/fallback-image.png"; }}
+                              />
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td className="image-cell">
+                            {row["BACK IMAGE"] ? (
+                              <img
+                                src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
+                                alt="Back"
+                                className="product-image"
+                                loading="lazy"
+                                onError={(e) => { e.target.src = "/fallback-image.png"; }}
+                              />
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td className="image-cell">
+                            {row["SIDE IMAGE"] ? (
+                              <img
+                                src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
+                                alt="Side"
+                                className="product-image"
+                                loading="lazy"
+                                onError={(e) => { e.target.src = "/fallback-image.png"; }}
+                              />
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td className="image-cell">
+                            {row["PATTERN IMAGE"] ? (
+                              <img
+                                src={getGoogleDriveThumbnail(row["PATTERN IMAGE"])}
+                                alt="Pattern"
+                                className="product-image"
+                                loading="lazy"
+                                onError={(e) => { e.target.src = "/fallback-image.png"; }}
+                              />
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td>{row["FIT SAMPLE"] || "N/A"}</td>
+                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
+                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
+                          <td>
+                            {row["COSTING LINK"] ? (
+                              <a
+                                href={row["COSTING LINK"]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="view-button"
+                              >
+                                View
+                              </a>
+                            ) : (
+                              <span className="na-text">N/A</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {activeTab === "orders" && (
+            <div className="tab-content">
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {[
+                        { label: "IMAGE", icon: <FiImage size={14} /> },
+                        { label: "FIT STATUS" },
+                        { label: "H-NUMBER" },
+                        { label: "CUSTOMER NAME" },
+                        { label: "PO NUMBER" },
+                        { label: "STYLE NUMBER" },
+                        { label: "DESCRIPTION" },
+                        { label: "TOTAL UNITS" },
+                        { label: "XFACT DD" },
+                        { label: "REAL DD" },
+                        { label: "LIVE STATUS" }
+                      ].map((header, index) => (
+                        <th key={index}>
+                          <div className="header-content">
+                            {header.icon && <span className="header-icon">{header.icon}</span>}
+                            {header.label}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.length === 0 ? (
+                      <tr className="empty-state">
+                        <td colSpan="11">
+                          <div className="empty-content">
+                            <FiAlertCircle size={28} />
+                            <div>No Matching Orders Found</div>
+                            <p>Try Adjusting Your Search Or Filters</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredOrders.map((row, i) => (
+                        <tr key={i}>
+                          <td className="image-cell">
+                            {row.IMAGE ? (
+                              <img
+                                src={getGoogleDriveThumbnail(row.IMAGE)}
+                                alt="Product"
+                                className="product-image"
+                                loading="lazy"
+                                onError={(e) => { e.target.src = "/fallback-image.png"; }}
+                              />
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td>
+                            <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
+                              {row["FIT STATUS"]}
+                            </span>
+                          </td>
+                          <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                          <td>{row["CUSTOMER NAME"]}</td>
+                          <td>{row["PO NUMBER"]}</td>
+                          <td>{row["STYLE NUMBER"]}</td>
+                          <td>{row["DESCRIPTION"]}</td>
+                          <td className="bold-cell">{row["TOTAL UNITS"]}</td>
+                          <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
+                          <td className="nowrap">{formatDate(row["REAL DD"])}</td>
+                          <td>
+                            <span className={`status-badge ${
+                              row["LIVE STATUS"] === "DELIVERED" ? 'success' : 
+                              row["LIVE STATUS"] === "FABRIC ORDERED" ? 'info' : 'warning'
+                            }`}>
+                              {row["LIVE STATUS"]}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      <div className="search-filter-container">
-        <div className="search-box">
-          <FiSearch className="search-icon" size={16} />
-          <input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-            aria-label="Search"
-          />
-        </div>
-      </div>
-
-      {activeTab === "developments" && (
-        <>
-          <div className="filter-grid">
-            <div className="filter-item">
-              <label className="filter-label">Customer Name</label>
-              <select
-                value={customerNameFilter}
-                onChange={(e) => setCustomerNameFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All</option>
-                <option value="Public Desire">Public Desire</option>
-                <option value="Kaiia">Kaiia</option>
-              </select>
-            </div>
-            <div className="filter-item">
-              <label className="filter-label">Fit Sample</label>
-              <select
-                value={fitSampleFilter}
-                onChange={(e) => setFitSampleFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All</option>
-                {[...new Set(data.insert_pattern.map(item => item["FIT SAMPLE"]).filter(Boolean))].sort().map((value, i) => (
-                  <option key={i} value={value}>{value}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>H-NUMBER</th>
-                  <th>CUSTOMER NAME</th>
-                  <th>CUSTOMER CODE</th>
-                  <th>FRONT IMAGE</th>
-                  <th>BACK IMAGE</th>
-                  <th>SIDE IMAGE</th>
-                  <th>FIT SAMPLE</th>
-                  <th>COST PRICE</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDevelopments.length === 0 ? (
-                  <tr className="empty-state">
-                    <td colSpan="9">
-                      <div className="empty-content">
-                        <FiAlertCircle size={28} />
-                        <div>No Matching Developments Found</div>
-                        <p>Try Adjusting Your Search Or Filters</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDevelopments.map((row, i) => (
-                    <tr key={i}>
-                      <td className="nowrap">{formatDate(row["Timestamp"])}</td>
-                      <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                      <td>{row["CUSTOMER NAME"] || "N/A"}</td>
-                      <td>{row["CUSTOMER CODE"] || "N/A"}</td>
-                      <td className="image-cell">
-                        {row["FRONT IMAGE"] ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
-                            alt="Front"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Front image failed to load:", row["FRONT IMAGE"]); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td className="image-cell">
-                        {row["BACK IMAGE"] ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
-                            alt="Back"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Back image failed to load:", row["BACK IMAGE"]); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td className="image-cell">
-                        {row["SIDE IMAGE"] ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
-                            alt="Side"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Side image failed to load:", row["SIDE IMAGE"]); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td>{row["FIT SAMPLE"] || "N/A"}</td>
-                      <td className="price-cell nowrap bold-cell cost-price">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {activeTab === "orders" && (
-        <>
-          <div className="filter-grid">
-            <div className="filter-item">
-              <label className="filter-label">LIVE STATUS</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All</option>
-                {[...new Set(data.sales_po.map(item => item["LIVE STATUS"]).filter(Boolean))].sort().map((value, i) => (
-                  <option key={i} value={value}>{value}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>IMAGE</th>
-                  <th>FIT STATUS</th>
-                  <th>H-NUMBER</th>
-                  <th>CUSTOMER NAME</th>
-                  <th>PO NUMBER</th>
-                  <th>STYLE NUMBER</th>
-                  <th>DESCRIPTION</th>
-                  <th>TOTAL UNITS</th>
-                  <th>XFACT DD</th>
-                  <th>REAL DD</th>
-                  <th>LIVE STATUS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.length === 0 ? (
-                  <tr className="empty-state">
-                    <td colSpan="11">
-                      <div className="empty-content">
-                        <FiAlertCircle size={28} />
-                        <div>No Matching Orders Found</div>
-                        <p>Try Adjusting Your Search Or Filters</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOrders.map((row, i) => (
-                    <tr key={i}>
-                      <td className="image-cell">
-                        {row.IMAGE ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row.IMAGE)}
-                            alt="Product"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Order image failed to load:", row.IMAGE); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td>
-                        <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
-                          {row["FIT STATUS"]}
-                        </span>
-                      </td>
-                      <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                      <td>{row["CUSTOMER NAME"]}</td>
-                      <td>{row["PO NUMBER"]}</td>
-                      <td>{row["STYLE NUMBER"]}</td>
-                      <td>{row["DESCRIPTION"]}</td>
-                      <td className="bold-cell">{row["TOTAL UNITS"]}</td>
-                      <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
-                      <td className="nowrap">{formatDate(row["REAL DD"])}</td>
-                      <td>
-                        <span className={`status-badge ${
-                          row["LIVE STATUS"] === "DELIVERED" ? 'success' : 
-                          row["LIVE STATUS"] === "FABRIC ORDERED" ? 'info' : 'warning'
-                        }`}>
-                          {row["LIVE STATUS"]}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
     </div>
   );
 };

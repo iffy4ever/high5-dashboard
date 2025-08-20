@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from "react";
 import * as XLSX from 'xlsx';
 import {
-  FiTruck, FiCalendar, FiClock, FiAlertCircle, 
+  FiTruck, FiCalendar, FiClock, FiAlertCircle,
   FiDatabase, FiDownload, FiFilter, FiSearch, FiExternalLink,
-  FiFileText, FiUsers, FiCheckCircle, FiLayers, FiShoppingBag, FiPrinter, FiBarChart2
+  FiFileText, FiLayers, FiShoppingBag, FiPrinter, FiBarChart2, FiCheckCircle, FiUsers
 } from 'react-icons/fi';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
@@ -19,12 +19,9 @@ function App() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     TYPE: "",
-    "STYLE TYPE": "",
     COLOUR: "",
     "LIVE STATUS": "",
-    "FIT STATUS": "",
-    "CUSTOMER NAME": "",
-    "FIT SAMPLE": ""
+    "FIT STATUS": ""
   });
   const [fabricFilters, setFabricFilters] = useState({
     TYPE: "",
@@ -44,9 +41,6 @@ function App() {
   const [showStats, setShowStats] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  // Log for debugging filter panels
-  console.log('Rendering App: showStats=', showStats, 'activeTab=', activeTab);
 
   // Modern Color Scheme with dark mode support
   const colors = darkMode ? {
@@ -109,7 +103,7 @@ function App() {
     statCardBorder: "#E5E7EB",
   };
 
-  // Form links with icons, including PD & KAIIA Dashboard link
+  // Form links with icons
   const formLinks = [
     {
       label: "Development Form",
@@ -268,21 +262,16 @@ function App() {
   };
 
   const getGoogleDriveThumbnail = (url) => {
-    if (!url) {
-      console.warn("No URL provided for thumbnail");
-      return "/fallback-image.png";
-    }
+    if (!url) return "";
     try {
       const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
       if (!fileId) {
         console.warn("No valid file ID found in URL:", url);
         return "/fallback-image.png";
       }
-      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-      console.log("Generated thumbnail URL:", thumbnailUrl);
-      return thumbnailUrl;
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
     } catch (e) {
-      console.error("Error generating thumbnail URL:", e.message, "URL:", url);
+      console.error("Error generating thumbnail URL:", e);
       return "/fallback-image.png";
     }
   };
@@ -291,10 +280,8 @@ function App() {
     const windowHeight = window.innerHeight;
     const mouseY = e.clientY;
     const showAbove = mouseY > windowHeight * 0.7;
-    const previewUrl = imageUrl ? getGoogleDriveThumbnail(imageUrl).replace("w200", "w400") : "/fallback-image.png";
-    console.log("Preview image URL:", previewUrl);
     setPreviewImage({
-      url: previewUrl,
+      url: imageUrl ? getGoogleDriveThumbnail(imageUrl) : "/fallback-image.png",
       visible: true,
       position: { x: e.clientX, y: e.clientY },
       direction: showAbove ? 'above' : 'below'
@@ -331,7 +318,7 @@ function App() {
     } else if (activeTab === "developments") {
       dataToExport = filteredDevelopments;
       columnOrder = [
-        "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "STYLE TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
+        "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
         "SIDE IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
       ];
     }
@@ -450,7 +437,7 @@ function App() {
 
         {/* Stats Panel */}
         {showStats && (
-          <div className="stats-panel no-print">
+          <div className="stats-panel no-print active">
             <div className="stats-grid">
               {[
                 {
@@ -620,8 +607,8 @@ function App() {
                     });
                   } else if (activeTab === "developments") {
                     setFilters({
-                      "STYLE TYPE": "",
-                      "CUSTOMER NAME": "",
+                      TYPE: "",
+                      COLOUR: "",
                       "FIT SAMPLE": ""
                     });
                   }
@@ -737,15 +724,15 @@ function App() {
           {activeTab === "developments" && (
             <div className="tab-content">
               <div className="filter-grid">
-                {["STYLE TYPE", "CUSTOMER NAME", "FIT SAMPLE"].map((key) => (
+                {["TYPE", "COLOUR", "FIT SAMPLE"].map((key) => (
                   <div key={key} className="filter-item">
-                    <label className="filter-label">{key === "STYLE TYPE" ? "TYPE" : key}</label>
+                    <label className="filter-label">{key}</label>
                     <select
                       value={filters[key] || ""}
                       onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
                       className="filter-select"
                     >
-                      <option value="">All {key === "STYLE TYPE" ? "Types" : key}</option>
+                      <option value="">All {key}</option>
                       {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
                         <option key={i} value={value}>{value}</option>
                       ))}
@@ -776,18 +763,18 @@ function App() {
           {/* Production Sheets Tab */}
           {activeTab === "production" && (
             <div className="tab-content no-print">
-              <div className="po-input-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: `2px solid ${colors.border}`, paddingTop: '1rem', marginTop: '1.5rem'}}>
-                <div className="filter-item" style={{flex: 1}}>
+              <div className="po-input-container">
+                <div className="filter-item" style={{ flex: 1 }}>
                   <textarea
                     value={poInput}
                     onChange={(e) => setPoInput(e.target.value)}
                     placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
                     rows={1}
                     className="filter-select"
-                    style={{width: '100%', height: '40px', overflow: 'hidden'}}
+                    style={{ width: '100%', height: '40px', overflow: 'hidden' }}
                   />
                 </div>
-                <div className="po-buttons" style={{display: 'flex', gap: '0.75rem'}}>
+                <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     onClick={() => {
                       const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
@@ -804,7 +791,7 @@ function App() {
               </div>
 
               {selectedPOs.length > 0 && (
-                <div className="sheets-container" style={{marginTop: '20px'}}>
+                <div className="sheets-container" style={{ marginTop: '20px' }}>
                   <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                   <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                 </div>
@@ -827,7 +814,7 @@ function App() {
               src={previewImage.url} 
               alt="Preview"
               className="preview-image"
-              onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Preview image failed to load:", previewImage.url); }}
+              onError={(e) => { e.target.src = "/fallback-image.png"; }}
             />
             <div className="preview-arrow"></div>
           </div>

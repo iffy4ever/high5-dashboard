@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatDate, getGoogleDriveThumbnail } from '../utils';
 
-function CuttingSheet({ selectedData }) {
+const CuttingSheet = ({ selectedData }) => {
   const totalUnits = selectedData.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
   const maxPOs = 6;
   const numPOs = Math.min(selectedData.length, maxPOs);
@@ -14,68 +14,68 @@ function CuttingSheet({ selectedData }) {
 
   return (
     <div className="printable-sheet">
-      <div style={{fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm'}}>CUTTING SHEET</div>
+      <div style={{ fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm' }}>CUTTING SHEET</div>
 
-      <div className="delivery-info" style={{color: '#FF0000'}}>
+      <div className="delivery-info" style={{ color: '#FF0000' }}>
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
       </div>
 
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000'}}>
-        {Array.from({length: 6}).map((_, i) => (
-          <div key={i} style={{overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm'}}>
-            {i <numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : 'No Image'}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000000' }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm' }}>
+            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="lazy" onError={(e) => { e.target.src = "/fallback-image.png"; }} /> : 'No Image'}
           </div>
         ))}
       </div>
 
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table">
         <tbody>
           <tr>
-            <th>Fabric Name 1:</th>
-            <th>Fabric Name 2:</th>
-            <th>Fabric Name 3:</th>
-            <th style={{color: '#000000'}}>Binding details</th>
+            <th style={{ lineHeight: 'fit-content' }}>Fabric Name 1:</th>
+            <th style={{ lineHeight: 'fit-content' }}>Fabric Name 2:</th>
+            <th style={{ lineHeight: 'fit-content' }}>Fabric Name 3:</th>
+            <th style={{ lineHeight: 'fit-content' }}>Binding details</th>
           </tr>
           <tr>
-            <td style={{height: '20mm'}}></td>
-            <td style={{height: '20mm'}}></td>
-            <td style={{height: '20mm'}}></td>
-            <td style={{height: '20mm'}}></td>
+            <td style={{ height: '20mm', lineHeight: 'fit-content' }}></td>
+            <td style={{ height: '20mm', lineHeight: 'fit-content' }}></td>
+            <td style={{ height: '20mm', lineHeight: 'fit-content' }}></td>
+            <td style={{ height: '20mm', lineHeight: 'fit-content' }}></td>
           </tr>
           <tr>
-            <td>Width:</td>
-            <td>Width:</td>
-            <td>Width:</td>
-            <td></td>
+            <td style={{ lineHeight: 'fit-content' }}>Width:</td>
+            <td style={{ lineHeight: 'fit-content' }}>Width:</td>
+            <td style={{ lineHeight: 'fit-content' }}>Width:</td>
+            <td style={{ lineHeight: 'fit-content' }}></td>
           </tr>
         </tbody>
       </table>
 
-      <table className="table" style={{border: '1px solid #000'}}>
+      <table className="table">
         <thead>
           <tr>
-            <th style={{width: '15%'}}>PO Number</th>
-            <th style={{width: '25%'}}>Style #</th>
-            <th style={{width: '20%'}}>Colour</th>
-            <th style={{width: '10%'}}>Department</th>
-            <th style={{width: '10%'}}>Units</th>
-            <th style={{width: '10%'}}>H Number</th>
-            <th style={{width: '10%'}}>Type</th>
-            <th style={{width: '10%'}}>Total</th>
+            <th style={{ width: '15%', lineHeight: 'fit-content' }}>PO Number</th>
+            <th style={{ width: '25%', lineHeight: 'fit-content' }}>Style #</th>
+            <th style={{ width: '20%', lineHeight: 'fit-content' }}>Colour</th>
+            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Department</th>
+            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Units</th>
+            <th style={{ width: '10%', lineHeight: 'fit-content' }}>H Number</th>
+            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Type</th>
+            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Total</th>
           </tr>
         </thead>
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
-              <td>{row["STYLE NUMBER"] || ""}</td>
-              <td className="main-data">{row["COLOUR"] || ""}</td>
-              <td>{row["DEPARTMENT"] || "-"}</td>
-              <td>{row["TOTAL UNITS"] || ""}</td>
-              <td className="red-text">{row["H-NUMBER"] || ""}</td>
-              <td>{row["TYPE"] || ""}</td>
+              <td className="main-data red-text" style={{ lineHeight: 'fit-content' }}>{row["PO NUMBER"] || ""}</td>
+              <td style={{ lineHeight: 'fit-content' }}>{row["STYLE NUMBER"] || ""}</td>
+              <td className="main-data" style={{ lineHeight: 'fit-content' }}>{row["COLOUR"] || ""}</td>
+              <td style={{ lineHeight: 'fit-content' }}>{row["DEPARTMENT"] || "-"}</td>
+              <td style={{ lineHeight: 'fit-content' }}>{row["TOTAL UNITS"] || ""}</td>
+              <td className="red-text" style={{ lineHeight: 'fit-content' }}>{row["H-NUMBER"] || ""}</td>
+              <td style={{ lineHeight: 'fit-content' }}>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle'}}>
+                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle', lineHeight: 'fit-content' }}>
                   {totalUnits}
                 </td>
               )}
@@ -84,35 +84,35 @@ function CuttingSheet({ selectedData }) {
         </tbody>
       </table>
 
-      <table className="table sizes-table" style={{border: '1px solid #000'}}>
+      <table className="table sizes-table">
         <colgroup>
-          <col style={{width: '10%'}} />
-          <col style={{width: '15%'}} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '15%' }} />
           {sizes.map((_, i) => (
-            <col key={i} style={{width: '5%'}} />
+            <col key={i} style={{ width: '5%' }} />
           ))}
         </colgroup>
         <thead>
           <tr>
-            <th>PO Number</th>
-            <th>Colour</th>
-            {sizes.map(size => <th key={size}>{size}</th>)}
+            <th style={{ lineHeight: 'fit-content' }}>PO Number</th>
+            <th style={{ lineHeight: 'fit-content' }}>Colour</th>
+            {sizes.map(size => <th key={size} style={{ lineHeight: 'fit-content' }}>{size}</th>)}
           </tr>
         </thead>
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
-              <td className="main-data">{row["COLOUR"] || ""}</td>
+              <td className="main-data red-text" style={{ lineHeight: 'fit-content' }}>{row["PO NUMBER"] || ""}</td>
+              <td className="main-data" style={{ lineHeight: 'fit-content' }}>{row["COLOUR"] || ""}</td>
               {sizes.map(size => (
-                <td key={size}>{row[size] || ""}</td>
+                <td key={size} style={{ lineHeight: 'fit-content' }}>{row[size] || ""}</td>
               ))}
             </tr>
           ))}
-          <tr className="total-row" style={{color: '#000000'}}>
-            <td colSpan={2}>Total:</td>
+          <tr className="total-row">
+            <td colSpan={2} style={{ lineHeight: 'fit-content' }}>Total:</td>
             {sizes.map(size => (
-              <td key={size}>{totalBySize[size]}</td>
+              <td key={size} style={{ lineHeight: 'fit-content' }}>{totalBySize[size]}</td>
             ))}
           </tr>
         </tbody>
@@ -120,17 +120,17 @@ function CuttingSheet({ selectedData }) {
       <table className="ratio-section">
         <tbody>
           <tr>
-            <td>RATIO:.</td>
+            <td style={{ lineHeight: 'fit-content' }}>RATIO:.</td>
           </tr>
-          {Array.from({length: 1}).map((_, i) => (
+          {Array.from({ length: 1 }).map((_, i) => (
             <tr key={i}>
-              <td></td>
+              <td style={{ lineHeight: 'fit-content' }}></td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
-}
+};
 
 export default CuttingSheet;

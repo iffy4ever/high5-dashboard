@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiAlertCircle, FiImage, FiDollarSign, FiExternalLink } from 'react-icons/fi';
+import { getColorCode } from '../utils/index';
 
 const DevelopmentsTable = ({
   data,
@@ -28,6 +29,7 @@ const DevelopmentsTable = ({
               value={filters[key] || ""}
               onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
               className="filter-select"
+              aria-label={`Filter by ${key}`}
             >
               <option value="">All {key === "STYLE TYPE" ? "Types" : key}</option>
               {[...new Set(data.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
@@ -37,7 +39,6 @@ const DevelopmentsTable = ({
           </div>
         ))}
       </div>
-
       <div className="table-container">
         <table className="data-table developments-table">
           <thead>
@@ -91,11 +92,13 @@ const DevelopmentsTable = ({
                         onMouseEnter={(e) => handleMouseEnter(row["FRONT IMAGE"], e)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer">
+                        <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
                           <img
                             src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
                             alt="Front"
                             className="product-image"
+                            loading="lazy"
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         </a>
                       </div>
@@ -109,11 +112,13 @@ const DevelopmentsTable = ({
                         onMouseEnter={(e) => handleMouseEnter(row["BACK IMAGE"], e)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer">
+                        <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View back image">
                           <img
                             src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
                             alt="Back"
                             className="product-image"
+                            loading="lazy"
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         </a>
                       </div>
@@ -127,11 +132,13 @@ const DevelopmentsTable = ({
                         onMouseEnter={(e) => handleMouseEnter(row["SIDE IMAGE"], e)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer">
+                        <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View side image">
                           <img
                             src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
                             alt="Side"
                             className="product-image"
+                            loading="lazy"
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         </a>
                       </div>
@@ -145,11 +152,13 @@ const DevelopmentsTable = ({
                         onMouseEnter={(e) => handleMouseEnter(row["PATTERN IMAGE"], e)}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <a href={row["PATTERN IMAGE"]} target="_blank" rel="noopener noreferrer">
+                        <a href={row["PATTERN IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View pattern image">
                           <img
                             src={getGoogleDriveThumbnail(row["PATTERN IMAGE"])}
                             alt="Pattern"
                             className="product-image"
+                            loading="lazy"
+                            onError={(e) => { e.target.src = "/fallback-image.png"; }}
                           />
                         </a>
                       </div>
@@ -167,6 +176,7 @@ const DevelopmentsTable = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="view-button"
+                        aria-label="View costing link"
                       >
                         View
                       </a>
@@ -187,14 +197,16 @@ const DevelopmentsTable = ({
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="pagination-button"
+            aria-label="Previous page"
           >
             Previous
           </button>
-          <span>{`Page ${currentPage} of ${totalPages}`}</span>
+          <span aria-live="polite">{`Page ${currentPage} of ${totalPages}`}</span>
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="pagination-button"
+            aria-label="Next page"
           >
             Next
           </button>
