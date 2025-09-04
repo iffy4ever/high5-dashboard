@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo    GITHUB UPDATE FOR REACT APP
+echo    GITHUB UPDATE FOR REACT APP (MAIN BRANCH)
 echo ============================================
 echo.
 
@@ -18,29 +18,27 @@ echo Committing changes...
 git commit -m "Auto update - %date% %time%"
 echo.
 
-for /f "delims=" %%i in ('git branch --show-current') do set BRANCH=%%i
-echo Detected branch: %BRANCH%
-echo.
-
-echo Pushing to GitHub...
-git push origin %BRANCH%
+echo Pushing to MAIN branch on GitHub...
+git push origin main
 echo.
 
 if %errorlevel% equ 0 (
-    echo ✅ Push successful!
+    echo ✅ Push to MAIN branch successful!
     echo.
-    echo 📋 NEXT STEPS:
-    echo 1. Visit: https://github.com/iffy4ever/high5-dashboard
-    echo 2. Click 'Compare & pull request'
-    echo 3. Create and merge pull request
+    echo 📋 Your React app is now updated on GitHub!
     echo.
-    echo You can also check:
-    echo - Commit history: https://github.com/iffy4ever/high5-dashboard/commits/%BRANCH%
-    echo - Actions: https://github.com/iffy4ever/high5-dashboard/actions
+    echo You can view your repository at:
+    echo https://github.com/iffy4ever/high5-dashboard
+    echo.
+    echo To view your live site (if deployed):
+    echo https://iffy4ever.github.io/high5-dashboard/
 ) else (
     echo ❌ Push failed!
     echo.
-    echo Try: git pull origin %BRANCH% first
+    echo Possible solutions:
+    echo 1. Run: git pull origin main (to sync first)
+    echo 2. Check internet connection
+    echo 3. Verify GitHub credentials
 )
 
 echo.
