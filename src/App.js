@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from "react";
+// src/App.js
+import React, { useState, useMemo, useEffect } from "react";
 import * as XLSX from 'xlsx';
+import { Routes, Route, Link } from 'react-router-dom';
 import {
   FiTruck, FiCalendar, FiClock, FiAlertCircle,
   FiDatabase, FiDownload, FiFilter, FiSearch, FiExternalLink,
@@ -10,25 +12,36 @@ import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
 import DocketSheet from './components/DocketSheet';
 import CuttingSheet from './components/CuttingSheet';
-import { formatDate, getDateValue, formatCurrency, compactSizes } from './utils';
+import StatsPanel from './components/StatsPanel';
+import CustomerPage from './components/CustomerPage';
+import { formatDate, getDateValue, formatCurrency, compactSizes, getGoogleDriveThumbnail, getGoogleDriveDownloadLink } from './utils/index';
 import { useData } from './useData';
 import './styles.css';
 
 function App() {
   const { data, loading, error } = useData();
+  console.log("Full Data Object:", data); // Debug: Log the entire data object
+  console.log("Fabric Data:", data?.fabric); // Debug: Specifically log fabric data
+
+  useEffect(() => {
+    if (data && !data.fabric) {
+      console.error("Fabric data is undefined or not loaded:", data);
+    }
+  }, [data]);
+
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     TYPE: "",
-    COLOUR: "",
     "LIVE STATUS": "",
-    "FIT STATUS": ""
+    "FIT STATUS": "",
+    "CUSTOMER NAME": ""
   });
   const [fabricFilters, setFabricFilters] = useState({
     TYPE: "",
-    COLOUR: "",
+    "CUSTOMER NAME": "",
     SUPPLIER: ""
   });
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("sales");
   const [previewImage, setPreviewImage] = useState({
     url: null,
     visible: false,
@@ -42,7 +55,6 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modern Color Scheme with dark mode support
   const colors = darkMode ? {
     primary: "#6366F1",
     primaryLight: "#818CF8",
@@ -59,19 +71,24 @@ function App() {
     info: "#3B82F6",
     textDark: "#F3F4F6",
     textMedium: "#9CA3AF",
-    textLight: "#1F2937",
+    textLight: "#FFFFFF",
     background: "#111827",
     cardBg: "#1F2937",
     border: "#374151",
     rowEven: "#1F2937",
     rowOdd: "#111827",
-    headerBg: "#1F2937",
-    headerText: "#F3F4F6",
-    activeTab: "#6366F1",
+    headerBg: "#374151",
+    headerText: "#000000",
+    activeTab: "#CD5E77",
     inactiveTab: "#6B7280",
-    actionButton: "#10B981",
+    actionButton: "#1B4D3E",
     statCardBg: "#1F2937",
     statCardBorder: "#374151",
+    accentRgb: "245, 158, 11",
+    successRgb: "16, 185, 129",
+    warningRgb: "245, 158, 11",
+    infoRgb: "59, 130, 246",
+    activeTabRgb: "205, 94, 119"
   } : {
     primary: "#6366F1",
     primaryLight: "#818CF8",
@@ -88,44 +105,50 @@ function App() {
     info: "#3B82F6",
     textDark: "#1F2937",
     textMedium: "#6B7280",
-    textLight: "#F9FAFB",
+    textLight: "#FFFFFF",
     background: "#F9FAFB",
     cardBg: "#FFFFFF",
     border: "#E5E7EB",
     rowEven: "#FFFFFF",
     rowOdd: "#F9FAFB",
-    headerBg: "#FFFFFF",
-    headerText: "#1F2937",
-    activeTab: "#6366F1",
+    headerBg: "#F3F4F6",
+    headerText: "#000000",
+    activeTab: "#CD5E77",
     inactiveTab: "#9CA3AF",
-    actionButton: "#10B981",
+    actionButton: "#1B4D3E",
     statCardBg: "#FFFFFF",
     statCardBorder: "#E5E7EB",
+    accentRgb: "245, 158, 11",
+    successRgb: "16, 185, 129",
+    warningRgb: "245, 158, 11",
+    infoRgb: "59, 130, 246",
+    activeTabRgb: "205, 94, 119"
   };
 
-  // Form links with icons
   const formLinks = [
     {
       label: "Development Form",
       url: "https://forms.gle/hq1pgP4rz1BSjiCc6",
       icon: <FiFileText size={16} />,
-      color: colors.primary
+      color: colors.primary,
+      external: true
     },
     {
       label: "Insert Pattern Form",
       url: "https://forms.gle/LBQwrpMjJuFzLTsC8",
       icon: <FiLayers size={16} />,
-      color: colors.secondary
+      color: colors.secondary,
+      external: true
     },
     {
       label: "PD & KAIIA Dashboard",
       url: "/pd-kaiia",
       icon: <FiUsers size={16} />,
-      color: colors.accent
+      color: colors.accent,
+      external: true
     }
   ];
 
-  // Calculate production statistics
   const productionStats = useMemo(() => {
     const now = new Date();
     const oneMonthAgo = new Date(now);
@@ -153,138 +176,127 @@ function App() {
       notDelivered: 0,
       goldSealSent: 0,
       lastDeliveryDate: null,
-      statusDistribution: {},
-      colorDistribution: {},
-      customerDistribution: {}
+      lastDeliveryDateFormatted: "-",
+      lastQuarterLabel: `Q${Math.floor((now.getMonth() + 3) / 3)} ${now.getFullYear() - 1}`,
+      lastYearOrdersLabel: `Orders ${lastYearStart.getFullYear()}-${lastYearEnd.getFullYear()}`,
+      lastYearLabel: `Units ${lastYearStart.getFullYear()}-${lastYearEnd.getFullYear()}`,
+      currentYearLabel: `Units ${currentYearStart.getFullYear()}-${currentYearEnd.getFullYear()}`
     };
 
-    data.sales_po.forEach(order => {
-      const status = String(order["LIVE STATUS"] || "").toUpperCase().trim();
-      const totalUnits = parseInt(order["TOTAL UNITS"] || 0);
-      const color = order["COLOUR"] || "Unknown";
-      const customer = order["CUSTOMER NAME"] || "Unknown";
-      
-      stats.totalUnits += totalUnits;
-      stats.statusDistribution[status] = (stats.statusDistribution[status] || 0) + 1;
-      stats.colorDistribution[color] = (stats.colorDistribution[color] || 0) + 1;
-      stats.customerDistribution[customer] = (stats.customerDistribution[customer] || 0) + 1;
-
-      let deliveryDate = null;
-      try {
-        if (order["REAL DD"]) {
-          if (typeof order["REAL DD"] === 'number') {
-            deliveryDate = new Date((order["REAL DD"] - 25569) * 86400 * 1000);
-          } else {
-            deliveryDate = new Date(order["REAL DD"]);
-          }
-          if (isNaN(deliveryDate.getTime())) deliveryDate = null;
-        }
-      } catch (e) {
-        deliveryDate = null;
+    if (data.sales_po) {
+      stats.totalOrders = data.sales_po.length;
+      stats.totalUnits = data.sales_po.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.deliveredLast30Days = data.sales_po.filter(row => {
+        const deliveryDate = getDateValue(row["REAL DD"]);
+        return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= oneMonthAgo;
+      }).length;
+      stats.deliveredUnitsLast30Days = data.sales_po
+        .filter(row => {
+          const deliveryDate = getDateValue(row["REAL DD"]);
+          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= oneMonthAgo;
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.unitsDeliveredLastQuarter = data.sales_po
+        .filter(row => {
+          const deliveryDate = getDateValue(row["REAL DD"]);
+          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= lastQuarterStart && deliveryDate <= lastQuarterEnd;
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.unitsDeliveredCurrentYear = data.sales_po
+        .filter(row => {
+          const deliveryDate = getDateValue(row["REAL DD"]);
+          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= currentYearStart && deliveryDate <= currentYearEnd;
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.unitsDeliveredLastYear = data.sales_po
+        .filter(row => {
+          const deliveryDate = getDateValue(row["REAL DD"]);
+          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd;
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.ordersLastYear = data.sales_po
+        .filter(row => {
+          const deliveryDate = getDateValue(row["REAL DD"]);
+          return deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd;
+        }).length;
+      stats.pendingUnits = data.sales_po
+        .filter(row => row["LIVE STATUS"] !== "DELIVERED")
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.inProduction = data.sales_po
+        .filter(row => row["LIVE STATUS"] === "IN PRODUCTION")
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.fabricOrdered = data.sales_po
+        .filter(row => row["LIVE STATUS"] === "FABRIC ORDERED")
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      stats.notDelivered = data.sales_po
+        .filter(row => row["LIVE STATUS"] !== "DELIVERED")
+        .length;
+      stats.goldSealSent = data.sales_po
+        .filter(row => row["FIT STATUS"] === "GS SENT")
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
+      const lastDelivery = data.sales_po
+        .filter(row => row["LIVE STATUS"] === "DELIVERED")
+        .reduce((latest, row) => {
+          const date = getDateValue(row["REAL DD"]);
+          return !latest || date > getDateValue(latest["REAL DD"]) ? row : latest;
+        }, null);
+      if (lastDelivery) {
+        stats.lastDeliveryDate = getDateValue(lastDelivery["REAL DD"]);
+        stats.lastDeliveryDateFormatted = formatDate(lastDelivery["REAL DD"]);
       }
+    }
 
-      stats.totalOrders++;
-
-      if (status === "DELIVERED" && deliveryDate) {
-        if (deliveryDate > oneMonthAgo) {
-          stats.deliveredLast30Days++;
-          stats.deliveredUnitsLast30Days += totalUnits;
-        }
-
-        if (deliveryDate >= lastQuarterStart && deliveryDate <= lastQuarterEnd) {
-          stats.unitsDeliveredLastQuarter += totalUnits;
-        }
-
-        if (deliveryDate >= currentYearStart && deliveryDate <= currentYearEnd) {
-          stats.unitsDeliveredCurrentYear += totalUnits;
-        }
-
-        if (deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd) {
-          stats.unitsDeliveredLastYear += totalUnits;
-          stats.ordersLastYear++;
-        }
-        
-        if (!stats.lastDeliveryDate || deliveryDate > stats.lastDeliveryDate) {
-          stats.lastDeliveryDate = deliveryDate;
-        }
-      } else {
-        stats.pendingUnits += totalUnits;
-      }
-
-      if (status === "IN PRODUCTION") {
-        stats.inProduction++;
-      } else if (status === "FABRIC ORDERED") {
-        stats.fabricOrdered++;
-      } else if (status !== "DELIVERED") {
-        stats.notDelivered++;
-      }
-
-      if (String(order["FIT STATUS"] || "").toUpperCase().trim() === "GS SENT") {
-        stats.goldSealSent++;
-      }
-    });
-
-    const lastQuarterMonth = lastQuarterStart.toLocaleString('en-GB', { month: 'short' });
-    const lastQuarterEndMonth = lastQuarterEnd.toLocaleString('en-GB', { month: 'short' });
-    const lastQuarterYear = lastQuarterStart.getFullYear();
-    const lastQuarterLabel = `Units (${lastQuarterMonth}-${lastQuarterEndMonth} ${lastQuarterYear})`;
-
-    const currentYearLabel = `Units (FY${currentFiscalYear})`;
-
-    const lastYearLabel = `Units (FY${currentFiscalYear-1})`;
-
-    const lastYearOrdersLabel = `Orders (FY${currentFiscalYear-1})`;
-
-    return {
-      ...stats,
-      lastDeliveryDateFormatted: stats.lastDeliveryDate 
-        ? stats.lastDeliveryDate.toLocaleDateString('en-GB', { 
-            day: 'numeric', 
-            month: 'short', 
-            year: 'numeric' 
-          }) 
-        : "No Deliveries Yet",
-      topCustomers: Object.entries(stats.customerDistribution)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5),
-      lastQuarterLabel,
-      currentYearLabel,
-      lastYearLabel,
-      lastYearOrdersLabel
-    };
+    return stats;
   }, [data.sales_po]);
 
-  // Utility Functions
-  const getGoogleDriveDownloadLink = (url) => {
-    if (!url) return "";
-    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    return fileId ? `https://drive.google.com/file/d/${fileId}/view` : "";
-  };
+  const filteredSales = useMemo(() => {
+    if (!data.sales_po) return [];
+    return data.sales_po
+      .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
+      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+      .filter(row => !filters.TYPE || (row["TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
+      .filter(row => !filters["LIVE STATUS"] || (row["LIVE STATUS"] || "").toLowerCase() === filters["LIVE STATUS"].toLowerCase())
+      .filter(row => !filters["FIT STATUS"] || (row["FIT STATUS"] || "").toLowerCase() === filters["FIT STATUS"].toLowerCase())
+      .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
+      .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
+  }, [data.sales_po, search, filters]);
 
-  const getGoogleDriveThumbnail = (url) => {
-    if (!url) return "";
-    try {
-      const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-      if (!fileId) {
-        console.warn("No valid file ID found in URL:", url);
-        return "/fallback-image.png";
-      }
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-    } catch (e) {
-      console.error("Error generating thumbnail URL:", e);
-      return "/fallback-image.png";
+  const filteredFabric = useMemo(() => {
+    console.log("Raw Fabric Data:", data.fabric); // Debug: Log raw data
+    if (!data.fabric) {
+      console.error("Fabric data is undefined or empty");
+      return [];
     }
+    return data.fabric
+      .filter(row => true) // Temporarily bypass all filters for testing
+      .sort((a, b) => (b["NO."] || "").localeCompare(a["NO."] || "")); // Sort by "NO."
+  }, [data.fabric]);
+
+  const filteredDevelopments = useMemo(() => {
+    if (!data.insert_pattern) return [];
+    return data.insert_pattern
+      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+      .filter(row => !filters.TYPE || (row["STYLE TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
+      .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
+      .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
+      .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
+  }, [data.insert_pattern, search, filters]);
+
+  const getMatchingSalesImage = (fabricRow) => {
+    if (!data.sales_po || !fabricRow["H-NUMBER"]) return null;
+    const matchingSale = data.sales_po.find(sale => sale["H-NUMBER"] === fabricRow["H-NUMBER"]);
+    return matchingSale ? matchingSale.IMAGE : null;
   };
 
-  const handleMouseEnter = (imageUrl, e) => {
-    const windowHeight = window.innerHeight;
-    const mouseY = e.clientY;
-    const showAbove = mouseY > windowHeight * 0.7;
+  const handleMouseEnter = (url, e) => {
+    if (!url) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isNearBottom = window.innerHeight - rect.bottom < 250;
     setPreviewImage({
-      url: imageUrl ? getGoogleDriveThumbnail(imageUrl) : "/fallback-image.png",
+      url: url,
       visible: true,
-      position: { x: e.clientX, y: e.clientY },
-      direction: showAbove ? 'above' : 'below'
+      position: { x: rect.left + rect.width / 2, y: rect.top + window.scrollY },
+      direction: isNearBottom ? 'above' : 'below'
     });
   };
 
@@ -292,103 +304,38 @@ function App() {
     setPreviewImage(prev => ({ ...prev, visible: false }));
   };
 
-  const getMatchingSalesImage = (orderRef) => {
-    const matchingSales = data.sales_po.find(sales => sales["PO NUMBER"] === orderRef);
-    return matchingSales ? matchingSales.IMAGE : null;
-  };
-
   const exportToExcel = () => {
-    let dataToExport, columnOrder;
-    if (activeTab === "dashboard") {
-      dataToExport = filteredSales;
-      columnOrder = [
-        "IMAGE", "FIT STATUS", "H-NUMBER", "CUSTOMER NAME", "PO NUMBER", "STYLE NUMBER", "DESCRIPTION", 
-        "COLOUR", "PRICE", "TOTAL UNITS", "XFACT DD", "REAL DD", "LIVE STATUS", "CMT PRICE", "ACTUAL CMT",
-        "PACKING LIST", "SIZES"
-      ];
-    } else if (activeTab === "fabric") {
-      dataToExport = filteredFabric.map(row => ({
-        ...row,
-        IMAGE: getMatchingSalesImage(row["ORDER REF"]) || "N/A"
-      }));
-      columnOrder = [
-        "NO.", "IMAGE", "DATE", "H-NUMBER", "ORDER REF", "TYPE", 
-        "DESCRIPTION", "COLOUR", "TOTAL", "FABRIC/TRIM PRICE", "FABRIC PO LINKS"
-      ];
-    } else if (activeTab === "developments") {
-      dataToExport = filteredDevelopments;
-      columnOrder = [
-        "TIMESTAMP", "H-NUMBER", "CUSTOMER NAME", "TYPE", "CUSTOMER CODE", "FRONT IMAGE", "BACK IMAGE",
-        "SIDE IMAGE", "FIT SAMPLE", "TOTAL COST", "CMT PRICE", "COSTING LINK"
-      ];
+    let exportData = [];
+    let sheetName = '';
+    if (activeTab === 'sales') {
+      exportData = filteredSales;
+      sheetName = 'Sales';
+    } else if (activeTab === 'fabric') {
+      exportData = filteredFabric;
+      sheetName = 'Fabric';
+    } else if (activeTab === 'developments') {
+      exportData = filteredDevelopments;
+      sheetName = 'Developments';
     }
 
-    const exportData = dataToExport.map(row => {
-      const newRow = {};
-      columnOrder.forEach(key => {
-        const originalKey = key === "FABRIC/TRIM PRICE" ? "FABRIC/TRIM PRICE" : 
-                          key === "FIT SAMPLE" ? "FIT SAMPLE" : 
-                          key === "TIMESTAMP" ? "Timestamp" : key;
-        if (originalKey in row) {
-          if (["PRICE", "CMT PRICE", "ACTUAL CMT", "FABRIC/TRIM PRICE", "TOTAL COST"].includes(originalKey)) {
-            newRow[key] = formatCurrency(row[originalKey]);
-          } else if (["XFACT DD", "REAL DD", "DATE", "TIMESTAMP"].includes(originalKey)) {
-            newRow[key] = formatDate(row[originalKey]);
-          } else if (key === "SIZES") {
-            newRow[key] = compactSizes(row);
-          } else {
-            newRow[key] = row[originalKey];
-          }
-        }
-      });
-      return newRow;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData, { header: columnOrder });
+    const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}Data`);
-
-    const fileName = `High5_${activeTab}_${new Date().toISOString().slice(0,10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `${sheetName}_export.xlsx`);
   };
 
-  // Filtered Data
-  const filteredSales = useMemo(() => {
-    return data.sales_po
-      .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
-      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
-      .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
-  }, [data.sales_po, search, filters]);
-
-  const filteredFabric = useMemo(() => {
-    return data.fabric_po
-      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(fabricFilters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
-      .sort((a, b) => getDateValue(b["DATE"]) - getDateValue(a["DATE"]));
-  }, [data.fabric_po, search, fabricFilters]);
-
-  const filteredDevelopments = useMemo(() => {
-    return data.insert_pattern
-      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => Object.entries(filters).every(([k, v]) => !v || (row[k] || "").toLowerCase() === v.toLowerCase()))
-      .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
-  }, [data.insert_pattern, search, filters]);
-
-  // Loading State
   if (loading) return (
     <div className="loading-screen">
       <div className="loading-content">
         <div className="spinner">
           <FiShoppingBag size={32} className="spin" />
         </div>
-        <h2>Loading Production Dashboard</h2>
+        <h2>Loading High5 Production Dashboard</h2>
         <p>Fetching the latest data...</p>
       </div>
     </div>
   );
 
-  // Error State
   if (error) return (
     <div className="error-screen">
       <div className="error-content">
@@ -408,435 +355,312 @@ function App() {
   );
 
   return (
-    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
-      {/* Main Content */}
-      <div className="main-content">
-        {/* Top Navigation */}
-        <header className="top-nav no-print">
-          <div className="nav-left">
-            <h1>High5 Production Dashboard</h1>
-            <button 
-              className="theme-toggle"
-              onClick={() => setDarkMode(!darkMode)}
-            >
-              <span className="toggle-icon">
-                {darkMode ? '☀️' : '🌙'}
-              </span>
-            </button>
-          </div>
-          <div className="nav-right">
-            <button 
-              className="stats-toggle"
-              onClick={() => setShowStats(!showStats)}
-              style={{ color: colors.primary }}
-            >
-              <FiBarChart2 size={18} />
-            </button>
-          </div>
-        </header>
-
-        {/* Stats Panel */}
-        {showStats && (
-          <div className="stats-panel no-print active">
-            <div className="stats-grid">
-              {[
-                {
-                  title: "Total Orders",
-                  value: productionStats.totalOrders,
-                  icon: <FiShoppingBag size={16} />,
-                  color: colors.primary,
-                },
-                {
-                  title: "Total Units",
-                  value: productionStats.totalUnits,
-                  icon: <FiShoppingBag size={16} />,
-                  color: colors.primary,
-                },
-                {
-                  title: "Orders (Last 30d)",
-                  value: productionStats.deliveredLast30Days,
-                  icon: <FiTruck size={16} />,
-                  color: colors.success,
-                },
-                {
-                  title: "Units (Last 30d)",
-                  value: productionStats.deliveredUnitsLast30Days,
-                  icon: <FiShoppingBag size={16} />,
-                  color: colors.success,
-                },
-                {
-                  title: productionStats.lastQuarterLabel,
-                  value: productionStats.unitsDeliveredLastQuarter,
-                  icon: <FiTruck size={16} />,
-                  color: colors.success,
-                },
-                {
-                  title: "In Prod.",
-                  value: productionStats.inProduction,
-                  icon: <FiClock size={16} />,
-                  color: colors.accent,
-                },
-                {
-                  title: "Fabric Ord.",
-                  value: productionStats.fabricOrdered,
-                  icon: <FiDatabase size={16} />,
-                  color: colors.info,
-                },
-                {
-                  title: "Pend. Units",
-                  value: productionStats.pendingUnits,
-                  icon: <FiAlertCircle size={16} />,
-                  color: colors.warning,
-                },
-                {
-                  title: "Gold Seal Sent",
-                  value: productionStats.goldSealSent,
-                  icon: <FiCheckCircle size={16} />,
-                  color: colors.success,
-                },
-                {
-                  title: "Last Delivery",
-                  value: productionStats.lastDeliveryDateFormatted,
-                  icon: <FiCalendar size={16} />,
-                  color: colors.secondary,
-                },
-                {
-                  title: productionStats.lastYearOrdersLabel,
-                  value: productionStats.ordersLastYear,
-                  icon: <FiBarChart2 size={16} />,
-                  color: colors.secondary,
-                },
-                {
-                  title: productionStats.lastYearLabel,
-                  value: productionStats.unitsDeliveredLastYear,
-                  icon: <FiTruck size={16} />,
-                  color: colors.success,
-                },
-                {
-                  title: productionStats.currentYearLabel,
-                  value: productionStats.unitsDeliveredCurrentYear,
-                  icon: <FiTruck size={16} />,
-                  color: colors.success,
-                },
-              ].map((metric, index) => (
-                <div key={index} className="stat-card">
-                  <div className="stat-icon" style={{ backgroundColor: `${metric.color}20`, color: metric.color }}>
-                    {metric.icon}
-                  </div>
-                  <div className="stat-content">
-                    <div className="stat-value">{metric.value}</div>
-                    <div className="stat-title">{metric.title}</div>
+    <Routes>
+      <Route path="/" element={
+        <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+          <div className="app-content">
+            <header className="app-header no-print">
+              <div className="header-left">
+                <h1 className="app-title">High5 Production Dashboard</h1>
+                <div className="form-links">
+                  {formLinks.map((link, index) => (
+                    link.external ? (
+                      <a
+                        key={index}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="form-link"
+                        style={{ color: link.color }}
+                        aria-label={link.label}
+                      >
+                        {link.icon}
+                        <span>{link.label}</span>
+                      </a>
+                    ) : (
+                      <Link
+                        key={index}
+                        to={link.url}
+                        className="form-link"
+                        style={{ color: link.color }}
+                        aria-label={link.label}
+                      >
+                        {link.icon}
+                        <span>{link.label}</span>
+                      </Link>
+                    )
+                  ))}
+                </div>
+              </div>
+              <div className="header-center">
+                <div className="tab-container">
+                  <div className="tabs">
+                    {["sales", "fabric", "developments", "production"].map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`tab-button ${activeTab === tab ? 'active' : ''}`}
+                      >
+                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Dashboard Content */}
-        <div className="content-wrapper no-print">
-          {/* Form Buttons Row */}
-          <div className="form-links-grid">
-            {formLinks.map((form, index) => (
-              <a
-                key={index}
-                href={form.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="form-link"
-                style={{ backgroundColor: form.color }}
-              >
-                <div className="form-icon">{form.icon}</div>
-                <div className="form-content">
-                  <div className="form-label">{form.label}</div>
-                  <div className="form-subtext">Open</div>
-                </div>
-                <FiExternalLink size={14} />
-              </a>
-            ))}
-          </div>
-
-          {/* Tabs */}
-          <div className="tab-container">
-            <div className="tabs">
-              {[
-                { id: "dashboard", label: "Sales Orders", icon: <FiShoppingBag size={16} /> },
-                { id: "fabric", label: "Fabric Orders", icon: <FiLayers size={16} /> },
-                { id: "developments", label: "Developments", icon: <FiLayers size={16} /> },
-                { id: "production", label: "Production Sheets", icon: <FiPrinter size={16} /> }
-              ].map(tab => (
-                <button 
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              </div>
+              <div className="header-right">
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className="action-button show-stats-button"
                 >
-                  {tab.icon}
-                  {tab.label}
+                  {showStats ? 'Hide Stats' : 'Show Stats'}
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="search-filter-container">
-            <div className="search-box">
-              <FiSearch className="search-icon" size={16} />
-              <input
-                placeholder="Search Orders, Styles, Colors..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="search-input"
-              />
-            </div>
-            
-            <div className="action-buttons">
-              <button
-                onClick={() => {
-                  if (activeTab === "dashboard") {
-                    setFilters({
-                      TYPE: "",
-                      COLOUR: "",
-                      "LIVE STATUS": "",
-                      "FIT STATUS": ""
-                    });
-                  } else if (activeTab === "fabric") {
-                    setFabricFilters({
-                      TYPE: "",
-                      COLOUR: "",
-                      SUPPLIER: ""
-                    });
-                  } else if (activeTab === "developments") {
-                    setFilters({
-                      TYPE: "",
-                      COLOUR: "",
-                      "FIT SAMPLE": ""
-                    });
-                  }
-                  setSearch("");
-                }}
-                className="secondary-button"
-              >
-                <FiFilter size={14} /> Clear Filters
-              </button>
-
-              <button
-                onClick={exportToExcel}
-                className="primary-button"
-              >
-                <FiDownload size={14} /> Export
-              </button>
-
-              <button
-                onClick={() => window.print()}
-                className="secondary-button"
-              >
-                <FiPrinter size={14} /> Print
-              </button>
-            </div>
-          </div>
-
-          {/* Sales PO Tab */}
-          {activeTab === "dashboard" && (
-            <div className="tab-content">
-              <div className="filter-grid">
-                {Object.keys(filters).filter(key => key !== "STYLE TYPE" && key !== "CUSTOMER NAME" && key !== "FIT SAMPLE").map((key) => (
-                  <div key={key} className="filter-item">
-                    <label className="filter-label">{key}</label>
-                    <select
-                      value={filters[key]}
-                      onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
-                      className="filter-select"
-                    >
-                      <option value="">All {key}</option>
-                      {[...new Set(data.sales_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
-                        <option key={i} value={value}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="action-button dark-mode-toggle"
+                >
+                  {darkMode ? 'Light Mode' : 'Dark Mode'}
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  className="action-button export-button"
+                >
+                  <FiDownload size={14} /> Export
+                </button>
               </div>
+            </header>
 
-              <div className="table-container">
-                <SalesTable
-                  data={filteredSales}
-                  filters={filters}
-                  setFilters={setFilters}
-                  colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  compactSizes={compactSizes}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredSales.length}
-                  itemsPerPage={itemsPerPage}
-                />
-              </div>
-            </div>
-          )}
+            {showStats && (
+              <StatsPanel productionStats={productionStats} colors={colors} />
+            )}
 
-          {/* Fabric PO Tab */}
-          {activeTab === "fabric" && (
-            <div className="tab-content">
-              <div className="filter-grid">
-                {Object.keys(fabricFilters).map((key) => (
-                  <div key={key} className="filter-item">
-                    <label className="filter-label">{key}</label>
-                    <select
-                      value={fabricFilters[key] || ""}
-                      onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
-                      className="filter-select"
-                    >
-                      <option value="">All {key}</option>
-                      {[...new Set(data.fabric_po.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
-                        <option key={i} value={value}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-
-              <div className="table-container">
-                <FabricTable
-                  data={filteredFabric}
-                  fabricFilters={fabricFilters}
-                  setFabricFilters={setFabricFilters}
-                  colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  getMatchingSalesImage={getMatchingSalesImage}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredFabric.length}
-                  itemsPerPage={itemsPerPage}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Developments Tab */}
-          {activeTab === "developments" && (
-            <div className="tab-content">
-              <div className="filter-grid">
-                {["TYPE", "COLOUR", "FIT SAMPLE"].map((key) => (
-                  <div key={key} className="filter-item">
-                    <label className="filter-label">{key}</label>
-                    <select
-                      value={filters[key] || ""}
-                      onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
-                      className="filter-select"
-                    >
-                      <option value="">All {key}</option>
-                      {[...new Set(data.insert_pattern.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
-                        <option key={i} value={value}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-              <div className="table-container">
-                <DevelopmentsTable
-                  data={filteredDevelopments}
-                  filters={filters}
-                  setFilters={setFilters}
-                  colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredDevelopments.length}
-                  itemsPerPage={itemsPerPage}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Production Sheets Tab */}
-          {activeTab === "production" && (
-            <div className="tab-content no-print">
-              <div className="po-input-container">
-                <div className="filter-item" style={{ flex: 1 }}>
-                  <textarea
-                    value={poInput}
-                    onChange={(e) => setPoInput(e.target.value)}
-                    placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
-                    rows={1}
-                    className="filter-select"
-                    style={{ width: '100%', height: '40px', overflow: 'hidden' }}
+            <div className="main-content">
+              <div className="search-box-container">
+                <div className="search-box">
+                  <FiSearch size={16} />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search..."
+                    aria-label="Search sales, fabric, or developments"
                   />
                 </div>
-                <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    onClick={() => {
-                      const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
-                      setSelectedPOs(pos);
-                    }}
-                    className="primary-button"
-                  >
-                    Generate Sheets
-                  </button>
-                  <button onClick={() => window.print()} className="primary-button">
-                    <FiPrinter size={14} /> Print Sheets
-                  </button>
-                </div>
               </div>
 
-              {selectedPOs.length > 0 && (
-                <div className="sheets-container" style={{ marginTop: '20px' }}>
-                  <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                  <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+              {activeTab !== "production" && (
+                <div className="filter-container no-print">
+                  {activeTab === "sales" && (
+                    <div className="filter-row">
+                      {[
+                        { key: "TYPE", label: "Type", options: [...new Set(data.sales_po?.map(row => row["TYPE"]).filter(Boolean))] },
+                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.sales_po?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
+                        { key: "LIVE STATUS", label: "Live Status", options: [...new Set(data.sales_po?.map(row => row["LIVE STATUS"]).filter(Boolean))] },
+                        { key: "FIT STATUS", label: "Fit Status", options: [...new Set(data.sales_po?.map(row => row["FIT STATUS"]).filter(Boolean))] }
+                      ].map(filter => (
+                        <div key={filter.key} className="filter-item">
+                          <label>{filter.label}</label>
+                          <select
+                            value={filters[filter.key]}
+                            onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
+                            className="filter-select"
+                          >
+                            <option value="">All</option>
+                            {filter.options.map((option, i) => (
+                              <option key={i} value={option}>{option}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {activeTab === "fabric" && (
+                    <div className="filter-row">
+                      {[
+                        { key: "TYPE", label: "Type", options: [...new Set(data.fabric?.map(row => row["TYPE"]).filter(Boolean))] },
+                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.fabric?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
+                        { key: "SUPPLIER", label: "Supplier", options: [...new Set(data.fabric?.map(row => row["SUPPLIER"]).filter(Boolean))] }
+                      ].map(filter => (
+                        <div key={filter.key} className="filter-item">
+                          <label>{filter.label}</label>
+                          <select
+                            value={fabricFilters[filter.key]}
+                            onChange={(e) => setFabricFilters({ ...fabricFilters, [filter.key]: e.target.value })}
+                            className="filter-select"
+                          >
+                            <option value="">All</option>
+                            {filter.options.map((option, i) => (
+                              <option key={i} value={option}>{option}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {activeTab === "developments" && (
+                    <div className="filter-row">
+                      {[
+                        { key: "STYLE TYPE", label: "Style Type", options: [...new Set(data.insert_pattern?.map(row => row["STYLE TYPE"]).filter(Boolean))] },
+                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.insert_pattern?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
+                        { key: "FIT SAMPLE", label: "Fit Sample", options: [...new Set(data.insert_pattern?.map(row => row["FIT SAMPLE"]).filter(Boolean))] }
+                      ].map(filter => (
+                        <div key={filter.key} className="filter-item">
+                          <label>{filter.label}</label>
+                          <select
+                            value={filters[filter.key]}
+                            onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
+                            className="filter-select"
+                          >
+                            <option value="">All</option>
+                            {filter.options.map((option, i) => (
+                              <option key={i} value={option}>{option}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "sales" && (
+                <div className="table-container">
+                  <SalesTable
+                    data={filteredSales}
+                    filters={filters}
+                    setFilters={setFilters}
+                    colors={colors}
+                    handleMouseEnter={handleMouseEnter}
+                    handleMouseLeave={handleMouseLeave}
+                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                    getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    compactSizes={compactSizes}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalItems={filteredSales.length}
+                    itemsPerPage={itemsPerPage}
+                  />
+                </div>
+              )}
+
+              {activeTab === "fabric" && (
+                <div className="table-container">
+                  <FabricTable
+                    data={filteredFabric}
+                    fabricFilters={fabricFilters}
+                    setFabricFilters={setFabricFilters}
+                    colors={colors}
+                    handleMouseEnter={handleMouseEnter}
+                    handleMouseLeave={handleMouseLeave}
+                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                    getMatchingSalesImage={getMatchingSalesImage}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalItems={filteredFabric.length}
+                    itemsPerPage={itemsPerPage}
+                  />
+                </div>
+              )}
+
+              {activeTab === "developments" && (
+                <div className="table-container">
+                  <DevelopmentsTable
+                    data={filteredDevelopments}
+                    filters={filters}
+                    setFilters={setFilters}
+                    colors={colors}
+                    handleMouseEnter={handleMouseEnter}
+                    handleMouseLeave={handleMouseLeave}
+                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    totalItems={filteredDevelopments.length}
+                    itemsPerPage={itemsPerPage}
+                  />
+                </div>
+              )}
+
+              {activeTab === "production" && (
+                <div className="no-print">
+                  <div className="po-input-container">
+                    <div className="filter-item" style={{ flex: 1 }}>
+                      <textarea
+                        value={poInput}
+                        onChange={(e) => setPoInput(e.target.value)}
+                        placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
+                        rows={1}
+                        className="filter-select"
+                        style={{ width: '100%', height: '40px', overflow: 'hidden' }}
+                      />
+                    </div>
+                    <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button
+                        onClick={() => {
+                          const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
+                          setSelectedPOs(pos);
+                        }}
+                        className="action-button generate-button"
+                      >
+                        Generate Sheets
+                      </button>
+                      <button onClick={() => window.print()} className="action-button print-button">
+                        <FiPrinter size={14} /> Print Sheets
+                      </button>
+                    </div>
+                  </div>
+
+                  {selectedPOs.length > 0 && (
+                    <div className="sheets-container" style={{ marginTop: '20px' }}>
+                      <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                      <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+
+            {previewImage.visible && (
+              <div 
+                className={`image-preview ${previewImage.direction} no-print`}
+                style={{
+                  left: `${previewImage.position.x}px`,
+                  [previewImage.direction === 'below' ? 'top' : 'bottom']: 
+                    `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
+                }}
+              >
+                <img 
+                  src={previewImage.url} 
+                  alt="Preview"
+                  className="preview-image"
+                />
+                <div className="preview-arrow"></div>
+              </div>
+            )}
+
+            <footer className="app-footer no-print">
+              <div className="footer-content">
+                <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
+                <div>
+                  Last Updated: {new Date().toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              </div>
+            </footer>
+          </div>
         </div>
-
-        {/* Image Preview */}
-        {previewImage.visible && (
-          <div 
-            className={`image-preview ${previewImage.direction} no-print`}
-            style={{
-              left: `${previewImage.position.x}px`,
-              [previewImage.direction === 'below' ? 'top' : 'bottom']: 
-                `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
-            }}
-          >
-            <img 
-              src={previewImage.url} 
-              alt="Preview"
-              className="preview-image"
-              onError={(e) => { e.target.src = "/fallback-image.png"; }}
-            />
-            <div className="preview-arrow"></div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <footer className="app-footer no-print">
-          <div className="footer-content">
-            <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
-            <div>
-              Last Updated: {new Date().toLocaleString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </div>
-          </div>
-        </footer>
-      </div>
-    </div>
+      } />
+      <Route path="/pd-kaiia" element={<CustomerPage />} />
+    </Routes>
   );
 }
 

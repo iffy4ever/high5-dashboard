@@ -14,8 +14,8 @@ const DocketSheet = ({ selectedData }) => {
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="red-text" style={{ lineHeight: 'fit-content' }}>{row["H-NUMBER"] || ""}</td>
-              <td colSpan={7} style={{ lineHeight: 'fit-content' }}>{row["DESCRIPTION"] || ""}</td>
+              <td className="red-text">{row["H-NUMBER"] || ""}</td>
+              <td colSpan={7}>{row["DESCRIPTION"] || ""}</td>
             </tr>
           ))}
         </tbody>
@@ -28,7 +28,7 @@ const DocketSheet = ({ selectedData }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '2mm', marginBottom: '3mm', overflow: 'hidden', border: '1px solid #000000' }}>
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40mm' }}>
-            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="lazy" onError={(e) => { e.target.src = "/fallback-image.png"; }} /> : 'No Image'}
+            {i < numPOs && paddedData[i].IMAGE ? <img src={getGoogleDriveThumbnail(paddedData[i].IMAGE)} alt={paddedData[i]["DESCRIPTION"]} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="lazy" /> : 'No Image'}
           </div>
         ))}
       </div>
@@ -36,28 +36,28 @@ const DocketSheet = ({ selectedData }) => {
       <table className="table">
         <thead>
           <tr>
-            <th style={{ width: '15%', lineHeight: 'fit-content' }}>PO Number</th>
-            <th style={{ width: '25%', lineHeight: 'fit-content' }}>Style #</th>
-            <th style={{ width: '20%', lineHeight: 'fit-content' }}>Colour</th>
-            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Department</th>
-            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Units</th>
-            <th style={{ width: '10%', lineHeight: 'fit-content' }}>H Number</th>
-            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Type</th>
-            <th style={{ width: '10%', lineHeight: 'fit-content' }}>Total</th>
+            <th style={{ width: '15%' }}>PO Number</th>
+            <th style={{ width: '25%' }}>Style #</th>
+            <th style={{ width: '20%' }}>Colour</th>
+            <th style={{ width: '10%' }}>Department</th>
+            <th style={{ width: '10%' }}>Units</th>
+            <th style={{ width: '10%' }}>H Number</th>
+            <th style={{ width: '10%' }}>Type</th>
+            <th style={{ width: '10%' }}>Total</th>
           </tr>
         </thead>
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data red-text" style={{ lineHeight: 'fit-content' }}>{row["PO NUMBER"] || ""}</td>
-              <td style={{ lineHeight: 'fit-content' }}>{row["STYLE NUMBER"] || ""}</td>
-              <td className="main-data" style={{ lineHeight: 'fit-content' }}>{row["COLOUR"] || ""}</td>
-              <td style={{ lineHeight: 'fit-content' }}>{row["DEPARTMENT"] || "-"}</td>
-              <td style={{ lineHeight: 'fit-content' }}>{row["TOTAL UNITS"] || ""}</td>
-              <td className="red-text" style={{ lineHeight: 'fit-content' }}>{row["H-NUMBER"] || ""}</td>
-              <td style={{ lineHeight: 'fit-content' }}>{row["TYPE"] || ""}</td>
+              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
+              <td>{row["STYLE NUMBER"] || ""}</td>
+              <td className="main-data">{row["COLOUR"] || ""}</td>
+              <td>{row["DEPARTMENT"] || "-"}</td>
+              <td>{row["TOTAL UNITS"] || ""}</td>
+              <td className="red-text">{row["H-NUMBER"] || ""}</td>
+              <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle', lineHeight: 'fit-content' }}>
+                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle' }}>
                   {totalUnits}
                 </td>
               )}
@@ -75,25 +75,25 @@ const DocketSheet = ({ selectedData }) => {
         </colgroup>
         <thead>
           <tr>
-            <th style={{ lineHeight: 'fit-content' }}>SIZES</th>
+            <th>SIZES</th>
             {paddedData.map((row, i) => (
-              <th key={i} style={{ lineHeight: 'fit-content' }}>{row["TYPE"] || ""} {row["PO NUMBER"] || ""}</th>
+              <th key={i}>{row["TYPE"] || ""} {row["PO NUMBER"] || ""}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {["4", "6", "8", "10", "12", "14", "16", "18"].map(size => (
             <tr key={size}>
-              <td style={{ lineHeight: 'fit-content' }}>UK {size}</td>
+              <td>UK {size}</td>
               {paddedData.map((row, j) => (
-                <td key={j} style={{ lineHeight: 'fit-content' }}>{row[size] || ""}</td>
+                <td key={j}>{row[size] || ""}</td>
               ))}
             </tr>
           ))}
           <tr className="total-row">
-            <td style={{ lineHeight: 'fit-content' }}>TOTAL : -</td>
+            <td>TOTAL : -</td>
             {paddedData.map((row, i) => (
-              <td key={i} style={{ lineHeight: 'fit-content' }}>{row["TOTAL UNITS"] || ""}</td>
+              <td key={i}>{row["TOTAL UNITS"] || ""}</td>
             ))}
           </tr>
         </tbody>
@@ -102,11 +102,11 @@ const DocketSheet = ({ selectedData }) => {
       <table className="notes-section">
         <tbody>
           <tr>
-            <td style={{ lineHeight: 'fit-content' }}>NOTES : -</td>
+            <td>NOTES : -</td>
           </tr>
           {Array.from({ length: 1 }).map((_, i) => (
             <tr key={i}>
-              <td style={{ lineHeight: 'fit-content' }}></td>
+              <td></td>
             </tr>
           ))}
         </tbody>

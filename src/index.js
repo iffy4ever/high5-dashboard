@@ -1,18 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter as Router } from 'react-router-dom';
 import App from './App';
-import CustomerPage from './components/CustomerPage';
-import './index.css';
+import './styles.css';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const container = document.getElementById('root');
+const root = createRoot(container);
 root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/pd-kaiia" element={<CustomerPage />} />
-      </Routes>
-    </BrowserRouter>
-  </React.StrictMode>
+  <Router>
+    <App />
+  </Router>
 );
