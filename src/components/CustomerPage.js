@@ -1,7 +1,6 @@
-// src/components/CustomerPage.js
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign } from 'react-icons/fi';
+import { FiSearch, FiAlertCircle, FiShoppingBag } from 'react-icons/fi';
 import { useData } from '../useData';
 import { getGoogleDriveThumbnail, formatDate, getDateValue, formatCurrency } from '../utils/index';
 import '../styles.css';
@@ -25,77 +24,6 @@ const CustomerPage = () => {
     direction: 'below'
   });
   const [darkMode, setDarkMode] = useState(false);
-
-  // PURE BLACK TEXT COLORS
-  const colors = darkMode ? {
-    primary: "#6366F1",
-    primaryLight: "#818CF8",
-    primaryDark: "#4F46E5",
-    secondary: "#EC4899",
-    secondaryLight: "#F472B6",
-    secondaryDark: "#DB2777",
-    accent: "#F59E0B",
-    accentLight: "#FBBF24",
-    accentDark: "#D97706",
-    danger: "#EF4444",
-    success: "#10B981",
-    warning: "#F59E0B",
-    info: "#3B82F6",
-    textDark: "#000000", // PURE BLACK
-    textMedium: "#000000", // PURE BLACK
-    textLight: "#FFFFFF",
-    background: "#111827",
-    cardBg: "#1F2937",
-    border: "#374151",
-    rowEven: "#1F2937",
-    rowOdd: "#111827",
-    headerBg: "#374151",
-    headerText: "#000000", // PURE BLACK
-    activeTab: "#CD5E77",
-    inactiveTab: "#6B7280",
-    actionButton: "#1B4D3E",
-    statCardBg: "#1F2937",
-    statCardBorder: "#374151",
-    accentRgb: "245, 158, 11",
-    successRgb: "16, 185, 129",
-    warningRgb: "245, 158, 11",
-    infoRgb: "59, 130, 246",
-    activeTabRgb: "205, 94, 119"
-  } : {
-    primary: "#6366F1",
-    primaryLight: "#818CF8",
-    primaryDark: "#4F46E5",
-    secondary: "#EC4899",
-    secondaryLight: "#F472B6",
-    secondaryDark: "#DB2777",
-    accent: "#F59E0B",
-    accentLight: "#FBBF24",
-    accentDark: "#D97706",
-    danger: "#EF4444",
-    success: "#10B981",
-    warning: "#F59E0B",
-    info: "#3B82F6",
-    textDark: "#000000", // PURE BLACK
-    textMedium: "#000000", // PURE BLACK
-    textLight: "#FFFFFF",
-    background: "#F9FAFB",
-    cardBg: "#FFFFFF",
-    border: "#E5E7EB",
-    rowEven: "#FFFFFF",
-    rowOdd: "#F9FAFB",
-    headerBg: "#F3F4F6",
-    headerText: "#000000", // PURE BLACK
-    activeTab: "#CD5E77",
-    inactiveTab: "#9CA3AF",
-    actionButton: "#1B4D3E",
-    statCardBg: "#FFFFFF",
-    statCardBorder: "#E5E7EB",
-    accentRgb: "245, 158, 11",
-    successRgb: "16, 185, 129",
-    warningRgb: "245, 158, 11",
-    infoRgb: "59, 130, 246",
-    activeTabRgb: "205, 94, 119"
-  };
 
   const filteredDevelopments = useMemo(() => {
     if (!data.insert_pattern) return [];
@@ -472,8 +400,12 @@ const CustomerPage = () => {
               className={`image-preview ${previewImage.direction} no-print`}
               style={{
                 left: `${previewImage.position.x}px`,
-                [previewImage.direction === 'below' ? 'top' : 'bottom']: 
-                  `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
+                top: previewImage.direction === 'below' ? 
+                  `${previewImage.position.y + 20}px` : 
+                  'auto',
+                bottom: previewImage.direction === 'above' ? 
+                  `${window.innerHeight - previewImage.position.y + 20}px` : 
+                  'auto'
               }}
             >
               <img 

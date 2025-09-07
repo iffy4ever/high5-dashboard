@@ -111,7 +111,6 @@ export const getGoogleDriveDownloadLink = (url) => {
     // Validate file ID format
     if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) {
       console.warn("Invalid file ID format:", fileId, "URL:", url);
-      return url;
     }
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
     console.log("Generated download URL:", downloadUrl); // Debug log

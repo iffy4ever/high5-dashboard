@@ -2,9 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import * as XLSX from 'xlsx';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import {
-  FiTruck, FiCalendar, FiClock, FiAlertCircle,
-  FiDatabase, FiDownload, FiFilter, FiSearch, FiExternalLink,
-  FiFileText, FiLayers, FiShoppingBag, FiPrinter, FiBarChart2, FiCheckCircle, FiUsers
+  FiAlertCircle, FiDownload, FiSearch,
+  FiFileText, FiLayers, FiShoppingBag, FiPrinter, FiUsers
 } from 'react-icons/fi';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
@@ -18,7 +17,12 @@ import { useData } from './useData';
 import './styles.css';
 
 function App() {
-  const { data, loading, error } = useData();
+  // For development/testing - set to false when Google Script is working
+  const USE_MOCK_DATA = process.env.NODE_ENV === 'development';
+  
+  const { data: realData, loading, error } = useData();
+  const data = USE_MOCK_DATA ? { sales_po: [], fabric: [], insert_pattern: [] } : realData;
+  
   console.log("Full Data Object:", data);
   console.log("Fabric Data:", data?.fabric);
 
@@ -145,7 +149,7 @@ function App() {
       url: "/pd-kaiia",
       icon: <FiUsers size={16} />,
       color: colors.accent,
-      external: true
+      external: false
     }
   ];
 
@@ -617,7 +621,7 @@ function App() {
                         <button onClick={() => window.print()} className="action-button print-button">
                           <FiPrinter size={14} /> Print Sheets
                         </button>
-                        </div>
+                      </div>
                     </div>
 
                     {selectedPOs.length > 0 && (
@@ -635,8 +639,12 @@ function App() {
                   className={`image-preview ${previewImage.direction} no-print`}
                   style={{
                     left: `${previewImage.position.x}px`,
-                    [previewImage.direction === 'below' ? 'top' : 'bottom']: 
-                      `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
+                    top: previewImage.direction === 'below' ? 
+                      `${previewImage.position.y + 20}px` : 
+                      'auto',
+                    bottom: previewImage.direction === 'above' ? 
+                      `${window.innerHeight - previewImage.position.y + 20}px` : 
+                      'auto'
                   }}
                 >
                   <img 
