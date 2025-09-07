@@ -17,6 +17,8 @@ echo 4. Pushing to main branch...
 git push origin main
 
 echo.
-echo ✅ Update completed successfully!
+echo ✅ GitHub update completed successfully!
+echo.
+echo 📦 Vercel will automatically deploy the new version...
 echo.
 pause
