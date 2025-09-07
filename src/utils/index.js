@@ -16,63 +16,52 @@ export const getColorCode = (color) => {
   return "#7C3AED";
 };
 
-<<<<<<< HEAD
 // Date formatting function
-export const formatDate = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+export const formatDate = (value) => {
+  if (!value) return "";
+  try {
+    let date;
+    if (typeof value === 'number') {
+      date = new Date((value - 25569) * 86400 * 1000);
+    } else {
+      date = new Date(value);
+    }
+    if (isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return String(value);
+  }
 };
 
 // Date value extraction function
-export const getDateValue = (dateString) => {
-  if (!dateString) return 0;
-  const date = new Date(dateString);
-  return date.getTime();
+export const getDateValue = (value) => {
+  if (!value) return 0;
+  let date;
+  if (typeof value === 'number') {
+    date = new Date((value - 25569) * 86400 * 1000);
+  } else {
+    date = new Date(value);
+  }
+  return isNaN(date.getTime()) ? 0 : date.getTime();
 };
 
 // Currency formatting function
-export const formatCurrency = (amount) => {
-  if (!amount) return "£0.00";
+export const formatCurrency = (value) => {
+  if (!value) return "£0.00";
+  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',
-    currency: 'GBP'
-  }).format(amount);
+    currency: 'GBP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
 };
 
 // Google Drive thumbnail URL generator
-export const getGoogleDriveThumbnail = (url) => {
-  if (!url) return "";
-  if (url.includes('drive.google.com')) {
-    const fileId = url.match(/[-\w]{25,}/);
-    if (fileId) {
-      return `https://drive.google.com/thumbnail?id=${fileId[0]}&sz=w1000`;
-    }
-  }
-  return url;
-};
-
-// Google Drive download link generator
-export const getGoogleDriveDownloadLink = (url) => {
-  if (!url) return "";
-  if (url.includes('drive.google.com')) {
-    const fileId = url.match(/[-\w]{25,}/);
-    if (fileId) {
-      return `https://drive.google.com/uc?export=download&id=${fileId[0]}`;
-    }
-  }
-  return url;
-};
-
-// Size compacting function
-export const compactSizes = (sizes) => {
-  if (!sizes || !Array.isArray(sizes)) return "";
-  return sizes.join(', ');
-=======
 export const getGoogleDriveThumbnail = (url) => {
   console.log("getGoogleDriveThumbnail called with URL:", url); // Debug log
   if (!url || typeof url !== 'string') {
@@ -106,59 +95,7 @@ export const getGoogleDriveThumbnail = (url) => {
   }
 };
 
-export const getDateValue = (value) => {
-  if (!value) return 0;
-  let date;
-  if (typeof value === 'number') {
-    date = new Date((value - 25569) * 86400 * 1000);
-  } else {
-    date = new Date(value);
-  }
-  return isNaN(date.getTime()) ? 0 : date.getTime();
-};
-
-export const formatDate = (value) => {
-  if (!value) return "";
-  try {
-    let date;
-    if (typeof value === 'number') {
-      date = new Date((value - 25569) * 86400 * 1000);
-    } else {
-      date = new Date(value);
-    }
-    if (isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  } catch {
-    return String(value);
-  }
-};
-
-export const formatCurrency = (value) => {
-  if (!value) return "£0.00";
-  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(number);
-};
-
-export const compactSizes = (row) => {
-  const sizes = [];
-  for (let i = 4; i <= 26; i += 2) {
-    const size = i.toString();
-    if (row[size]) {
-      sizes.push(`${size}:${row[size]}`);
-    }
-  }
-  return sizes.join(', ');
-};
-
+// Google Drive download link generator
 export const getGoogleDriveDownloadLink = (url) => {
   console.log("getGoogleDriveDownloadLink called with URL:", url); // Debug log
   if (!url || typeof url !== 'string') {
@@ -183,5 +120,16 @@ export const getGoogleDriveDownloadLink = (url) => {
     console.error("Error generating download URL:", e, "URL:", url);
     return url;
   }
->>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
+};
+
+// Size compacting function
+export const compactSizes = (row) => {
+  const sizes = [];
+  for (let i = 4; i <= 26; i += 2) {
+    const size = i.toString();
+    if (row[size]) {
+      sizes.push(`${size}:${row[size]}`);
+    }
+  }
+  return sizes.join(', ');
 };
