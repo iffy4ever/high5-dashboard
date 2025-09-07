@@ -1,25 +1,24 @@
 @echo off
-echo Removing Vercel config to use defaults...
+echo Updating GitHub repository...
 echo.
 
 cd /d "C:\Users\%USERNAME%\Desktop\high5-dashboard"
 
-echo 1. Removing vercel.json and .vercelrc...
-del vercel.json 2>nul
-del .vercelrc 2>nul
+echo 1. Pulling latest changes...
+git pull origin main
 
-echo 2. Keeping only the essential .env file...
-(
-echo NODE_OPTIONS=--openssl-legacy-provider
-echo GENERATE_SOURCEMAP=false
-) > .env
-
-echo 3. Updating git...
+echo 2. Adding all changes...
 git add .
-git commit -m "Fix: Use Vercel default configuration"
+
+echo 3. Committing with timestamp...
+git commit -m "Update: %date% %time%"
+
+echo 4. Pushing to main branch...
 git push origin main
 
 echo.
-echo ✅ Removed custom Vercel config. Using defaults now.
+echo ✅ GitHub update completed successfully!
+echo.
+echo 📦 Vercel will automatically deploy within 1-2 minutes...
 echo.
 pause
