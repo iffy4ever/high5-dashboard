@@ -1,6 +1,6 @@
 {
   "name": "dashboard-app",
-  "version": "0.1.0",
+  "version": "!NEW_VERSION!",
   "private": true,
   "engines": {
     "node": "22.x"
@@ -40,4 +40,3 @@
     "react-scripts": "5.0.1"
   }
 }
-// Cache bust: 07/09/2025 21:41:45.74 
