@@ -1,6 +1,6 @@
 {
   "name": "dashboard-app",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "engines": {
     "node": "22.x"
@@ -22,18 +22,6 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
     ]
   },
   "devDependencies": {
