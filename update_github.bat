@@ -1,43 +1,23 @@
 @echo off
-echo GitHub Update Script with Branch Detection
+echo Updating GitHub repository...
 echo.
 
+REM Navigate to your repository
 cd /d "C:\Users\%USERNAME%\Desktop\high5-dashboard"
 
-echo Step 1: Checking git...
-git --version
-if errorlevel 1 goto error
+REM Pull latest changes first to avoid conflicts
+git pull origin main
 
-echo.
-echo Step 2: Getting current branch...
-for /f "tokens=*" %%i in ('git branch --show-current 2^>nul') do set CURRENT_BRANCH=%%i
-
-if "%CURRENT_BRANCH%"=="" (
-    echo ERROR: Could not determine current branch
-    pause
-    exit /b 1
-)
-
-echo Current branch: %CURRENT_BRANCH%
-
-echo.
-echo Step 3: Adding files...
+REM Add all changes
 git add .
 
-echo.
-echo Step 4: Committing...
+REM Commit with timestamp
 git commit -m "Auto-update: %date% %time%"
 
-echo.
-echo Step 5: Pushing to %CURRENT_BRANCH% branch...
-git push origin %CURRENT_BRANCH%
+REM Push to main branch
+git push origin main
 
 echo.
-echo SUCCESS: Pushed to %CURRENT_BRANCH% branch!
+echo Update completed successfully!
+echo.
 pause
-exit /b 0
-
-:error
-echo ERROR: Git not found
-pause
-exit /b 1

@@ -26,7 +26,10 @@ const CustomerPage = () => {
   });
   const [darkMode, setDarkMode] = useState(false);
 
+<<<<<<< HEAD
   // PURE BLACK TEXT COLORS
+=======
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
   const colors = darkMode ? {
     primary: "#6366F1",
     primaryLight: "#818CF8",
@@ -41,8 +44,13 @@ const CustomerPage = () => {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
+<<<<<<< HEAD
     textDark: "#000000", // PURE BLACK
     textMedium: "#000000", // PURE BLACK
+=======
+    textDark: "#F3F4F6",
+    textMedium: "#9CA3AF",
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
     textLight: "#FFFFFF",
     background: "#111827",
     cardBg: "#1F2937",
@@ -50,7 +58,11 @@ const CustomerPage = () => {
     rowEven: "#1F2937",
     rowOdd: "#111827",
     headerBg: "#374151",
+<<<<<<< HEAD
     headerText: "#000000", // PURE BLACK
+=======
+    headerText: "#000000",
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
     activeTab: "#CD5E77",
     inactiveTab: "#6B7280",
     actionButton: "#1B4D3E",
@@ -75,8 +87,13 @@ const CustomerPage = () => {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
+<<<<<<< HEAD
     textDark: "#000000", // PURE BLACK
     textMedium: "#000000", // PURE BLACK
+=======
+    textDark: "#1F2937",
+    textMedium: "#6B7280",
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
     textLight: "#FFFFFF",
     background: "#F9FAFB",
     cardBg: "#FFFFFF",
@@ -84,7 +101,11 @@ const CustomerPage = () => {
     rowEven: "#FFFFFF",
     rowOdd: "#F9FAFB",
     headerBg: "#F3F4F6",
+<<<<<<< HEAD
     headerText: "#000000", // PURE BLACK
+=======
+    headerText: "#000000",
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
     activeTab: "#CD5E77",
     inactiveTab: "#9CA3AF",
     actionButton: "#1B4D3E",
@@ -125,6 +146,7 @@ const CustomerPage = () => {
 
   const handleMouseEnter = (url, e) => {
     if (!url) return;
+<<<<<<< HEAD
     
     // Preload image for faster display
     const img = new Image();
@@ -134,6 +156,12 @@ const CustomerPage = () => {
     const isNearBottom = window.innerHeight - rect.bottom < 250;
     setPreviewImage({
       url: getGoogleDriveThumbnail(url),
+=======
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isNearBottom = window.innerHeight - rect.bottom < 250;
+    setPreviewImage({
+      url: url,
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
       visible: true,
       position: { x: rect.left + rect.width / 2, y: rect.top + window.scrollY },
       direction: isNearBottom ? 'above' : 'below'
@@ -317,6 +345,14 @@ const CustomerPage = () => {
                                   loading="eager"
                                   fetchPriority="high"
                                   onError={(e) => {
+<<<<<<< HEAD
+=======
+                                    console.error("CustomerPage front image failed to load:", {
+                                      url: row["FRONT IMAGE"],
+                                      message: e.message,
+                                      rowData: row
+                                    });
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                                     e.target.src = "/fallback-image.png";
                                   }}
                                 />
@@ -325,6 +361,10 @@ const CustomerPage = () => {
                           ) : (
                             <div className="no-image">
                               No Image
+<<<<<<< HEAD
+=======
+                              {console.warn("No FRONT IMAGE field in row:", row)}
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                             </div>
                           )}
                         </td>
@@ -342,6 +382,14 @@ const CustomerPage = () => {
                                   loading="eager"
                                   fetchPriority="high"
                                   onError={(e) => {
+<<<<<<< HEAD
+=======
+                                    console.error("CustomerPage back image failed to load:", {
+                                      url: row["BACK IMAGE"],
+                                      message: e.message,
+                                      rowData: row
+                                    });
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                                     e.target.src = "/fallback-image.png";
                                   }}
                                 />
@@ -350,6 +398,10 @@ const CustomerPage = () => {
                           ) : (
                             <div className="no-image">
                               No Image
+<<<<<<< HEAD
+=======
+                              {console.warn("No BACK IMAGE field in row:", row)}
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                             </div>
                           )}
                         </td>
@@ -367,6 +419,14 @@ const CustomerPage = () => {
                                   loading="eager"
                                   fetchPriority="high"
                                   onError={(e) => {
+<<<<<<< HEAD
+=======
+                                    console.error("CustomerPage side image failed to load:", {
+                                      url: row["SIDE IMAGE"],
+                                      message: e.message,
+                                      rowData: row
+                                    });
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                                     e.target.src = "/fallback-image.png";
                                   }}
                                 />
@@ -375,6 +435,10 @@ const CustomerPage = () => {
                           ) : (
                             <div className="no-image">
                               No Image
+<<<<<<< HEAD
+=======
+                              {console.warn("No SIDE IMAGE field in row:", row)}
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                             </div>
                           )}
                         </td>
@@ -434,6 +498,14 @@ const CustomerPage = () => {
                                   loading="eager"
                                   fetchPriority="high"
                                   onError={(e) => {
+<<<<<<< HEAD
+=======
+                                    console.error("CustomerPage order image failed to load:", {
+                                      url: row.IMAGE,
+                                      message: e.message,
+                                      rowData: row
+                                    });
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                                     e.target.src = "/fallback-image.png";
                                   }}
                                 />
@@ -442,6 +514,10 @@ const CustomerPage = () => {
                           ) : (
                             <div className="no-image">
                               No Image
+<<<<<<< HEAD
+=======
+                              {console.warn("No IMAGE field in order row:", row)}
+>>>>>>> c129a8780512417f34c98b60f05e1a8274a6d248
                             </div>
                           )}
                         </td>
