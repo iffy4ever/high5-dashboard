@@ -1,5 +1,6 @@
+// src/components/FabricTable.js
 import React from 'react';
-import { FiAlertCircle, FiImage, FiDollarSign } from 'react-icons/fi';
+import { FiAlertCircle, FiImage, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { getColorCode } from '../utils';
 
 const FabricTable = ({
@@ -22,42 +23,29 @@ const FabricTable = ({
 
   return (
     <>
-      <div className="filter-grid">
-        {Object.keys(fabricFilters).map((key) => (
-          <div key={key} className="filter-item">
-            <label className="filter-label">
-              {key}
-            </label>
-            <select
-              value={fabricFilters[key] || ""}
-              onChange={(e) => setFabricFilters({ ...fabricFilters, [key]: e.target.value })}
-              className="filter-select"
-            >
-              <option value="">All {key}</option>
-              {[...new Set(data.map(item => item[key]).filter(Boolean))].sort().map((value, i) => (
-                <option key={i} value={value}>{value}</option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
-
       <div className="table-container">
         <table className="data-table">
           <thead>
             <tr>
               {[
                 { label: "NO." },
-                { label: "IMAGE", icon: <FiImage size={14} /> },
                 { label: "DATE" },
                 { label: "H-NUMBER" },
                 { label: "ORDER REF" },
                 { label: "TYPE" },
                 { label: "DESCRIPTION" },
                 { label: "COLOUR" },
-                { label: "TOTAL" },
+                { label: "SUPPLIER" },
+                { label: "ORDER UNITS FABRIC/TRIM COST" },
+                { label: "TOTAL", icon: <FiDollarSign size={14} /> },
                 { label: "FABRIC/TRIM PRICE", icon: <FiDollarSign size={14} /> },
-                { label: "FABRIC PO LINKS" }
+                { label: "NOTES" },
+                { label: "STATUS" },
+                { label: "DELIVERY NOTE NO." },
+                { label: "INVOICE NO." },
+                { label: "TOTAL ARRIVED" },
+                { label: "TOLLERANCE" },
+                { label: "FABRIC PO LINKS", icon: <FiExternalLink size={14} /> }
               ].map((header, index) => (
                 <th key={index}>
                   <div className="header-content">
@@ -71,7 +59,7 @@ const FabricTable = ({
           <tbody>
             {data.length === 0 ? (
               <tr className="empty-state">
-                <td colSpan="11">
+                <td colSpan="18">
                   <div className="empty-content">
                     <FiAlertCircle size={28} />
                     <div>No Matching Fabric Orders Found</div>
@@ -82,34 +70,12 @@ const FabricTable = ({
             ) : (
               data.map((row, i) => (
                 <tr key={i}>
-                  <td className="bold-cell">{row["NO."]}</td>
-                  <td className="image-cell">
-                    {getMatchingSalesImage(row["ORDER REF"]) ? (
-                      <div 
-                        onMouseEnter={(e) => handleMouseEnter(getMatchingSalesImage(row["ORDER REF"]), e)}
-                        onMouseLeave={handleMouseLeave}
-                      >
-                        <a href={getMatchingSalesImage(row["ORDER REF"])} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={getGoogleDriveThumbnail(getMatchingSalesImage(row["ORDER REF"]))}
-                            alt="Product"
-                            className="product-image"
-                          />
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="no-image">No Image</div>
-                    )}
-                  </td>
+                  <td>{row["NO."] || "N/A"}</td>
                   <td className="nowrap">{formatDate(row["DATE"])}</td>
-                  <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                  <td>{row["ORDER REF"]}</td>
-                  <td>
-                    <span className="type-badge">
-                      {row["TYPE"]}
-                    </span>
-                  </td>
-                  <td>{row["DESCRIPTION"]}</td>
+                  <td className="highlight-cell">{row["H-NUMBER"] || "N/A"}</td>
+                  <td>{row["ORDER REF"] || "N/A"}</td>
+                  <td><span className="type-text">{row["TYPE"] || "N/A"}</span></td>
+                  <td>{row["DESCRIPTION"] || "N/A"}</td>
                   <td>
                     <div className="color-cell">
                       {row["COLOUR"] && (
@@ -118,11 +84,19 @@ const FabricTable = ({
                           style={{ backgroundColor: getColorCode(row["COLOUR"]) }}
                         ></span>
                       )}
-                      {row["COLOUR"]}
+                      {row["COLOUR"] || "N/A"}
                     </div>
                   </td>
-                  <td className="bold-cell">{row["TOTAL"]}</td>
-                  <td className="price-cell nowrap bold-cell">{formatCurrency(row["FABRIC/TRIM PRICE"])}</td>
+                  <td>{row["SUPPLIER"] || "N/A"}</td>
+                  <td>{row["ORDER UNITS FABRIC/TRIM COST"] || "N/A"}</td>
+                  <td className="price-cell">{formatCurrency(row["TOTAL"])}</td>
+                  <td className="price-cell">{formatCurrency(row["FABRIC/TRIM PRICE"])}</td>
+                  <td>{row["NOTES"] || "N/A"}</td>
+                  <td><span className="status-text" data-status={row["STATUS"]}>{row["STATUS"] || "N/A"}</span></td>
+                  <td>{row["DELIVERY NOTE NO."] || "N/A"}</td>
+                  <td>{row["INVOICE NO."] || "N/A"}</td>
+                  <td>{row["TOTAL ARRIVED"] || "N/A"}</td>
+                  <td>{row["TOLLERANCE"] || "N/A"}</td>
                   <td>
                     {row["FABRIC PO LINKS"] ? (
                       <a
@@ -130,11 +104,12 @@ const FabricTable = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="view-button"
+                        aria-label="View PO"
                       >
                         View PO
                       </a>
                     ) : (
-                      <span className="na-text">No Link</span>
+                      <span className="na-text">N/A</span>
                     )}
                   </td>
                 </tr>
@@ -150,14 +125,16 @@ const FabricTable = ({
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="pagination-button"
+            aria-label="Previous page"
           >
             Previous
           </button>
-          <span>{`Page ${currentPage} of ${totalPages}`}</span>
+          <span aria-live="polite">{`Page ${currentPage} of ${totalPages}`}</span>
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="pagination-button"
+            aria-label="Next page"
           >
             Next
           </button>

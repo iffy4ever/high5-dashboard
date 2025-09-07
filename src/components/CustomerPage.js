@@ -1,78 +1,101 @@
+// src/components/CustomerPage.js
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign } from 'react-icons/fi';
 import { useData } from '../useData';
+import { getGoogleDriveThumbnail, formatDate, getDateValue, formatCurrency } from '../utils/index';
 import '../styles.css';
-
-const getDateValue = (value) => {
-  if (!value) return 0;
-  let date;
-  if (typeof value === 'number') {
-    date = new Date((value - 25569) * 86400 * 1000);
-  } else {
-    date = new Date(value);
-  }
-  return isNaN(date.getTime()) ? 0 : date.getTime();
-};
-
-const formatDate = (value) => {
-  if (!value) return "";
-  try {
-    let date;
-    if (typeof value === 'number') {
-      date = new Date((value - 25569) * 86400 * 1000);
-    } else {
-      date = new Date(value);
-    }
-    if (isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  } catch {
-    return String(value);
-  }
-};
-
-const formatCurrency = (value) => {
-  if (!value) return "£0.00";
-  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(number);
-};
-
-const getGoogleDriveThumbnail = (url) => {
-  if (!url) {
-    console.warn("No URL provided for thumbnail");
-    return "/fallback-image.png";
-  }
-  try {
-    const fileId = url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    if (!fileId) {
-      console.warn("No valid file ID found in URL:", url);
-      return "/fallback-image.png";
-    }
-    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-    console.log("Generated thumbnail URL:", thumbnailUrl);
-    return thumbnailUrl;
-  } catch (e) {
-    console.error("Error generating thumbnail URL:", e.message, "URL:", url);
-    return "/fallback-image.png";
-  }
-};
 
 const CustomerPage = () => {
   const { data, loading, error } = useData();
   const [activeTab, setActiveTab] = useState("developments");
   const [search, setSearch] = useState("");
-  const [customerNameFilter, setCustomerNameFilter] = useState("");
-  const [fitSampleFilter, setFitSampleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState({
+    TYPE: "",
+    COLOUR: "",
+    "LIVE STATUS": "",
+    "FIT STATUS": "",
+    "CUSTOMER NAME": "",
+    "FIT SAMPLE": ""
+  });
+  const [previewImage, setPreviewImage] = useState({
+    url: null,
+    visible: false,
+    position: { x: 0, y: 0 },
+    direction: 'below'
+  });
+  const [darkMode, setDarkMode] = useState(false);
+
+  // PURE BLACK TEXT COLORS
+  const colors = darkMode ? {
+    primary: "#6366F1",
+    primaryLight: "#818CF8",
+    primaryDark: "#4F46E5",
+    secondary: "#EC4899",
+    secondaryLight: "#F472B6",
+    secondaryDark: "#DB2777",
+    accent: "#F59E0B",
+    accentLight: "#FBBF24",
+    accentDark: "#D97706",
+    danger: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    info: "#3B82F6",
+    textDark: "#000000", // PURE BLACK
+    textMedium: "#000000", // PURE BLACK
+    textLight: "#FFFFFF",
+    background: "#111827",
+    cardBg: "#1F2937",
+    border: "#374151",
+    rowEven: "#1F2937",
+    rowOdd: "#111827",
+    headerBg: "#374151",
+    headerText: "#000000", // PURE BLACK
+    activeTab: "#CD5E77",
+    inactiveTab: "#6B7280",
+    actionButton: "#1B4D3E",
+    statCardBg: "#1F2937",
+    statCardBorder: "#374151",
+    accentRgb: "245, 158, 11",
+    successRgb: "16, 185, 129",
+    warningRgb: "245, 158, 11",
+    infoRgb: "59, 130, 246",
+    activeTabRgb: "205, 94, 119"
+  } : {
+    primary: "#6366F1",
+    primaryLight: "#818CF8",
+    primaryDark: "#4F46E5",
+    secondary: "#EC4899",
+    secondaryLight: "#F472B6",
+    secondaryDark: "#DB2777",
+    accent: "#F59E0B",
+    accentLight: "#FBBF24",
+    accentDark: "#D97706",
+    danger: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    info: "#3B82F6",
+    textDark: "#000000", // PURE BLACK
+    textMedium: "#000000", // PURE BLACK
+    textLight: "#FFFFFF",
+    background: "#F9FAFB",
+    cardBg: "#FFFFFF",
+    border: "#E5E7EB",
+    rowEven: "#FFFFFF",
+    rowOdd: "#F9FAFB",
+    headerBg: "#F3F4F6",
+    headerText: "#000000", // PURE BLACK
+    activeTab: "#CD5E77",
+    inactiveTab: "#9CA3AF",
+    actionButton: "#1B4D3E",
+    statCardBg: "#FFFFFF",
+    statCardBorder: "#E5E7EB",
+    accentRgb: "245, 158, 11",
+    successRgb: "16, 185, 129",
+    warningRgb: "245, 158, 11",
+    infoRgb: "59, 130, 246",
+    activeTabRgb: "205, 94, 119"
+  };
 
   const filteredDevelopments = useMemo(() => {
     if (!data.insert_pattern) return [];
@@ -82,19 +105,44 @@ const CustomerPage = () => {
         return customer === "public desire" || customer === "kaiia";
       })
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => !customerNameFilter || (row["CUSTOMER NAME"] || "").toLowerCase() === customerNameFilter.toLowerCase())
-      .filter(row => !fitSampleFilter || (row["FIT SAMPLE"] || "").toLowerCase() === fitSampleFilter.toLowerCase())
+      .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
+      .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
+      .filter(row => !filters.TYPE || (row["STYLE TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
-  }, [data.insert_pattern, search, customerNameFilter, fitSampleFilter]);
+  }, [data.insert_pattern, search, filters]);
 
   const filteredOrders = useMemo(() => {
     if (!data.sales_po) return [];
     return data.sales_po
       .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
-      .filter(row => !statusFilter || (row["LIVE STATUS"] || "").toLowerCase() === statusFilter.toLowerCase())
+      .filter(row => !filters.TYPE || (row["TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
+      .filter(row => !filters.COLOUR || (row["COLOUR"] || "").toLowerCase() === filters.COLOUR.toLowerCase())
+      .filter(row => !filters["LIVE STATUS"] || (row["LIVE STATUS"] || "").toLowerCase() === filters["LIVE STATUS"].toLowerCase())
+      .filter(row => !filters["FIT STATUS"] || (row["FIT STATUS"] || "").toLowerCase() === filters["FIT STATUS"].toLowerCase())
       .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
-  }, [data.sales_po, search, statusFilter]);
+  }, [data.sales_po, search, filters]);
+
+  const handleMouseEnter = (url, e) => {
+    if (!url) return;
+    
+    // Preload image for faster display
+    const img = new Image();
+    img.src = getGoogleDriveThumbnail(url);
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isNearBottom = window.innerHeight - rect.bottom < 250;
+    setPreviewImage({
+      url: getGoogleDriveThumbnail(url),
+      visible: true,
+      position: { x: rect.left + rect.width / 2, y: rect.top + window.scrollY },
+      direction: isNearBottom ? 'above' : 'below'
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setPreviewImage(prev => ({ ...prev, visible: false }));
+  };
 
   if (loading) return (
     <div className="loading-screen">
@@ -127,243 +175,332 @@ const CustomerPage = () => {
   );
 
   return (
-    <div className="customer-page">
-      <h1>PD & KAIIA Dashboard</h1>
-
-      <div className="tab-container">
-        <div className="tabs">
-          <button
-            onClick={() => setActiveTab("developments")}
-            className={`tab-button ${activeTab === "developments" ? 'active' : ''}`}
-          >
-            All Developments
-          </button>
-          <button
-            onClick={() => setActiveTab("orders")}
-            className={`tab-button ${activeTab === "orders" ? 'active' : ''}`}
-          >
-            All Order Status
-          </button>
-        </div>
-      </div>
-
-      <div className="search-filter-container">
-        <div className="search-box">
-          <FiSearch className="search-icon" size={16} />
-          <input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-            aria-label="Search"
-          />
-        </div>
-      </div>
-
-      {activeTab === "developments" && (
-        <>
-          <div className="filter-grid">
-            <div className="filter-item">
-              <label className="filter-label">Customer Name</label>
-              <select
-                value={customerNameFilter}
-                onChange={(e) => setCustomerNameFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All</option>
-                <option value="Public Desire">Public Desire</option>
-                <option value="Kaiia">Kaiia</option>
-              </select>
-            </div>
-            <div className="filter-item">
-              <label className="filter-label">Fit Sample</label>
-              <select
-                value={fitSampleFilter}
-                onChange={(e) => setFitSampleFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All</option>
-                {[...new Set(data.insert_pattern.map(item => item["FIT SAMPLE"]).filter(Boolean))].sort().map((value, i) => (
-                  <option key={i} value={value}>{value}</option>
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+      <div className="app-content">
+        <header className="app-header no-print">
+          <div className="header-left">
+            <h1 className="app-title">PD & KAIIA Dashboard</h1>
+          </div>
+          <div className="header-center">
+            <div className="tab-container">
+              <div className="tabs">
+                {["developments", "orders"].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`tab-button ${activeTab === tab ? 'active' : ''}`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
                 ))}
-              </select>
+              </div>
+            </div>
+          </div>
+          <div className="header-right">
+            <button onClick={() => setDarkMode(!darkMode)} className="action-button dark-mode-toggle">
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
+          </div>
+        </header>
+
+        <div className="main-content">
+          <div className="search-box-container">
+            <div className="search-box">
+              <FiSearch size={16} />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                aria-label="Search orders or developments"
+              />
             </div>
           </div>
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>H-NUMBER</th>
-                  <th>CUSTOMER NAME</th>
-                  <th>CUSTOMER CODE</th>
-                  <th>FRONT IMAGE</th>
-                  <th>BACK IMAGE</th>
-                  <th>SIDE IMAGE</th>
-                  <th>FIT SAMPLE</th>
-                  <th>COST PRICE</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDevelopments.length === 0 ? (
-                  <tr className="empty-state">
-                    <td colSpan="9">
-                      <div className="empty-content">
-                        <FiAlertCircle size={28} />
-                        <div>No Matching Developments Found</div>
-                        <p>Try Adjusting Your Search Or Filters</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDevelopments.map((row, i) => (
-                    <tr key={i}>
-                      <td className="nowrap">{formatDate(row["Timestamp"])}</td>
-                      <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                      <td>{row["CUSTOMER NAME"] || "N/A"}</td>
-                      <td>{row["CUSTOMER CODE"] || "N/A"}</td>
-                      <td className="image-cell">
-                        {row["FRONT IMAGE"] ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
-                            alt="Front"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Front image failed to load:", row["FRONT IMAGE"]); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td className="image-cell">
-                        {row["BACK IMAGE"] ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
-                            alt="Back"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Back image failed to load:", row["BACK IMAGE"]); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td className="image-cell">
-                        {row["SIDE IMAGE"] ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
-                            alt="Side"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Side image failed to load:", row["SIDE IMAGE"]); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td>{row["FIT SAMPLE"] || "N/A"}</td>
-                      <td className="price-cell nowrap bold-cell cost-price">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {activeTab === "orders" && (
-        <>
-          <div className="filter-grid">
-            <div className="filter-item">
-              <label className="filter-label">LIVE STATUS</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All</option>
-                {[...new Set(data.sales_po.map(item => item["LIVE STATUS"]).filter(Boolean))].sort().map((value, i) => (
-                  <option key={i} value={value}>{value}</option>
+          <div className="filter-container no-print">
+            {activeTab === "developments" && (
+              <div className="filter-row">
+                {[
+                  { key: "TYPE", label: "Type", options: [...new Set(data.insert_pattern?.map(row => row["STYLE TYPE"]).filter(Boolean))] },
+                  { key: "CUSTOMER NAME", label: "Customer Name", options: ["Public Desire", "Kaiia"] },
+                  { key: "FIT SAMPLE", label: "Fit Sample", options: [...new Set(data.insert_pattern?.map(row => row["FIT SAMPLE"]).filter(Boolean))] }
+                ].map(filter => (
+                  <div key={filter.key} className="filter-item">
+                    <label>{filter.label}</label>
+                    <select
+                      value={filters[filter.key]}
+                      onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
+                      className="filter-select"
+                    >
+                      <option value="">All</option>
+                      {filter.options.map((option, i) => (
+                        <option key={i} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
                 ))}
-              </select>
-            </div>
+              </div>
+            )}
+            {activeTab === "orders" && (
+              <div className="filter-row">
+                {[
+                  { key: "TYPE", label: "Type", options: [...new Set(data.sales_po?.map(row => row["TYPE"]).filter(Boolean))] },
+                  { key: "COLOUR", label: "Colour", options: [...new Set(data.sales_po?.map(row => row["COLOUR"]).filter(Boolean))] },
+                  { key: "LIVE STATUS", label: "Live Status", options: [...new Set(data.sales_po?.map(row => row["LIVE STATUS"]).filter(Boolean))] },
+                  { key: "FIT STATUS", label: "Fit Status", options: [...new Set(data.sales_po?.map(row => row["FIT STATUS"]).filter(Boolean))] }
+                ].map(filter => (
+                  <div key={filter.key} className="filter-item">
+                    <label>{filter.label}</label>
+                    <select
+                      value={filters[filter.key]}
+                      onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
+                      className="filter-select"
+                    >
+                      <option value="">All</option>
+                      {filter.options.map((option, i) => (
+                        <option key={i} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>IMAGE</th>
-                  <th>FIT STATUS</th>
-                  <th>H-NUMBER</th>
-                  <th>CUSTOMER NAME</th>
-                  <th>PO NUMBER</th>
-                  <th>STYLE NUMBER</th>
-                  <th>DESCRIPTION</th>
-                  <th>TOTAL UNITS</th>
-                  <th>XFACT DD</th>
-                  <th>REAL DD</th>
-                  <th>LIVE STATUS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.length === 0 ? (
-                  <tr className="empty-state">
-                    <td colSpan="11">
-                      <div className="empty-content">
-                        <FiAlertCircle size={28} />
-                        <div>No Matching Orders Found</div>
-                        <p>Try Adjusting Your Search Or Filters</p>
-                      </div>
-                    </td>
+          {activeTab === "developments" && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>TIMESTAMP</th>
+                    <th>H-NUMBER</th>
+                    <th>CUSTOMER NAME</th>
+                    <th>STYLE TYPE</th>
+                    <th>CUSTOMER CODE</th>
+                    <th>FRONT IMAGE</th>
+                    <th>BACK IMAGE</th>
+                    <th>SIDE IMAGE</th>
+                    <th>FIT SAMPLE</th>
+                    <th>TOTAL GARMENT PRICE</th>
                   </tr>
-                ) : (
-                  filteredOrders.map((row, i) => (
-                    <tr key={i}>
-                      <td className="image-cell">
-                        {row.IMAGE ? (
-                          <img
-                            src={getGoogleDriveThumbnail(row.IMAGE)}
-                            alt="Product"
-                            className="product-image"
-                            loading="lazy"
-                            onError={(e) => { e.target.src = "/fallback-image.png"; console.error("Order image failed to load:", row.IMAGE); }}
-                          />
-                        ) : (
-                          <div className="no-image">No Image</div>
-                        )}
-                      </td>
-                      <td>
-                        <span className={`status-badge ${row["FIT STATUS"] === "GS SENT" ? 'success' : 'warning'}`}>
-                          {row["FIT STATUS"]}
-                        </span>
-                      </td>
-                      <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                      <td>{row["CUSTOMER NAME"]}</td>
-                      <td>{row["PO NUMBER"]}</td>
-                      <td>{row["STYLE NUMBER"]}</td>
-                      <td>{row["DESCRIPTION"]}</td>
-                      <td className="bold-cell">{row["TOTAL UNITS"]}</td>
-                      <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
-                      <td className="nowrap">{formatDate(row["REAL DD"])}</td>
-                      <td>
-                        <span className={`status-badge ${
-                          row["LIVE STATUS"] === "DELIVERED" ? 'success' : 
-                          row["LIVE STATUS"] === "FABRIC ORDERED" ? 'info' : 'warning'
-                        }`}>
-                          {row["LIVE STATUS"]}
-                        </span>
+                </thead>
+                <tbody>
+                  {filteredDevelopments.length === 0 ? (
+                    <tr className="empty-state">
+                      <td colSpan="10">
+                        <div className="empty-content">
+                          <FiAlertCircle size={28} />
+                          <div>No Matching Developments Found</div>
+                          <p>Try Adjusting Your Search Or Filters</p>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    filteredDevelopments.map((row, i) => (
+                      <tr key={i}>
+                        <td className="nowrap">{formatDate(row["Timestamp"])}</td>
+                        <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                        <td>{row["CUSTOMER NAME"] || "N/A"}</td>
+                        <td>{row["STYLE TYPE"]}</td>
+                        <td>{row["CUSTOMER CODE"] || "N/A"}</td>
+                        <td className="image-cell">
+                          {row["FRONT IMAGE"] ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row["FRONT IMAGE"], e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row["FRONT IMAGE"]) || "/fallback-image.png"}
+                                  alt="Front"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td className="image-cell">
+                          {row["BACK IMAGE"] ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row["BACK IMAGE"], e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View back image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row["BACK IMAGE"]) || "/fallback-image.png"}
+                                  alt="Back"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td className="image-cell">
+                          {row["SIDE IMAGE"] ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row["SIDE IMAGE"], e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View side image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row["SIDE IMAGE"]) || "/fallback-image.png"}
+                                  alt="Side"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td>{row["FIT SAMPLE"] || "N/A"}</td>
+                        <td className="price-cell nowrap">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "orders" && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>IMAGE</th>
+                    <th>FIT STATUS</th>
+                    <th>H-NUMBER</th>
+                    <th>CUSTOMER NAME</th>
+                    <th>PO NUMBER</th>
+                    <th>STYLE NUMBER</th>
+                    <th>DESCRIPTION</th>
+                    <th>TOTAL UNITS</th>
+                    <th>XFACT DD</th>
+                    <th>REAL DD</th>
+                    <th>LIVE STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 ? (
+                    <tr className="empty-state">
+                      <td colSpan="11">
+                        <div className="empty-content">
+                          <FiAlertCircle size={28} />
+                          <div>No Matching Orders Found</div>
+                          <p>Try Adjusting Your Search Or Filters</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map((row, i) => (
+                      <tr key={i}>
+                        <td className="image-cell">
+                          {row.IMAGE ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row.IMAGE, e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
+                                  alt="Product"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <span className="status-text" data-status={row["FIT STATUS"]}>{row["FIT STATUS"]}</span>
+                        </td>
+                        <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                        <td>{row["CUSTOMER NAME"]}</td>
+                        <td>{row["PO NUMBER"]}</td>
+                        <td>{row["STYLE NUMBER"]}</td>
+                        <td>{row["DESCRIPTION"]}</td>
+                        <td className="bold-cell">{row["TOTAL UNITS"]}</td>
+                        <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
+                        <td className="nowrap">{formatDate(row["REAL DD"])}</td>
+                        <td>
+                          <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {previewImage.visible && (
+            <div 
+              className={`image-preview ${previewImage.direction} no-print`}
+              style={{
+                left: `${previewImage.position.x}px`,
+                [previewImage.direction === 'below' ? 'top' : 'bottom']: 
+                  `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
+              }}
+            >
+              <img 
+                src={previewImage.url} 
+                alt="Preview"
+                className="preview-image"
+              />
+              <div className="preview-arrow"></div>
+            </div>
+          )}
+        </div>
+
+        <footer className="app-footer no-print">
+          <div className="footer-content">
+            <div>PD & KAIIA Dashboard © {new Date().getFullYear()}</div>
+            <div>
+              Last Updated: {new Date().toLocaleString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
           </div>
-        </>
-      )}
+        </footer>
+      </div>
     </div>
   );
 };

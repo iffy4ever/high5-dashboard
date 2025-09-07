@@ -1,3 +1,4 @@
+// src/components/Notifications.js
 import React from 'react';
 import { FiShoppingBag } from 'react-icons/fi';
 import { FaCircle } from 'react-icons/fa';
@@ -8,6 +9,7 @@ const Notifications = ({ notifications, setNotifications, colors }) => {
       <button 
         className="notification-button"
         onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+        aria-label="View notifications"
       >
         <FiShoppingBag size={18} />
         {notifications.filter(n => !n.read).length > 0 && (
@@ -24,6 +26,7 @@ const Notifications = ({ notifications, setNotifications, colors }) => {
             <button 
               className="mark-all-read"
               onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+              aria-label="Mark all notifications as read"
             >
               Mark all as read
             </button>
@@ -45,7 +48,7 @@ const Notifications = ({ notifications, setNotifications, colors }) => {
             ))}
           </div>
           <div className="notification-footer">
-            <a href="/" onClick={(e) => e.preventDefault()}>View all notifications</a>
+            <a href="/" onClick={(e) => e.preventDefault()} aria-label="View all notifications">View all notifications</a>
           </div>
         </div>
       )}
