@@ -1,9 +1,10 @@
+// src/useData.js
 import { useState, useEffect } from 'react';
 
 export const useData = () => {
   const [data, setData] = useState({
     sales_po: [],
-    fabric_po: [],
+    fabric: [], // Changed from fabric_po to fabric
     insert_pattern: []
   });
   const [loading, setLoading] = useState(true);
@@ -16,10 +17,10 @@ export const useData = () => {
       try {
         setData({
           sales_po: fetched.sales_po || [],
-          fabric_po: fetched.fabric_po || [],
+          fabric: fetched.fabric || fetched.fabric_po || [], // Handle both naming conventions
           insert_pattern: fetched.insert_pattern || []
         });
-        console.log('Insert Pattern keys:', Object.keys(fetched.insert_pattern[0] || {}));
+        console.log('Data loaded - Sales:', fetched.sales_po?.length, 'Fabric:', fetched.fabric?.length || fetched.fabric_po?.length, 'Developments:', fetched.insert_pattern?.length);
       } catch (e) {
         setError("Error Parsing Data");
         console.error(e);

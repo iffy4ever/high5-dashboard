@@ -1,5 +1,5 @@
 /* src/styles.css */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -9,7 +9,7 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  font-weight: 300;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
@@ -95,7 +95,7 @@ a, button, input, select {
   --scrollbar-thumb-hover: #9CA3AF;
   --primary: #6366F1;
   --background: #F9FAFB;
-  --text-dark: #1F2937;
+  --text-dark: #000000;
   --text-medium: #6B7280;
   --text-light: #FFFFFF;
   --card-bg: #FFFFFF;
@@ -127,9 +127,9 @@ a, button, input, select {
   --text-dark: #F3F4F6;
   --text-medium: #9CA3AF;
   --text-light: #FFFFFF;
-  --card-bg: #1F2937;
+  --card-bg: #000000;
   --border: #374151;
-  --row-even: #1F2937;
+  --row-even: #000000;
   --row-odd: #111827;
   --header-bg: #374151;
   --header-text: #000000;
@@ -137,7 +137,7 @@ a, button, input, select {
   --active-tab-rgb: 205, 94, 119;
   --inactive-tab: #6B7280;
   --action-button: #1B4D3E;
-  --stat-card-bg: #1F2937;
+  --stat-card-bg: #000000;
   --stat-card-border: #374151;
   --accent-rgb: 245, 158, 11;
   --success-rgb: 16, 185, 129;
@@ -256,6 +256,7 @@ a, button, input, select {
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
+  color: var(--text-dark);
 }
 
 .form-link:hover {
@@ -380,7 +381,7 @@ a, button, input, select {
   display: block;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-medium);
+  color: var(--text-dark);
   margin-bottom: 0.25rem;
 }
 
@@ -440,7 +441,7 @@ a, button, input, select {
 
 .stat-title {
   font-size: 0.75rem;
-  color: var(--text-medium);
+  color: var(--text-dark);
 }
 
 /* Table Styles */
@@ -516,10 +517,15 @@ a, button, input, select {
   width: 160px;
   height: 160px;
   object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.image-cell img:hover {
+  transform: scale(1.05);
 }
 
 .no-image {
-  color: var(--text-medium);
+  color: var(--text-dark);
   font-size: 0.75rem;
   text-align: center;
   line-height: 160px;
@@ -544,6 +550,7 @@ a, button, input, select {
 .type-text {
   font-size: 0.75rem;
   font-weight: 500;
+  color: var(--text-dark);
 }
 
 .color-cell {
@@ -567,6 +574,7 @@ a, button, input, select {
 
 .bold-cell {
   font-weight: 600;
+  color: var(--text-dark);
 }
 
 .highlight-cell {
@@ -592,7 +600,7 @@ a, button, input, select {
 }
 
 .na-text {
-  color: var(--text-medium);
+  color: var(--text-dark);
   font-size: 0.75rem;
 }
 
@@ -612,6 +620,7 @@ a, button, input, select {
   padding: 0.25rem;
   text-align: center;
   border: 1px solid var(--border);
+  color: var(--text-dark);
 }
 
 .sizes-table tr:nth-child(2),
@@ -639,7 +648,7 @@ a, button, input, select {
 
 .empty-content p {
   font-size: 0.875rem;
-  color: var(--text-medium);
+  color: var(--text-dark);
 }
 
 /* PO Input */
@@ -762,7 +771,7 @@ a, button, input, select {
 
 .notification-time {
   font-size: 0.75rem;
-  color: var(--text-medium);
+  color: var(--text-dark);
 }
 
 .notification-footer {
@@ -827,7 +836,7 @@ a, button, input, select {
 /* Footer */
 .app-footer {
   background: var(--card-bg);
-  color: var(--text-medium);
+  color: var(--text-dark);
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
   margin-top: auto;
@@ -1019,4 +1028,31 @@ a, button, input, select {
   .stats-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
+}
+
+/* Image loading optimization */
+.product-image {
+  transition: opacity 0.3s ease;
+}
+
+.product-image[src*="fallback-image.png"] {
+  opacity: 0.5;
+}
+
+/* Fast image loading */
+.image-cell img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Preload animation */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.image-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
 }

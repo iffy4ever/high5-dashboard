@@ -1,3 +1,4 @@
+// src/utils/index.js
 export const getColorCode = (color) => {
   if (!color) return "#7C3AED";
   const colorLower = color.toLowerCase();
@@ -17,34 +18,26 @@ export const getColorCode = (color) => {
 };
 
 export const getGoogleDriveThumbnail = (url) => {
-  console.log("getGoogleDriveThumbnail called with URL:", url); // Debug log
   if (!url || typeof url !== 'string') {
-    console.warn("Invalid or missing URL for thumbnail:", url);
     return "/fallback-image.png";
   }
+  
   try {
-    // Support multiple Google Drive URL formats
+    // Extract file ID from various Google Drive URL formats
     const fileIdMatch = url.match(/\/file\/d\/([^/]+)/) || 
                         url.match(/id=([^&]+)/) || 
                         url.match(/\/open\?id=([^&]+)/) || 
                         url.match(/\/d\/([^/]+)/) || 
                         url.match(/\/uc\?id=([^&]+)/);
+    
     const fileId = fileIdMatch ? fileIdMatch[1] : null;
-    if (!fileId) {
-      console.warn("No valid file ID found in URL:", url);
+    if (!fileId || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
       return "/fallback-image.png";
     }
-    // Validate file ID format (alphanumeric with optional hyphens)
-    if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) {
-      console.warn("Invalid file ID format:", fileId, "URL:", url);
-      return "/fallback-image.png";
-    }
-    // Use smaller thumbnail size for faster loading
-    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=s200`;
-    console.log("Generated thumbnail URL:", thumbnailUrl); // Debug log
-    return thumbnailUrl;
+    
+    // Use webp format for faster loading and smaller size
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=s200&export=download&format=webp`;
   } catch (e) {
-    console.error("Error generating thumbnail URL:", e, "Original URL:", url);
     return "/fallback-image.png";
   }
 };
@@ -103,27 +96,23 @@ export const compactSizes = (row) => {
 };
 
 export const getGoogleDriveDownloadLink = (url) => {
-  console.log("getGoogleDriveDownloadLink called with URL:", url); // Debug log
   if (!url || typeof url !== 'string') {
-    console.warn("Invalid or missing URL for download link:", url);
     return "";
   }
   try {
     const fileId = url.match(/\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
-    if (!fileId) {
-      console.warn("No valid file ID found in URL:", url);
+    if (!fileId || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
       return url;
     }
-    // Validate file ID format
-    if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) {
-      console.warn("Invalid file ID format:", fileId, "URL:", url);
-      return url;
-    }
-    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    console.log("Generated download URL:", downloadUrl); // Debug log
-    return downloadUrl;
+    return `https://drive.google.com/uc?export=download&id=${fileId}`;
   } catch (e) {
-    console.error("Error generating download URL:", e, "URL:", url);
     return url;
   }
+};
+
+// Preload images for instant loading
+export const preloadImage = (url) => {
+  if (!url) return;
+  const img = new Image();
+  img.src = getGoogleDriveThumbnail(url);
 };

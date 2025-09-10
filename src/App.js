@@ -14,18 +14,32 @@ import DocketSheet from './components/DocketSheet';
 import CuttingSheet from './components/CuttingSheet';
 import StatsPanel from './components/StatsPanel';
 import CustomerPage from './components/CustomerPage';
-import { formatDate, getDateValue, formatCurrency, compactSizes, getGoogleDriveThumbnail, getGoogleDriveDownloadLink } from './utils/index';
+import { formatDate, getDateValue, formatCurrency, compactSizes, getGoogleDriveThumbnail, getGoogleDriveDownloadLink, preloadImage } from './utils/index';
 import { useData } from './useData';
 import './styles.css';
 
 function App() {
   const { data, loading, error } = useData();
-  console.log("Full Data Object:", data); // Debug: Log the entire data object
-  console.log("Fabric Data:", data?.fabric); // Debug: Specifically log fabric data
+  console.log("Full Data Object:", data);
+  console.log("Fabric Data:", data?.fabric);
 
   useEffect(() => {
     if (data && !data.fabric) {
       console.error("Fabric data is undefined or not loaded:", data);
+    }
+    
+    // Preload images for faster loading
+    if (data.sales_po) {
+      data.sales_po.forEach(row => {
+        if (row.IMAGE) preloadImage(row.IMAGE);
+      });
+    }
+    if (data.insert_pattern) {
+      data.insert_pattern.forEach(row => {
+        if (row["FRONT IMAGE"]) preloadImage(row["FRONT IMAGE"]);
+        if (row["BACK IMAGE"]) preloadImage(row["BACK IMAGE"]);
+        if (row["SIDE IMAGE"]) preloadImage(row["SIDE IMAGE"]);
+      });
     }
   }, [data]);
 
@@ -103,7 +117,7 @@ function App() {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
-    textDark: "#1F2937",
+    textDark: "#000000", // Changed from #1F2937 to #000000 for better readability
     textMedium: "#6B7280",
     textLight: "#FFFFFF",
     background: "#F9FAFB",
@@ -262,15 +276,14 @@ function App() {
   }, [data.sales_po, search, filters]);
 
   const filteredFabric = useMemo(() => {
-    console.log("Raw Fabric Data:", data.fabric); // Debug: Log raw data
-    if (!data.fabric) {
-      console.error("Fabric data is undefined or empty");
-      return [];
-    }
+    if (!data.fabric) return [];
     return data.fabric
-      .filter(row => true) // Temporarily bypass all filters for testing
-      .sort((a, b) => (b["NO."] || "").localeCompare(a["NO."] || "")); // Sort by "NO."
-  }, [data.fabric]);
+      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+      .filter(row => !fabricFilters.TYPE || (row["TYPE"] || "").toLowerCase() === fabricFilters.TYPE.toLowerCase())
+      .filter(row => !fabricFilters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === fabricFilters["CUSTOMER NAME"].toLowerCase())
+      .filter(row => !fabricFilters.SUPPLIER || (row["SUPPLIER"] || "").toLowerCase() === fabricFilters.SUPPLIER.toLowerCase())
+      .sort((a, b) => (b["NO."] || "").localeCompare(a["NO."] || ""));
+  }, [data.fabric, search, fabricFilters]);
 
   const filteredDevelopments = useMemo(() => {
     if (!data.insert_pattern) return [];
