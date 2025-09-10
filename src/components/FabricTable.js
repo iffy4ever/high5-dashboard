@@ -1,5 +1,6 @@
+// src/components/FabricTable.js
 import React from 'react';
-import { FiAlertCircle, FiDollarSign, FiExternalLink } from 'react-icons/fi';
+import { FiAlertCircle, FiImage, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { getColorCode } from '../utils';
 
 const FabricTable = ({
@@ -13,8 +14,6 @@ const FabricTable = ({
   getMatchingSalesImage,
   formatCurrency,
   formatDate,
-  onSort,
-  sort,
   currentPage,
   setCurrentPage,
   totalItems,
@@ -46,13 +45,9 @@ const FabricTable = ({
                 { label: "INVOICE NO." },
                 { label: "TOTAL ARRIVED" },
                 { label: "TOLLERANCE" },
-                { label: "FABRIC PO LINKS", icon: <FiExternalLink size={14} />, noSort: true }
+                { label: "FABRIC PO LINKS", icon: <FiExternalLink size={14} /> }
               ].map((header, index) => (
-                <th 
-                  key={index} 
-                  onClick={() => !header.noSort && onSort(header.label)}
-                  style={{ cursor: header.noSort ? 'default' : 'pointer' }}
-                >
+                <th key={index}>
                   <div className="header-content">
                     {header.icon && <span className="header-icon">{header.icon}</span>}
                     {header.label}

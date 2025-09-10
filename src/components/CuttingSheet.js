@@ -14,7 +14,7 @@ const CuttingSheet = ({ selectedData }) => {
 
   return (
     <div className="printable-sheet">
-      <div style={{ fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm', border: '0.5pt solid #000000' }}>CUTTING SHEET</div>
+      <div style={{ fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#dc3545', backgroundColor: '#ffebee', padding: '2mm', borderRadius: '4px', marginBottom: '3mm' }}>CUTTING SHEET</div>
 
       <div className="delivery-info" style={{ color: '#FF0000' }}>
         Delivery Date: {formatDate(selectedData[0]?.["XFACT DD"] || "")}
@@ -117,7 +117,7 @@ const CuttingSheet = ({ selectedData }) => {
           </tr>
         </tbody>
       </table>
-      <table className="table ratio-section">
+      <table className="ratio-section">
         <tbody>
           <tr>
             <td>RATIO:.</td>

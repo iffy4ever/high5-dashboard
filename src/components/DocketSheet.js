@@ -9,7 +9,7 @@ const DocketSheet = ({ selectedData }) => {
 
   return (
     <div className="printable-sheet">
-      <div style={{ fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm', border: '0.5pt solid #000000' }}>DOCKET SHEET</div>
+      <div style={{ fontSize: '14pt', fontWeight: 'bold', textAlign: 'center', color: '#28a745', backgroundColor: '#e0f7fa', padding: '2mm', borderRadius: '4px', marginBottom: '3mm' }}>DOCKET SHEET</div>
       <table className="table">
         <tbody>
           {paddedData.map((row, i) => (

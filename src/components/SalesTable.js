@@ -15,8 +15,6 @@ const SalesTable = ({
   formatCurrency,
   formatDate,
   compactSizes,
-  onSort,
-  sort,
   currentPage,
   setCurrentPage,
   totalItems,
@@ -31,7 +29,7 @@ const SalesTable = ({
           <thead>
             <tr>
               {[
-                { label: "IMAGE", icon: <FiImage size={14} />, noSort: true },
+                { label: "IMAGE", icon: <FiImage size={14} /> },
                 { label: "FIT STATUS" },
                 { label: "H-NUMBER" },
                 { label: "CUSTOMER NAME", icon: <FiUsers size={14} /> },
@@ -46,14 +44,10 @@ const SalesTable = ({
                 { label: "LIVE STATUS" },
                 { label: "CMT PRICE", icon: <FiDollarSign size={14} /> },
                 { label: "ACTUAL CMT", icon: <FiDollarSign size={14} /> },
-                { label: "PACKING LIST", icon: <FiFileText size={14} />, noSort: true },
-                { label: "SIZES", noSort: true }
+                { label: "PACKING LIST", icon: <FiFileText size={14} /> },
+                { label: "SIZES" }
               ].map((header, index) => (
-                <th 
-                  key={index} 
-                  onClick={() => !header.noSort && onSort(header.label)}
-                  style={{ cursor: header.noSort ? 'default' : 'pointer' }}
-                >
+                <th key={index}>
                   <div className="header-content">
                     {header.icon && <span className="header-icon">{header.icon}</span>}
                     {header.label}
@@ -165,7 +159,7 @@ const SalesTable = ({
                           <td>{row["8"] || ""}</td>
                           <td>{row["10"] || ""}</td>
                         </tr>
-                        <tr></tr> {/* Spacer row without text */}
+                        <tr style={{ margin: "0 5px" }}></tr> {/* Spacer row */}
                         <tr>
                           <td>12</td>
                           <td>14</td>

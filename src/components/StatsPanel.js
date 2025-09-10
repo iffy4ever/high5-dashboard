@@ -1,3 +1,4 @@
+// src/components/StatsPanel.js
 import React from 'react';
 import { FiShoppingBag, FiTruck, FiClock, FiDatabase, FiAlertCircle, FiCalendar, FiCheckCircle, FiBarChart2 } from 'react-icons/fi';
 
