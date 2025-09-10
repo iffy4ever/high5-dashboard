@@ -10,10 +10,10 @@
     "react-router-dom": "^6.8.0"
   },
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider yarn react-scripts start",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider yarn react-scripts build",
+    "test": "cross-env NODE_OPTIONS=--openssl-legacy-provider yarn react-scripts test",
+    "eject": "yarn react-scripts eject"
   },
   "browserslist": {
     "production": [
@@ -28,6 +28,7 @@
     ]
   },
   "devDependencies": {
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "cross-env": "^7.0.3"
   }
 }
