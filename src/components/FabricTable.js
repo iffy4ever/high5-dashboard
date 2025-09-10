@@ -14,6 +14,8 @@ const FabricTable = ({
   getMatchingSalesImage,
   formatCurrency,
   formatDate,
+  onSort,
+  sort,
   currentPage,
   setCurrentPage,
   totalItems,
@@ -45,9 +47,13 @@ const FabricTable = ({
                 { label: "INVOICE NO." },
                 { label: "TOTAL ARRIVED" },
                 { label: "TOLLERANCE" },
-                { label: "FABRIC PO LINKS", icon: <FiExternalLink size={14} /> }
+                { label: "FABRIC PO LINKS", icon: <FiExternalLink size={14} />, noSort: true }
               ].map((header, index) => (
-                <th key={index}>
+                <th 
+                  key={index} 
+                  onClick={() => !header.noSort && onSort(header.label)}
+                  style={{ cursor: header.noSort ? 'default' : 'pointer' }}
+                >
                   <div className="header-content">
                     {header.icon && <span className="header-icon">{header.icon}</span>}
                     {header.label}

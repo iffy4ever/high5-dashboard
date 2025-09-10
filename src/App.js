@@ -51,9 +51,13 @@ function App() {
   const [poInput, setPoInput] = useState("");
   const [selectedPOs, setSelectedPOs] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(false); // Default to false to hide stats initially
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const [salesSort, setSalesSort] = useState({ column: null, direction: 'asc' });
+  const [fabricSort, setFabricSort] = useState({ column: null, direction: 'asc' });
+  const [developmentsSort, setDevelopmentsSort] = useState({ column: null, direction: 'asc' });
 
   const colors = darkMode ? {
     primary: "#6366F1",
@@ -167,91 +171,89 @@ function App() {
       deliveredLast30Days: 0,
       deliveredUnitsLast30Days: 0,
       unitsDeliveredLastQuarter: 0,
-      unitsDeliveredCurrentYear: 0,
-      unitsDeliveredLastYear: 0,
-      ordersLastYear: 0,
-      pendingUnits: 0,
+      lastQuarterLabel: "",
       inProduction: 0,
       fabricOrdered: 0,
-      notDelivered: 0,
+      pendingUnits: 0,
       goldSealSent: 0,
-      lastDeliveryDate: null,
-      lastDeliveryDateFormatted: "-",
-      lastQuarterLabel: `Q${Math.floor((now.getMonth() + 3) / 3)} ${now.getFullYear() - 1}`,
-      lastYearOrdersLabel: `Orders ${lastYearStart.getFullYear()}-${lastYearEnd.getFullYear()}`,
-      lastYearLabel: `Units ${lastYearStart.getFullYear()}-${lastYearEnd.getFullYear()}`,
-      currentYearLabel: `Units ${currentYearStart.getFullYear()}-${currentYearEnd.getFullYear()}`
+      lastDeliveryDateFormatted: "N/A",
+      ordersLastYear: 0,
+      unitsDeliveredLastYear: 0,
+      lastYearLabel: "",
+      unitsDeliveredCurrentYear: 0,
+      currentYearLabel: "",
+      lastYearOrdersLabel: ""
     };
 
-    if (data.sales_po) {
+    if (data && data.sales_po) {
+      const getFiscalYearLabel = (year) => `FY ${year.toString().slice(-2)}-${(year + 1).toString().slice(-2)}`;
+
+      stats.lastQuarterLabel = `${lastQuarterStart.toLocaleString('default', { month: 'short' })} - ${lastQuarterEnd.toLocaleString('default', { month: 'short' })}`;
+      stats.lastYearLabel = getFiscalYearLabel(currentFiscalYear - 1);
+      stats.currentYearLabel = getFiscalYearLabel(currentFiscalYear);
+      stats.lastYearOrdersLabel = `${stats.lastYearLabel} Orders`;
+
+      let lastDeliveryDate = null;
+
       stats.totalOrders = data.sales_po.length;
       stats.totalUnits = data.sales_po.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.deliveredLast30Days = data.sales_po.filter(row => {
+
+      data.sales_po.forEach(row => {
         const deliveryDate = getDateValue(row["REAL DD"]);
-        return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= oneMonthAgo;
-      }).length;
-      stats.deliveredUnitsLast30Days = data.sales_po
-        .filter(row => {
-          const deliveryDate = getDateValue(row["REAL DD"]);
-          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= oneMonthAgo;
-        })
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.unitsDeliveredLastQuarter = data.sales_po
-        .filter(row => {
-          const deliveryDate = getDateValue(row["REAL DD"]);
-          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= lastQuarterStart && deliveryDate <= lastQuarterEnd;
-        })
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.unitsDeliveredCurrentYear = data.sales_po
-        .filter(row => {
-          const deliveryDate = getDateValue(row["REAL DD"]);
-          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= currentYearStart && deliveryDate <= currentYearEnd;
-        })
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.unitsDeliveredLastYear = data.sales_po
-        .filter(row => {
-          const deliveryDate = getDateValue(row["REAL DD"]);
-          return row["LIVE STATUS"] === "DELIVERED" && deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd;
-        })
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.ordersLastYear = data.sales_po
-        .filter(row => {
-          const deliveryDate = getDateValue(row["REAL DD"]);
-          return deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd;
-        }).length;
-      stats.pendingUnits = data.sales_po
-        .filter(row => row["LIVE STATUS"] !== "DELIVERED")
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.inProduction = data.sales_po
-        .filter(row => row["LIVE STATUS"] === "IN PRODUCTION")
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.fabricOrdered = data.sales_po
-        .filter(row => row["LIVE STATUS"] === "FABRIC ORDERED")
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      stats.notDelivered = data.sales_po
-        .filter(row => row["LIVE STATUS"] !== "DELIVERED")
-        .length;
-      stats.goldSealSent = data.sales_po
-        .filter(row => row["FIT STATUS"] === "GS SENT")
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0), 0);
-      const lastDelivery = data.sales_po
-        .filter(row => row["LIVE STATUS"] === "DELIVERED")
-        .reduce((latest, row) => {
-          const date = getDateValue(row["REAL DD"]);
-          return !latest || date > getDateValue(latest["REAL DD"]) ? row : latest;
-        }, null);
-      if (lastDelivery) {
-        stats.lastDeliveryDate = getDateValue(lastDelivery["REAL DD"]);
-        stats.lastDeliveryDateFormatted = formatDate(lastDelivery["REAL DD"]);
+        const units = parseInt(row["TOTAL UNITS"] || 0);
+
+        if (deliveryDate >= oneMonthAgo) {
+          stats.deliveredLast30Days++;
+          stats.deliveredUnitsLast30Days += units;
+        }
+
+        if (deliveryDate >= lastQuarterStart && deliveryDate <= lastQuarterEnd) {
+          stats.unitsDeliveredLastQuarter += units;
+        }
+
+        if (deliveryDate >= currentYearStart && deliveryDate <= currentYearEnd) {
+          stats.unitsDeliveredCurrentYear += units;
+        }
+
+        if (deliveryDate >= lastYearStart && deliveryDate <= lastYearEnd) {
+          stats.unitsDeliveredLastYear += units;
+          stats.ordersLastYear++;
+        }
+
+        if (row["LIVE STATUS"] === "In Production") stats.inProduction += units;
+        if (row["LIVE STATUS"] === "Pending") stats.pendingUnits += units;
+        if (row["FIT STATUS"] === "Gold Seal") stats.goldSealSent++;
+
+        if (row["REAL DD"] && (!lastDeliveryDate || deliveryDate > lastDeliveryDate)) {
+          lastDeliveryDate = deliveryDate;
+        }
+      });
+
+      if (lastDeliveryDate) {
+        stats.lastDeliveryDateFormatted = formatDate(lastDeliveryDate);
       }
     }
 
+    if (data && data.fabric) {
+      stats.fabricOrdered = data.fabric.reduce((sum, row) => sum + parseInt(row["ORDER UNITS FABRIC/TRIM COST"] || 0), 0);
+    }
+
     return stats;
-  }, [data.sales_po]);
+  }, [data]);
+
+  const getValueForSort = (column, value) => {
+    if (['XFACT DD', 'REAL DD', 'DATE', 'Timestamp'].includes(column)) {
+      return getDateValue(value);
+    }
+    if (['TOTAL UNITS', 'PRICE', 'CMT PRICE', 'ACTUAL CMT', 'TOTAL', 'ORDER UNITS FABRIC/TRIM COST', 'FABRIC/TRIM PRICE', 'TOTAL ARRIVED', 'TOTAL GARMENT PRICE', 'CMT PRICE'].includes(column) || column.match(/^\d+$/)) {
+      return parseFloat(value) || 0;
+    }
+    return value?.toString().toLowerCase() ?? '';
+  };
 
   const filteredSales = useMemo(() => {
-    if (!data.sales_po) return [];
-    return data.sales_po
+    if (!data || !data.sales_po) return [];
+    let filtered = data.sales_po
       .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
       .filter(row => !filters.TYPE || (row["TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
@@ -259,32 +261,68 @@ function App() {
       .filter(row => !filters["FIT STATUS"] || (row["FIT STATUS"] || "").toLowerCase() === filters["FIT STATUS"].toLowerCase())
       .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
       .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
-  }, [data.sales_po, search, filters]);
+
+    if (salesSort.column) {
+      filtered.sort((a, b) => {
+        const va = getValueForSort(salesSort.column, a[salesSort.column]);
+        const vb = getValueForSort(salesSort.column, b[salesSort.column]);
+        if (va < vb) return salesSort.direction === 'asc' ? -1 : 1;
+        if (va > vb) return salesSort.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [data, search, filters, salesSort]);
 
   const filteredFabric = useMemo(() => {
-    console.log("Raw Fabric Data:", data.fabric); // Debug: Log raw data
-    if (!data.fabric) {
-      console.error("Fabric data is undefined or empty");
-      return [];
+    if (!data || !data.fabric) return [];
+    let filtered = data.fabric
+      .filter(row => row["NO."] && row["H-NUMBER"] && row["ORDER REF"])
+      .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
+      .filter(row => !fabricFilters.TYPE || (row["TYPE"] || "").toLowerCase() === fabricFilters.TYPE.toLowerCase())
+      .filter(row => !fabricFilters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === fabricFilters["CUSTOMER NAME"].toLowerCase())
+      .filter(row => !fabricFilters.SUPPLIER || (row["SUPPLIER"] || "").toLowerCase() === fabricFilters.SUPPLIER.toLowerCase())
+      .sort((a, b) => getDateValue(b["DATE"]) - getDateValue(a["DATE"]));
+
+    if (fabricSort.column) {
+      filtered.sort((a, b) => {
+        const va = getValueForSort(fabricSort.column, a[fabricSort.column]);
+        const vb = getValueForSort(fabricSort.column, b[fabricSort.column]);
+        if (va < vb) return fabricSort.direction === 'asc' ? -1 : 1;
+        if (va > vb) return fabricSort.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
     }
-    return data.fabric
-      .filter(row => true) // Temporarily bypass all filters for testing
-      .sort((a, b) => (b["NO."] || "").localeCompare(a["NO."] || "")); // Sort by "NO."
-  }, [data.fabric]);
+
+    return filtered;
+  }, [data, search, fabricFilters, fabricSort]);
 
   const filteredDevelopments = useMemo(() => {
-    if (!data.insert_pattern) return [];
-    return data.insert_pattern
+    if (!data || !data.insert_pattern) return [];
+    let filtered = data.insert_pattern
+      .filter(row => row["H-NUMBER"] && row["STYLE TYPE"] && row["CUSTOMER CODE"])
       .filter(row => Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase()))
       .filter(row => !filters.TYPE || (row["STYLE TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
       .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
-      .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
-  }, [data.insert_pattern, search, filters]);
 
-  const getMatchingSalesImage = (fabricRow) => {
-    if (!data.sales_po || !fabricRow["H-NUMBER"]) return null;
-    const matchingSale = data.sales_po.find(sale => sale["H-NUMBER"] === fabricRow["H-NUMBER"]);
+    if (developmentsSort.column) {
+      filtered.sort((a, b) => {
+        const va = getValueForSort(developmentsSort.column, a[developmentsSort.column]);
+        const vb = getValueForSort(developmentsSort.column, b[developmentsSort.column]);
+        if (va < vb) return developmentsSort.direction === 'asc' ? -1 : 1;
+        if (va > vb) return developmentsSort.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [data, search, filters, developmentsSort]);
+
+  const getMatchingSalesImage = (hNumber) => {
+    if (!data || !data.sales_po) return null;
+    const matchingSale = data.sales_po.find(sale => sale["H-NUMBER"] === hNumber);
     return matchingSale ? matchingSale.IMAGE : null;
   };
 
@@ -304,25 +342,32 @@ function App() {
     setPreviewImage(prev => ({ ...prev, visible: false }));
   };
 
-  const exportToExcel = () => {
-    let exportData = [];
-    let sheetName = '';
-    if (activeTab === 'sales') {
-      exportData = filteredSales;
-      sheetName = 'Sales';
-    } else if (activeTab === 'fabric') {
-      exportData = filteredFabric;
-      sheetName = 'Fabric';
-    } else if (activeTab === 'developments') {
-      exportData = filteredDevelopments;
-      sheetName = 'Developments';
-    }
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    XLSX.writeFile(wb, `${sheetName}_export.xlsx`);
+  const handleSalesSort = (column) => {
+    setSalesSort(prev => ({
+      column,
+      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
+
+  const handleFabricSort = (column) => {
+    setFabricSort(prev => ({
+      column,
+      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const handleDevelopmentsSort = (column) => {
+    setDevelopmentsSort(prev => ({
+      column,
+      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSales = filteredSales.slice(indexOfFirstItem, indexOfLastItem);
+  const currentFabric = filteredFabric.slice(indexOfFirstItem, indexOfLastItem);
+  const currentDevelopments = filteredDevelopments.slice(indexOfFirstItem, indexOfLastItem);
 
   if (loading) return (
     <div className="loading-screen">
@@ -330,7 +375,7 @@ function App() {
         <div className="spinner">
           <FiShoppingBag size={32} className="spin" />
         </div>
-        <h2>Loading High5 Production Dashboard</h2>
+        <h2>Loading Dashboard</h2>
         <p>Fetching the latest data...</p>
       </div>
     </div>
@@ -358,305 +403,304 @@ function App() {
     <Routes>
       <Route path="/" element={
         <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
-          <div className="app-content">
-            <header className="app-header no-print">
+          <header className="app-header no-print">
+            <div className="header-content">
               <div className="header-left">
-                <h1 className="app-title">High5 Production Dashboard</h1>
-                <div className="form-links">
-                  {formLinks.map((link, index) => (
-                    link.external ? (
-                      <a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="form-link"
-                        style={{ color: link.color }}
-                        aria-label={link.label}
-                      >
-                        {link.icon}
-                        <span>{link.label}</span>
-                      </a>
-                    ) : (
-                      <Link
-                        key={index}
-                        to={link.url}
-                        className="form-link"
-                        style={{ color: link.color }}
-                        aria-label={link.label}
-                      >
-                        {link.icon}
-                        <span>{link.label}</span>
-                      </Link>
-                    )
-                  ))}
-                </div>
+                <h1 className="header-title">
+                  <FiShoppingBag size={20} />
+                  High5 Production Dashboard
+                </h1>
+                <button 
+                  onClick={() => setDarkMode(!darkMode)} 
+                  className="theme-toggle"
+                  aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                  {darkMode ? '☀️' : '🌙'}
+                </button>
               </div>
-              <div className="header-center">
-                <div className="tab-container">
-                  <div className="tabs">
-                    {["sales", "fabric", "developments", "production"].map(tab => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`tab-button ${activeTab === tab ? 'active' : ''}`}
-                      >
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="search-bar">
+                <FiSearch className="search-icon" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search by PO, Style, Customer..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Search"
+                />
               </div>
               <div className="header-right">
+                <div className="form-links">
+                  {formLinks.map((link, i) => (
+                    <Link
+                      key={i}
+                      to={link.url}
+                      className={`form-link ${link.external ? 'external' : ''}`}
+                      style={{ borderColor: link.color, color: link.color }}
+                      target={link.external ? "_blank" : "_self"}
+                      rel={link.external ? "noopener noreferrer" : undefined}
+                    >
+                      {link.icon}
+                      {link.label}
+                      {link.external && <FiExternalLink size={12} />}
+                    </Link>
+                  ))}
+                </div>
                 <button
                   onClick={() => setShowStats(!showStats)}
-                  className="action-button show-stats-button"
+                  className="action-button"
+                  aria-label={showStats ? "Hide Stats" : "Show Stats"}
                 >
                   {showStats ? 'Hide Stats' : 'Show Stats'}
                 </button>
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="action-button dark-mode-toggle"
-                >
-                  {darkMode ? 'Light Mode' : 'Dark Mode'}
-                </button>
-                <button
-                  onClick={exportToExcel}
-                  className="action-button export-button"
-                >
-                  <FiDownload size={14} /> Export
-                </button>
               </div>
-            </header>
-
-            {showStats && (
-              <StatsPanel productionStats={productionStats} colors={colors} />
-            )}
-
-            <div className="main-content">
-              <div className="search-box-container">
-                <div className="search-box">
-                  <FiSearch size={16} />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search..."
-                    aria-label="Search sales, fabric, or developments"
-                  />
-                </div>
-              </div>
-
-              {activeTab !== "production" && (
-                <div className="filter-container no-print">
-                  {activeTab === "sales" && (
-                    <div className="filter-row">
-                      {[
-                        { key: "TYPE", label: "Type", options: [...new Set(data.sales_po?.map(row => row["TYPE"]).filter(Boolean))] },
-                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.sales_po?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
-                        { key: "LIVE STATUS", label: "Live Status", options: [...new Set(data.sales_po?.map(row => row["LIVE STATUS"]).filter(Boolean))] },
-                        { key: "FIT STATUS", label: "Fit Status", options: [...new Set(data.sales_po?.map(row => row["FIT STATUS"]).filter(Boolean))] }
-                      ].map(filter => (
-                        <div key={filter.key} className="filter-item">
-                          <label>{filter.label}</label>
-                          <select
-                            value={filters[filter.key]}
-                            onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
-                            className="filter-select"
-                          >
-                            <option value="">All</option>
-                            {filter.options.map((option, i) => (
-                              <option key={i} value={option}>{option}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {activeTab === "fabric" && (
-                    <div className="filter-row">
-                      {[
-                        { key: "TYPE", label: "Type", options: [...new Set(data.fabric?.map(row => row["TYPE"]).filter(Boolean))] },
-                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.fabric?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
-                        { key: "SUPPLIER", label: "Supplier", options: [...new Set(data.fabric?.map(row => row["SUPPLIER"]).filter(Boolean))] }
-                      ].map(filter => (
-                        <div key={filter.key} className="filter-item">
-                          <label>{filter.label}</label>
-                          <select
-                            value={fabricFilters[filter.key]}
-                            onChange={(e) => setFabricFilters({ ...fabricFilters, [filter.key]: e.target.value })}
-                            className="filter-select"
-                          >
-                            <option value="">All</option>
-                            {filter.options.map((option, i) => (
-                              <option key={i} value={option}>{option}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {activeTab === "developments" && (
-                    <div className="filter-row">
-                      {[
-                        { key: "STYLE TYPE", label: "Style Type", options: [...new Set(data.insert_pattern?.map(row => row["STYLE TYPE"]).filter(Boolean))] },
-                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.insert_pattern?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
-                        { key: "FIT SAMPLE", label: "Fit Sample", options: [...new Set(data.insert_pattern?.map(row => row["FIT SAMPLE"]).filter(Boolean))] }
-                      ].map(filter => (
-                        <div key={filter.key} className="filter-item">
-                          <label>{filter.label}</label>
-                          <select
-                            value={filters[filter.key]}
-                            onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
-                            className="filter-select"
-                          >
-                            <option value="">All</option>
-                            {filter.options.map((option, i) => (
-                              <option key={i} value={option}>{option}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "sales" && (
-                <div className="table-container">
-                  <SalesTable
-                    data={filteredSales}
-                    filters={filters}
-                    setFilters={setFilters}
-                    colors={colors}
-                    handleMouseEnter={handleMouseEnter}
-                    handleMouseLeave={handleMouseLeave}
-                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                    getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    compactSizes={compactSizes}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalItems={filteredSales.length}
-                    itemsPerPage={itemsPerPage}
-                  />
-                </div>
-              )}
-
-              {activeTab === "fabric" && (
-                <div className="table-container">
-                  <FabricTable
-                    data={filteredFabric}
-                    fabricFilters={fabricFilters}
-                    setFabricFilters={setFabricFilters}
-                    colors={colors}
-                    handleMouseEnter={handleMouseEnter}
-                    handleMouseLeave={handleMouseLeave}
-                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                    getMatchingSalesImage={getMatchingSalesImage}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalItems={filteredFabric.length}
-                    itemsPerPage={itemsPerPage}
-                  />
-                </div>
-              )}
-
-              {activeTab === "developments" && (
-                <div className="table-container">
-                  <DevelopmentsTable
-                    data={filteredDevelopments}
-                    filters={filters}
-                    setFilters={setFilters}
-                    colors={colors}
-                    handleMouseEnter={handleMouseEnter}
-                    handleMouseLeave={handleMouseLeave}
-                    getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    totalItems={filteredDevelopments.length}
-                    itemsPerPage={itemsPerPage}
-                  />
-                </div>
-              )}
-
-              {activeTab === "production" && (
-                <div className="no-print">
-                  <div className="po-input-container">
-                    <div className="filter-item" style={{ flex: 1 }}>
-                      <textarea
-                        value={poInput}
-                        onChange={(e) => setPoInput(e.target.value)}
-                        placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
-                        rows={1}
-                        className="filter-select"
-                        style={{ width: '100%', height: '40px', overflow: 'hidden' }}
-                      />
-                    </div>
-                    <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
-                      <button
-                        onClick={() => {
-                          const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
-                          setSelectedPOs(pos);
-                        }}
-                        className="action-button generate-button"
-                      >
-                        Generate Sheets
-                      </button>
-                      <button onClick={() => window.print()} className="action-button print-button">
-                        <FiPrinter size={14} /> Print Sheets
-                      </button>
-                    </div>
-                  </div>
-
-                  {selectedPOs.length > 0 && (
-                    <div className="sheets-container" style={{ marginTop: '20px' }}>
-                      <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                      <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+          </header>
 
-            {previewImage.visible && (
-              <div 
-                className={`image-preview ${previewImage.direction} no-print`}
-                style={{
-                  left: `${previewImage.position.x}px`,
-                  [previewImage.direction === 'below' ? 'top' : 'bottom']: 
-                    `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
-                }}
+          <div className="tabs-container no-print">
+            {[
+              { id: "sales", label: "Sales Orders", icon: <FiShoppingBag size={16} /> },
+              { id: "fabric", label: "Fabric Orders", icon: <FiDatabase size={16} /> },
+              { id: "developments", label: "Developments", icon: <FiBarChart2 size={16} /> },
+              { id: "production", label: "Production Sheets", icon: <FiPrinter size={16} /> }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
               >
-                <img 
-                  src={previewImage.url} 
-                  alt="Preview"
-                  className="preview-image"
-                />
-                <div className="preview-arrow"></div>
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {showStats && <StatsPanel productionStats={productionStats} colors={colors} />}
+
+            {activeTab !== "production" && (
+              <div className="filters-container no-print">
+                <div className="filter-item">
+                  <label className="filter-label">Type</label>
+                  <select
+                    value={activeTab === "fabric" ? fabricFilters.TYPE : filters.TYPE}
+                    onChange={(e) => activeTab === "fabric" 
+                      ? setFabricFilters({ ...fabricFilters, TYPE: e.target.value })
+                      : setFilters({ ...filters, TYPE: e.target.value })}
+                    className="filter-select"
+                  >
+                    <option value="">All Types</option>
+                    {activeTab === "fabric" && data && data.fabric
+                      ? [...new Set(data.fabric.map(row => row.TYPE).filter(Boolean))].map(type => <option key={type} value={type}>{type}</option>)
+                      : data && data.sales_po
+                        ? [...new Set(data.sales_po.map(row => row.TYPE).filter(Boolean))].map(type => <option key={type} value={type}>{type}</option>)
+                        : null}
+                  </select>
+                </div>
+                {activeTab !== "fabric" && (
+                  <>
+                    <div className="filter-item">
+                      <label className="filter-label">Live Status</label>
+                      <select
+                        value={filters["LIVE STATUS"]}
+                        onChange={(e) => setFilters({ ...filters, "LIVE STATUS": e.target.value })}
+                        className="filter-select"
+                      >
+                        <option value="">All Status</option>
+                        {data && data.sales_po
+                          ? [...new Set(data.sales_po.map(row => row["LIVE STATUS"]).filter(Boolean))].map(status => <option key={status} value={status}>{status}</option>)
+                          : null}
+                      </select>
+                    </div>
+                    <div className="filter-item">
+                      <label className="filter-label">Fit Status</label>
+                      <select
+                        value={filters["FIT STATUS"]}
+                        onChange={(e) => setFilters({ ...filters, "FIT STATUS": e.target.value })}
+                        className="filter-select"
+                      >
+                        <option value="">All Status</option>
+                        {data && data.sales_po
+                          ? [...new Set(data.sales_po.map(row => row["FIT STATUS"]).filter(Boolean))].map(status => <option key={status} value={status}>{status}</option>)
+                          : null}
+                      </select>
+                    </div>
+                  </>
+                )}
+                <div className="filter-item">
+                  <label className="filter-label">Customer</label>
+                  <select
+                    value={activeTab === "fabric" ? fabricFilters["CUSTOMER NAME"] : filters["CUSTOMER NAME"]}
+                    onChange={(e) => activeTab === "fabric" 
+                      ? setFabricFilters({ ...fabricFilters, "CUSTOMER NAME": e.target.value })
+                      : setFilters({ ...filters, "CUSTOMER NAME": e.target.value })}
+                    className="filter-select"
+                  >
+                    <option value="">All Customers</option>
+                    {activeTab === "fabric" && data && data.fabric
+                      ? [...new Set(data.fabric.map(row => row["CUSTOMER NAME"]).filter(Boolean))].map(customer => <option key={customer} value={customer}>{customer}</option>)
+                      : data && data.sales_po
+                        ? [...new Set(data.sales_po.map(row => row["CUSTOMER NAME"]).filter(Boolean))].map(customer => <option key={customer} value={customer}>{customer}</option>)
+                        : null}
+                  </select>
+                </div>
+                {activeTab === "fabric" && (
+                  <div className="filter-item">
+                    <label className="filter-label">Supplier</label>
+                    <select
+                      value={fabricFilters.SUPPLIER}
+                      onChange={(e) => setFabricFilters({ ...fabricFilters, SUPPLIER: e.target.value })}
+                      className="filter-select"
+                    >
+                      <option value="">All Suppliers</option>
+                      {data && data.fabric
+                        ? [...new Set(data.fabric.map(row => row.SUPPLIER).filter(Boolean))].map(supplier => <option key={supplier} value={supplier}>{supplier}</option>)
+                        : null}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
 
-            <footer className="app-footer no-print">
-              <div className="footer-content">
-                <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
-                <div>
-                  Last Updated: {new Date().toLocaleString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div>
+            {activeTab === "sales" && (
+              <div className="table-container">
+                <SalesTable
+                  data={currentSales}
+                  filters={filters}
+                  setFilters={setFilters}
+                  colors={colors}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                  getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                  compactSizes={compactSizes}
+                  onSort={handleSalesSort}
+                  sort={salesSort}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalItems={filteredSales.length}
+                  itemsPerPage={itemsPerPage}
+                />
               </div>
-            </footer>
+            )}
+
+            {activeTab === "fabric" && (
+              <div className="table-container">
+                <FabricTable
+                  data={currentFabric}
+                  fabricFilters={fabricFilters}
+                  setFabricFilters={setFabricFilters}
+                  colors={colors}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                  getMatchingSalesImage={getMatchingSalesImage}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                  onSort={handleFabricSort}
+                  sort={fabricSort}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalItems={filteredFabric.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
+
+            {activeTab === "developments" && (
+              <div className="table-container">
+                <DevelopmentsTable
+                  data={currentDevelopments}
+                  filters={filters}
+                  setFilters={setFilters}
+                  colors={colors}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                  onSort={handleDevelopmentsSort}
+                  sort={developmentsSort}
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  totalItems={filteredDevelopments.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              </div>
+            )}
+
+            {activeTab === "production" && (
+              <div className="no-print">
+                <div className="po-input-container">
+                  <div className="filter-item" style={{ flex: 1 }}>
+                    <textarea
+                      value={poInput}
+                      onChange={(e) => setPoInput(e.target.value)}
+                      placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
+                      rows={1}
+                      className="filter-select"
+                      style={{ width: '100%', height: '40px', overflow: 'hidden' }}
+                    />
+                  </div>
+                  <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                      onClick={() => {
+                        const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
+                        setSelectedPOs(pos);
+                      }}
+                      className="action-button generate-button"
+                    >
+                      Generate Sheets
+                    </button>
+                    <button onClick={() => window.print()} className="action-button print-button">
+                      <FiPrinter size={14} /> Print Sheets
+                    </button>
+                  </div>
+                </div>
+
+                {selectedPOs.length > 0 && (
+                  <div className="sheets-container" style={{ marginTop: '20px' }}>
+                    <DocketSheet selectedData={data && data.sales_po ? data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"])) : []} />
+                    <CuttingSheet selectedData={data && data.sales_po ? data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"])) : []} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {previewImage.visible && (
+            <div 
+              className={`image-preview ${previewImage.direction} no-print`}
+              style={{
+                left: `${previewImage.position.x}px`,
+                [previewImage.direction === 'below' ? 'top' : 'bottom']: 
+                  `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
+              }}
+            >
+              <img 
+                src={previewImage.url} 
+                alt="Preview"
+                className="preview-image"
+              />
+              <div className="preview-arrow"></div>
+            </div>
+          )}
+
+          <footer className="app-footer no-print">
+            <div className="footer-content">
+              <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
+              <div>
+                Last Updated: {new Date().toLocaleString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </div>
+          </footer>
         </div>
       } />
       <Route path="/pd-kaiia" element={<CustomerPage />} />
