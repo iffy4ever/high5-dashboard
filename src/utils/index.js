@@ -16,6 +16,52 @@ export const getColorCode = (color) => {
   return "#7C3AED";
 };
 
+// Date formatting function
+export const formatDate = (value) => {
+  if (!value) return "";
+  try {
+    let date;
+    if (typeof value === 'number') {
+      date = new Date((value - 25569) * 86400 * 1000);
+    } else {
+      date = new Date(value);
+    }
+    if (isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  } catch {
+    return String(value);
+  }
+};
+
+// Date value extraction function
+export const getDateValue = (value) => {
+  if (!value) return 0;
+  let date;
+  if (typeof value === 'number') {
+    date = new Date((value - 25569) * 86400 * 1000);
+  } else {
+    date = new Date(value);
+  }
+  return isNaN(date.getTime()) ? 0 : date.getTime();
+};
+
+// Currency formatting function
+export const formatCurrency = (value) => {
+  if (!value) return "£0.00";
+  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
+};
+
+// Google Drive thumbnail URL generator
 export const getGoogleDriveThumbnail = (url) => {
   console.log("getGoogleDriveThumbnail called with URL:", url); // Debug log
   if (!url || typeof url !== 'string') {
@@ -49,59 +95,7 @@ export const getGoogleDriveThumbnail = (url) => {
   }
 };
 
-export const getDateValue = (value) => {
-  if (!value) return 0;
-  let date;
-  if (typeof value === 'number') {
-    date = new Date((value - 25569) * 86400 * 1000);
-  } else {
-    date = new Date(value);
-  }
-  return isNaN(date.getTime()) ? 0 : date.getTime();
-};
-
-export const formatDate = (value) => {
-  if (!value) return "";
-  try {
-    let date;
-    if (typeof value === 'number') {
-      date = new Date((value - 25569) * 86400 * 1000);
-    } else {
-      date = new Date(value);
-    }
-    if (isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  } catch {
-    return String(value);
-  }
-};
-
-export const formatCurrency = (value) => {
-  if (!value) return "£0.00";
-  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(number);
-};
-
-export const compactSizes = (row) => {
-  const sizes = [];
-  for (let i = 4; i <= 26; i += 2) {
-    const size = i.toString();
-    if (row[size]) {
-      sizes.push(`${size}:${row[size]}`);
-    }
-  }
-  return sizes.join(', ');
-};
-
+// Google Drive download link generator
 export const getGoogleDriveDownloadLink = (url) => {
   console.log("getGoogleDriveDownloadLink called with URL:", url); // Debug log
   if (!url || typeof url !== 'string') {
@@ -117,7 +111,6 @@ export const getGoogleDriveDownloadLink = (url) => {
     // Validate file ID format
     if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) {
       console.warn("Invalid file ID format:", fileId, "URL:", url);
-      return url;
     }
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
     console.log("Generated download URL:", downloadUrl); // Debug log
@@ -126,4 +119,16 @@ export const getGoogleDriveDownloadLink = (url) => {
     console.error("Error generating download URL:", e, "URL:", url);
     return url;
   }
+};
+
+// Size compacting function
+export const compactSizes = (row) => {
+  const sizes = [];
+  for (let i = 4; i <= 26; i += 2) {
+    const size = i.toString();
+    if (row[size]) {
+      sizes.push(`${size}:${row[size]}`);
+    }
+  }
+  return sizes.join(', ');
 };

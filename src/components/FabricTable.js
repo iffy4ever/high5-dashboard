@@ -1,6 +1,5 @@
-// src/components/FabricTable.js
 import React from 'react';
-import { FiAlertCircle, FiImage, FiDollarSign, FiExternalLink } from 'react-icons/fi';
+import { FiAlertCircle, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { getColorCode } from '../utils';
 
 const FabricTable = ({

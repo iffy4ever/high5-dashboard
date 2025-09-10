@@ -1,7 +1,10 @@
-// src/components/CustomerPage.js
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
+<<<<<<< HEAD
 import { FiSearch, FiAlertCircle, FiShoppingBag, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
+=======
+import { FiSearch, FiAlertCircle, FiShoppingBag } from 'react-icons/fi';
+>>>>>>> 7320c5fb90426341fcc7c87942543f8b88645f75
 import { useData } from '../useData';
 import { getGoogleDriveThumbnail, formatDate, getDateValue, formatCurrency } from '../utils/index';
 import '../styles.css';
@@ -25,76 +28,6 @@ const CustomerPage = () => {
     direction: 'below'
   });
   const [darkMode, setDarkMode] = useState(false);
-
-  const colors = darkMode ? {
-    primary: "#6366F1",
-    primaryLight: "#818CF8",
-    primaryDark: "#4F46E5",
-    secondary: "#EC4899",
-    secondaryLight: "#F472B6",
-    secondaryDark: "#DB2777",
-    accent: "#F59E0B",
-    accentLight: "#FBBF24",
-    accentDark: "#D97706",
-    danger: "#EF4444",
-    success: "#10B981",
-    warning: "#F59E0B",
-    info: "#3B82F6",
-    textDark: "#F3F4F6",
-    textMedium: "#9CA3AF",
-    textLight: "#FFFFFF",
-    background: "#111827",
-    cardBg: "#1F2937",
-    border: "#374151",
-    rowEven: "#1F2937",
-    rowOdd: "#111827",
-    headerBg: "#374151",
-    headerText: "#000000",
-    activeTab: "#CD5E77",
-    inactiveTab: "#6B7280",
-    actionButton: "#1B4D3E",
-    statCardBg: "#1F2937",
-    statCardBorder: "#374151",
-    accentRgb: "245, 158, 11",
-    successRgb: "16, 185, 129",
-    warningRgb: "245, 158, 11",
-    infoRgb: "59, 130, 246",
-    activeTabRgb: "205, 94, 119"
-  } : {
-    primary: "#6366F1",
-    primaryLight: "#818CF8",
-    primaryDark: "#4F46E5",
-    secondary: "#EC4899",
-    secondaryLight: "#F472B6",
-    secondaryDark: "#DB2777",
-    accent: "#F59E0B",
-    accentLight: "#FBBF24",
-    accentDark: "#D97706",
-    danger: "#EF4444",
-    success: "#10B981",
-    warning: "#F59E0B",
-    info: "#3B82F6",
-    textDark: "#1F2937",
-    textMedium: "#6B7280",
-    textLight: "#FFFFFF",
-    background: "#F9FAFB",
-    cardBg: "#FFFFFF",
-    border: "#E5E7EB",
-    rowEven: "#FFFFFF",
-    rowOdd: "#F9FAFB",
-    headerBg: "#F3F4F6",
-    headerText: "#000000",
-    activeTab: "#CD5E77",
-    inactiveTab: "#9CA3AF",
-    actionButton: "#1B4D3E",
-    statCardBg: "#FFFFFF",
-    statCardBorder: "#E5E7EB",
-    accentRgb: "245, 158, 11",
-    successRgb: "16, 185, 129",
-    warningRgb: "245, 158, 11",
-    infoRgb: "59, 130, 246",
-    activeTabRgb: "205, 94, 119"
-  };
 
   const filteredDevelopments = useMemo(() => {
     if (!data || !data.insert_pattern) return [];
@@ -132,10 +65,15 @@ const CustomerPage = () => {
 
   const handleMouseEnter = (url, e) => {
     if (!url) return;
+    
+    // Preload image for faster display
+    const img = new Image();
+    img.src = getGoogleDriveThumbnail(url);
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const isNearBottom = window.innerHeight - rect.bottom < 250;
     setPreviewImage({
-      url: url,
+      url: getGoogleDriveThumbnail(url),
       visible: true,
       position: { x: rect.left + rect.width / 2, y: rect.top + window.scrollY },
       direction: isNearBottom ? 'above' : 'below'
@@ -206,6 +144,231 @@ const CustomerPage = () => {
           <div className="header-right">
             {/* No stats button as per initial design */}
           </div>
+<<<<<<< HEAD
+=======
+
+          {activeTab === "developments" && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>TIMESTAMP</th>
+                    <th>H-NUMBER</th>
+                    <th>CUSTOMER NAME</th>
+                    <th>STYLE TYPE</th>
+                    <th>CUSTOMER CODE</th>
+                    <th>FRONT IMAGE</th>
+                    <th>BACK IMAGE</th>
+                    <th>SIDE IMAGE</th>
+                    <th>FIT SAMPLE</th>
+                    <th>TOTAL GARMENT PRICE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDevelopments.length === 0 ? (
+                    <tr className="empty-state">
+                      <td colSpan="10">
+                        <div className="empty-content">
+                          <FiAlertCircle size={28} />
+                          <div>No Matching Developments Found</div>
+                          <p>Try Adjusting Your Search Or Filters</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDevelopments.map((row, i) => (
+                      <tr key={i}>
+                        <td className="nowrap">{formatDate(row["Timestamp"])}</td>
+                        <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                        <td>{row["CUSTOMER NAME"] || "N/A"}</td>
+                        <td>{row["STYLE TYPE"]}</td>
+                        <td>{row["CUSTOMER CODE"] || "N/A"}</td>
+                        <td className="image-cell">
+                          {row["FRONT IMAGE"] ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row["FRONT IMAGE"], e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row["FRONT IMAGE"]) || "/fallback-image.png"}
+                                  alt="Front"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td className="image-cell">
+                          {row["BACK IMAGE"] ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row["BACK IMAGE"], e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View back image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row["BACK IMAGE"]) || "/fallback-image.png"}
+                                  alt="Back"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td className="image-cell">
+                          {row["SIDE IMAGE"] ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row["SIDE IMAGE"], e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View side image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row["SIDE IMAGE"]) || "/fallback-image.png"}
+                                  alt="Side"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td>{row["FIT SAMPLE"] || "N/A"}</td>
+                        <td className="price-cell nowrap">{formatCurrency(row["TOTAL GARMENT PRICE"])}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "orders" && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>IMAGE</th>
+                    <th>FIT STATUS</th>
+                    <th>H-NUMBER</th>
+                    <th>CUSTOMER NAME</th>
+                    <th>PO NUMBER</th>
+                    <th>STYLE NUMBER</th>
+                    <th>DESCRIPTION</th>
+                    <th>TOTAL UNITS</th>
+                    <th>XFACT DD</th>
+                    <th>REAL DD</th>
+                    <th>LIVE STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 ? (
+                    <tr className="empty-state">
+                      <td colSpan="11">
+                        <div className="empty-content">
+                          <FiAlertCircle size={28} />
+                          <div>No Matching Orders Found</div>
+                          <p>Try Adjusting Your Search Or Filters</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredOrders.map((row, i) => (
+                      <tr key={i}>
+                        <td className="image-cell">
+                          {row.IMAGE ? (
+                            <div 
+                              onMouseEnter={(e) => handleMouseEnter(row.IMAGE, e)}
+                              onMouseLeave={handleMouseLeave}
+                            >
+                              <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
+                                <img
+                                  src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
+                                  alt="Product"
+                                  className="product-image"
+                                  loading="eager"
+                                  fetchPriority="high"
+                                  onError={(e) => {
+                                    e.target.src = "/fallback-image.png";
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="no-image">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <span className="status-text" data-status={row["FIT STATUS"]}>{row["FIT STATUS"]}</span>
+                        </td>
+                        <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                        <td>{row["CUSTOMER NAME"]}</td>
+                        <td>{row["PO NUMBER"]}</td>
+                        <td>{row["STYLE NUMBER"]}</td>
+                        <td>{row["DESCRIPTION"]}</td>
+                        <td className="bold-cell">{row["TOTAL UNITS"]}</td>
+                        <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
+                        <td className="nowrap">{formatDate(row["REAL DD"])}</td>
+                        <td>
+                          <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {previewImage.visible && (
+            <div 
+              className={`image-preview ${previewImage.direction} no-print`}
+              style={{
+                left: `${previewImage.position.x}px`,
+                top: previewImage.direction === 'below' ? 
+                  `${previewImage.position.y + 20}px` : 
+                  'auto',
+                bottom: previewImage.direction === 'above' ? 
+                  `${window.innerHeight - previewImage.position.y + 20}px` : 
+                  'auto'
+              }}
+            >
+              <img 
+                src={previewImage.url} 
+                alt="Preview"
+                className="preview-image"
+              />
+              <div className="preview-arrow"></div>
+            </div>
+          )}
+>>>>>>> 7320c5fb90426341fcc7c87942543f8b88645f75
         </div>
       </header>
 
