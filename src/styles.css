@@ -287,11 +287,11 @@ button {
   cursor: not-allowed;
 }
 
-/* Search Box - MOVED TO LEFT */
+/* Search Box - WIDER and on LEFT */
 .search-box-container {
   padding: 1rem 1.5rem;
   display: flex;
-  justify-content: flex-start; /* Changed from center to flex-start */
+  justify-content: flex-start;
 }
 
 .search-box {
@@ -302,8 +302,9 @@ button {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
-  max-width: 500px;
-  margin: 0; /* Changed from auto to 0 */
+  width: 800px; /* DOUBLE THE WIDTH */
+  max-width: 800px; /* DOUBLE THE MAX WIDTH */
+  margin: 0;
 }
 
 .search-box input {
@@ -312,6 +313,7 @@ button {
   outline: none;
   color: var(--text-dark);
   width: 100%;
+  font-size: 1rem; /* Slightly larger font */
 }
 
 .search-box input::placeholder {
@@ -362,7 +364,7 @@ button {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Wider stats */
   gap: 1rem;
 }
 
@@ -469,6 +471,7 @@ button {
   width: 160px;
   height: 160px;
   object-fit: contain;
+  cursor: default; /* Remove pointer cursor */
 }
 
 .no-image {
@@ -607,48 +610,6 @@ button {
   gap: 0.75rem;
 }
 
-/* Image Preview */
-.image-preview {
-  position: fixed;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  z-index: 1000;
-  padding: 0.5rem;
-}
-
-.preview-image {
-  max-width: 300px;
-  max-height: 300px;
-  object-fit: contain;
-  border-radius: 0.25rem;
-}
-
-.preview-arrow {
-  position: absolute;
-  width: 1rem;
-  height: 1rem;
-  background: var(--card-bg);
-}
-
-.image-preview.below .preview-arrow {
-  top: -0.5rem;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-  z-index: -1;
-}
-
-.image-preview.above .preview-arrow {
-  bottom: -0.5rem;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  border-bottom: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  z-index: -1;
-}
-
 /* Footer */
 .app-footer {
   background: var(--card-bg);
@@ -767,6 +728,17 @@ button {
   color: #FF0000;
 }
 
+/* Cutting Sheet specific styles */
+.cutting-sheet-total {
+  font-size: 10pt !important; /* Same font size as other cells */
+  text-align: center !important; /* Center aligned */
+  vertical-align: middle !important;
+}
+
+.cutting-sheet-header {
+  text-align: center !important; /* Center aligned headers */
+}
+
 /* Pagination */
 .pagination-button {
   background-color: var(--card-bg);
@@ -785,58 +757,15 @@ button {
   cursor: not-allowed;
 }
 
-/* Hide non-printable elements during print */
-@media print {
-  body {
-    margin: 0;
-    padding: 0;
-  }
-
-  body * {
-    visibility: hidden;
-  }
-
-  .sheets-container, .sheets-container * {
-    visibility: visible;
-  }
-
-  .sheets-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    display: block;
-  }
-
-  .printable-sheet {
-    margin: 0;
-    border: initial;
-    border-radius: initial;
-    width: initial;
-    min-height: initial;
-    box-shadow: initial;
-    background: initial;
-    page-break-after: always;
-  }
-
-  .printable-sheet:last-child {
-    page-break-after: avoid;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 0;
-  }
-
-  .table, .table th, .table td {
-    border-width: 0.5pt !important;
-  }
-}
-
 /* Mobile Header Stats */
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  
+  .search-box {
+    width: 100%;
+    max-width: 100%;
   }
 }
 

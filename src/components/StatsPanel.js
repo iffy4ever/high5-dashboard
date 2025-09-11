@@ -38,6 +38,24 @@ const StatsPanel = ({ productionStats, colors }) => {
             color: productionStats.deliveredUnitsLast30Days > 0 ? "#10B981" : colors.textMedium,
           },
           {
+            title: "Last 3 Quarters Units",
+            value: formatNumber(productionStats.last3QuartersUnits),
+            icon: <FiBarChart2 size={16} />,
+            color: productionStats.last3QuartersUnits > 0 ? "#3B82F6" : colors.textMedium,
+          },
+          {
+            title: "3 Year Total Units",
+            value: formatNumber(productionStats.threeYearUnits),
+            icon: <FiBarChart2 size={16} />,
+            color: productionStats.threeYearUnits > 0 ? "#6366F1" : colors.textMedium,
+          },
+          {
+            title: "3 Year Total Orders",
+            value: formatNumber(productionStats.threeYearOrders),
+            icon: <FiShoppingBag size={16} />,
+            color: productionStats.threeYearOrders > 0 ? "#6366F1" : colors.textMedium,
+          },
+          {
             title: "In Production",
             value: formatNumber(productionStats.inProduction),
             icon: <FiClock size={16} />,
@@ -54,6 +72,12 @@ const StatsPanel = ({ productionStats, colors }) => {
             value: formatNumber(productionStats.pendingUnits),
             icon: <FiAlertCircle size={16} />,
             color: productionStats.pendingUnits > 0 ? colors.warning : colors.textMedium,
+          },
+          {
+            title: "GS To Send",
+            value: formatNumber(productionStats.gsToSend),
+            icon: <FiCheckCircle size={16} />,
+            color: productionStats.gsToSend > 0 ? "#F59E0B" : colors.textMedium,
           },
           {
             title: "Gold Seal Sent",

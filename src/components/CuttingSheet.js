@@ -54,10 +54,10 @@ const CuttingSheet = ({ selectedData }) => {
       <table className="table">
         <thead>
           <tr>
-            <th style={{ width: '15%' }}>PO Number</th>
-            <th style={{ width: '25%' }}>Style #</th>
+            <th style={{ width: '12%' }}>PO Number</th>
+            <th style={{ width: '20%' }}>Style #</th>
             <th style={{ width: '20%' }}>Colour</th>
-            <th style={{ width: '10%' }}>Department</th>
+            <th style={{ width: '17%' }}>Department</th>
             <th style={{ width: '10%' }}>Units</th>
             <th style={{ width: '10%' }}>H Number</th>
             <th style={{ width: '10%' }}>Type</th>
@@ -109,12 +109,16 @@ const CuttingSheet = ({ selectedData }) => {
               ))}
             </tr>
           ))}
-          <tr className="total-row">
-            <td colSpan={2}>Total:</td>
-            {sizes.map(size => (
-              <td key={size}>{totalBySize[size]}</td>
-            ))}
-          </tr>
+<tr className="total-row">
+  <td colSpan={2}>Total:</td>
+  {sizes.map(size => (
+    <td key={size} className="cutting-sheet-total">{totalBySize[size]}</td>
+  ))}
+</tr>
+
+<tr>
+  <td className="cutting-sheet-header">RATIO:</td>
+</tr>
         </tbody>
       </table>
       <table className="ratio-section">
