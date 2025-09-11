@@ -3,87 +3,69 @@ import React from 'react';
 import { FiShoppingBag, FiTruck, FiClock, FiDatabase, FiAlertCircle, FiCalendar, FiCheckCircle, FiBarChart2 } from 'react-icons/fi';
 
 const StatsPanel = ({ productionStats, colors }) => {
+  // Format large numbers with commas
+  const formatNumber = (num) => {
+    if (num === undefined || num === null) return '0';
+    return num.toLocaleString('en-GB');
+  };
+
   return (
     <div className="stats-panel no-print">
       <div className="stats-grid">
         {[
           {
             title: "Total Orders",
-            value: productionStats.totalOrders,
+            value: formatNumber(productionStats.totalOrders),
             icon: <FiShoppingBag size={16} />,
             color: colors.primary,
           },
           {
             title: "Total Units",
-            value: productionStats.totalUnits,
+            value: formatNumber(productionStats.totalUnits),
             icon: <FiShoppingBag size={16} />,
             color: colors.primary,
           },
           {
             title: "Orders (Last 30d)",
-            value: productionStats.deliveredLast30Days,
+            value: formatNumber(productionStats.deliveredLast30Days),
             icon: <FiTruck size={16} />,
-            color: colors.success,
+            color: productionStats.deliveredLast30Days > 0 ? "#10B981" : colors.textMedium,
           },
           {
             title: "Units (Last 30d)",
-            value: productionStats.deliveredUnitsLast30Days,
+            value: formatNumber(productionStats.deliveredUnitsLast30Days),
             icon: <FiShoppingBag size={16} />,
-            color: colors.success,
+            color: productionStats.deliveredUnitsLast30Days > 0 ? "#10B981" : colors.textMedium,
           },
           {
-            title: productionStats.lastQuarterLabel,
-            value: productionStats.unitsDeliveredLastQuarter,
-            icon: <FiTruck size={16} />,
-            color: colors.success,
-          },
-          {
-            title: "In Prod.",
-            value: productionStats.inProduction,
+            title: "In Production",
+            value: formatNumber(productionStats.inProduction),
             icon: <FiClock size={16} />,
-            color: colors.accent,
+            color: productionStats.inProduction > 0 ? colors.accent : colors.textMedium,
           },
           {
-            title: "Fabric Ord.",
-            value: productionStats.fabricOrdered,
+            title: "Fabric Ordered",
+            value: formatNumber(productionStats.fabricOrdered),
             icon: <FiDatabase size={16} />,
-            color: colors.info,
+            color: productionStats.fabricOrdered > 0 ? colors.info : colors.textMedium,
           },
           {
-            title: "Pend. Units",
-            value: productionStats.pendingUnits,
+            title: "Pending Units",
+            value: formatNumber(productionStats.pendingUnits),
             icon: <FiAlertCircle size={16} />,
-            color: colors.warning,
+            color: productionStats.pendingUnits > 0 ? colors.warning : colors.textMedium,
           },
           {
             title: "Gold Seal Sent",
-            value: productionStats.goldSealSent,
+            value: formatNumber(productionStats.goldSealSent),
             icon: <FiCheckCircle size={16} />,
-            color: colors.success,
+            color: productionStats.goldSealSent > 0 ? "#10B981" : colors.textMedium,
           },
           {
             title: "Last Delivery",
             value: productionStats.lastDeliveryDateFormatted,
             icon: <FiCalendar size={16} />,
-            color: colors.secondary,
-          },
-          {
-            title: productionStats.lastYearOrdersLabel,
-            value: productionStats.ordersLastYear,
-            icon: <FiBarChart2 size={16} />,
-            color: colors.secondary,
-          },
-          {
-            title: productionStats.lastYearLabel,
-            value: productionStats.unitsDeliveredLastYear,
-            icon: <FiTruck size={16} />,
-            color: colors.success,
-          },
-          {
-            title: productionStats.currentYearLabel,
-            value: productionStats.unitsDeliveredCurrentYear,
-            icon: <FiTruck size={16} />,
-            color: colors.success,
+            color: productionStats.lastDeliveryDateFormatted !== "-" ? colors.secondary : colors.textMedium,
           },
         ].map((metric, index) => (
           <div key={index} className="stat-card">

@@ -1,42 +1,55 @@
 // src/utils/index.js
+const imageCache = new Map();
+
 export const getColorCode = (color) => {
   if (!color) return "#7C3AED";
+  const colorMap = {
+    red: "#EF4444",
+    blue: "#3B82F6",
+    green: "#22C55E",
+    black: "#111827",
+    white: "#E5E7EB",
+    pink: "#EC4899",
+    yellow: "#F59E0B",
+    purple: "#7C3AED",
+    gray: "#6B7280",
+    grey: "#6B7280",
+    navy: "#1E40AF",
+    teal: "#0D9488",
+    orange: "#F97316"
+  };
+
   const colorLower = color.toLowerCase();
-  if (colorLower.includes("red")) return "#EF4444";
-  if (colorLower.includes("blue")) return "#3B82F6";
-  if (colorLower.includes("green")) return "#22C55E";
-  if (colorLower.includes("black")) return "#111827";
-  if (colorLower.includes("white")) return "#E5E7EB";
-  if (colorLower.includes("pink")) return "#EC4899";
-  if (colorLower.includes("yellow")) return "#F59E0B";
-  if (colorLower.includes("purple")) return "#7C3AED";
-  if (colorLower.includes("gray") || colorLower.includes("grey")) return "#6B7280";
-  if (colorLower.includes("navy")) return "#1E40AF";
-  if (colorLower.includes("teal")) return "#0D9488";
-  if (colorLower.includes("orange")) return "#F97316";
+  for (const [key, value] of Object.entries(colorMap)) {
+    if (colorLower.includes(key)) return value;
+  }
   return "#7C3AED";
 };
 
 export const getGoogleDriveThumbnail = (url) => {
-  if (!url || typeof url !== 'string') {
-    return "/fallback-image.png";
-  }
+  if (!url || typeof url !== 'string') return "/fallback-image.png";
   
+  // Check cache first
+  if (imageCache.has(url)) {
+    return imageCache.get(url);
+  }
+
   try {
-    // Extract file ID from various Google Drive URL formats
     const fileIdMatch = url.match(/\/file\/d\/([^/]+)/) || 
                         url.match(/id=([^&]+)/) || 
                         url.match(/\/open\?id=([^&]+)/) || 
                         url.match(/\/d\/([^/]+)/) || 
                         url.match(/\/uc\?id=([^&]+)/);
     
-    const fileId = fileIdMatch ? fileIdMatch[1] : null;
+    const fileId = fileIdMatch?.[1];
     if (!fileId || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
       return "/fallback-image.png";
     }
     
-    // Use webp format for faster loading and smaller size
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=s200&export=download&format=webp`;
+    // Use direct thumbnail URL for better loading
+    const thumbnailUrl = `https://lh3.googleusercontent.com/d/${fileId}=s200`;
+    imageCache.set(url, thumbnailUrl);
+    return thumbnailUrl;
   } catch (e) {
     return "/fallback-image.png";
   }
@@ -44,25 +57,28 @@ export const getGoogleDriveThumbnail = (url) => {
 
 export const getDateValue = (value) => {
   if (!value) return 0;
-  let date;
-  if (typeof value === 'number') {
-    date = new Date((value - 25569) * 86400 * 1000);
-  } else {
-    date = new Date(value);
+  try {
+    let date;
+    if (typeof value === 'number') {
+      date = new Date((value - 25569) * 86400 * 1000);
+    } else if (typeof value === 'string') {
+      date = new Date(value.includes('/') ? value.split('/').reverse().join('-') : value);
+    } else {
+      date = new Date(value);
+    }
+    return isNaN(date.getTime()) ? 0 : date.getTime();
+  } catch {
+    return 0;
   }
-  return isNaN(date.getTime()) ? 0 : date.getTime();
 };
 
 export const formatDate = (value) => {
   if (!value) return "";
   try {
-    let date;
-    if (typeof value === 'number') {
-      date = new Date((value - 25569) * 86400 * 1000);
-    } else {
-      date = new Date(value);
-    }
-    if (isNaN(date.getTime())) return String(value);
+    const dateValue = getDateValue(value);
+    if (dateValue === 0) return String(value);
+    
+    const date = new Date(dateValue);
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
@@ -74,31 +90,41 @@ export const formatDate = (value) => {
 };
 
 export const formatCurrency = (value) => {
-  if (!value) return "£0.00";
-  const number = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, "")) : value;
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(number);
+  if (value === null || value === undefined || value === "") return "£0.00";
+  
+  try {
+    const number = typeof value === 'string' 
+      ? parseFloat(value.replace(/[^\d.-]/g, "")) 
+      : Number(value);
+    
+    if (isNaN(number)) return "£0.00";
+    
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(number);
+  } catch {
+    return "£0.00";
+  }
 };
 
 export const compactSizes = (row) => {
   const sizes = [];
   for (let i = 4; i <= 26; i += 2) {
     const size = i.toString();
-    if (row[size]) {
-      sizes.push(`${size}:${row[size]}`);
+    const value = row[size];
+    if (value !== undefined && value !== null && value !== "" && value !== "0") {
+      sizes.push(`${size}:${value}`);
     }
   }
-  return sizes.join(', ');
+  return sizes.join(', ') || 'No sizes';
 };
 
 export const getGoogleDriveDownloadLink = (url) => {
-  if (!url || typeof url !== 'string') {
-    return "";
-  }
+  if (!url || typeof url !== 'string') return "";
+  
   try {
     const fileId = url.match(/\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
     if (!fileId || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
@@ -110,9 +136,27 @@ export const getGoogleDriveDownloadLink = (url) => {
   }
 };
 
-// Preload images for instant loading
+// Enhanced preload with error handling
 export const preloadImage = (url) => {
-  if (!url) return;
+  if (!url || imageCache.has(url)) return;
+  
+  const thumbnailUrl = getGoogleDriveThumbnail(url);
   const img = new Image();
-  img.src = getGoogleDriveThumbnail(url);
+  
+  img.onload = () => {
+    imageCache.set(url, thumbnailUrl);
+  };
+  
+  img.onerror = () => {
+    imageCache.set(url, "/fallback-image.png");
+  };
+  
+  img.src = thumbnailUrl;
+};
+
+// Batch preload images
+export const preloadImages = (urls) => {
+  urls.forEach(url => {
+    if (url) preloadImage(url);
+  });
 };
