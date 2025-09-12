@@ -297,37 +297,33 @@ const CustomerPage = () => {
                         <td>{row["CUSTOMER NAME"] || "N/A"}</td>
                         <td>{row["STYLE TYPE"]}</td>
                         <td>{row["CUSTOMER CODE"] || "N/A"}</td>
-                        <td className="image-cell">
-                          {row["FRONT IMAGE"] ? (
-                            <div 
-                              onMouseEnter={(e) => handleMouseEnter(row["FRONT IMAGE"], e)}
-                              onMouseLeave={handleMouseLeave}
-                            >
-                              <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
-                                <img
-                                  src={getGoogleDriveThumbnail(row["FRONT IMAGE"]) || "/fallback-image.png"}
-                                  alt="Front"
-                                  className="product-image"
-                                  loading="eager"
-                                  fetchPriority="high"
-                                  onError={(e) => {
-                                    console.error("CustomerPage front image failed to load:", {
-                                      url: row["FRONT IMAGE"],
-                                      message: e.message,
-                                      rowData: row
-                                    });
-                                    e.target.src = "/fallback-image.png";
-                                  }}
-                                />
-                              </a>
-                            </div>
-                          ) : (
-                            <div className="no-image">
-                              No Image
-                              {console.warn("No FRONT IMAGE field in row:", row)}
-                            </div>
-                          )}
-                        </td>
+                       <td className="image-cell">
+  {row["FRONT IMAGE"] ? (
+    <div>
+      <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
+        <img
+          src={getGoogleDriveThumbnail(row["FRONT IMAGE"]) || "/fallback-image.png"}
+          alt="Front"
+          className="product-image"
+          loading="eager"
+          fetchPriority="high"
+          onError={(e) => {
+            console.error("CustomerPage front image failed to load:", {
+              url: row["FRONT IMAGE"],
+              message: e.message,
+              rowData: row
+            });
+            e.target.src = "/fallback-image.png";
+          }}
+        />
+      </a>
+    </div>
+  ) : (
+    <div className="no-image">
+      No Image
+    </div>
+  )}
+</td> 
                         <td className="image-cell">
                           {row["BACK IMAGE"] ? (
                             <div 

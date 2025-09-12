@@ -4,11 +4,7 @@ import { FiAlertCircle, FiImage, FiDollarSign } from 'react-icons/fi';
 
 const DevelopmentsTable = ({
   data,
-  filters,
-  setFilters,
   colors,
-  handleMouseEnter,
-  handleMouseLeave,
   getGoogleDriveThumbnail,
   formatCurrency,
   formatDate,
@@ -68,10 +64,7 @@ const DevelopmentsTable = ({
                   <td>{row["CUSTOMER CODE"] || "N/A"}</td>
                   <td className="image-cell">
                     {row["FRONT IMAGE"] ? (
-                      <div 
-                        onMouseEnter={(e) => handleMouseEnter(row["FRONT IMAGE"], e)}
-                        onMouseLeave={handleMouseLeave}
-                      >
+                      <div>
                         <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
                           <img
                             src={getGoogleDriveThumbnail(row["FRONT IMAGE"]) || "/fallback-image.png"}
@@ -93,16 +86,12 @@ const DevelopmentsTable = ({
                     ) : (
                       <div className="no-image">
                         No Image
-                        {console.warn("No FRONT IMAGE field in row:", row)}
                       </div>
                     )}
                   </td>
                   <td className="image-cell">
                     {row["BACK IMAGE"] ? (
-                      <div 
-                        onMouseEnter={(e) => handleMouseEnter(row["BACK IMAGE"], e)}
-                        onMouseLeave={handleMouseLeave}
-                      >
+                      <div>
                         <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View back image">
                           <img
                             src={getGoogleDriveThumbnail(row["BACK IMAGE"]) || "/fallback-image.png"}
@@ -124,16 +113,12 @@ const DevelopmentsTable = ({
                     ) : (
                       <div className="no-image">
                         No Image
-                        {console.warn("No BACK IMAGE field in row:", row)}
                       </div>
                     )}
                   </td>
                   <td className="image-cell">
                     {row["SIDE IMAGE"] ? (
-                      <div 
-                        onMouseEnter={(e) => handleMouseEnter(row["SIDE IMAGE"], e)}
-                        onMouseLeave={handleMouseLeave}
-                      >
+                      <div>
                         <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View side image">
                           <img
                             src={getGoogleDriveThumbnail(row["SIDE IMAGE"]) || "/fallback-image.png"}
@@ -155,7 +140,6 @@ const DevelopmentsTable = ({
                     ) : (
                       <div className="no-image">
                         No Image
-                        {console.warn("No SIDE IMAGE field in row:", row)}
                       </div>
                     )}
                   </td>
@@ -168,8 +152,6 @@ const DevelopmentsTable = ({
                         target="_blank" 
                         rel="noopener noreferrer"
                         style={{ color: 'inherit' }}
-                        onMouseOver={(e) => e.target.style.color = '#1B4D3E'}
-                        onMouseOut={(e) => e.target.style.color = 'inherit'}
                       >
                         {formatCurrency(row["TOTAL GARMENT PRICE"])}
                       </a>

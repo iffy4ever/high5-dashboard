@@ -1,3 +1,4 @@
+// src/components/CuttingSheet.js
 import React from 'react';
 import { formatDate, getGoogleDriveThumbnail } from '../utils';
 
@@ -54,10 +55,10 @@ const CuttingSheet = ({ selectedData }) => {
       <table className="table">
         <thead>
           <tr>
-            <th style={{ width: '12%' }}>PO Number</th>
-            <th style={{ width: '20%' }}>Style #</th>
+            <th style={{ width: '15%' }}>PO Number</th>
+            <th style={{ width: '25%' }}>Style #</th>
             <th style={{ width: '20%' }}>Colour</th>
-            <th style={{ width: '17%' }}>Department</th>
+            <th style={{ width: '10%' }}>Department</th>
             <th style={{ width: '10%' }}>Units</th>
             <th style={{ width: '10%' }}>H Number</th>
             <th style={{ width: '10%' }}>Type</th>
@@ -84,7 +85,7 @@ const CuttingSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <table className="table sizes-table">
+      <table className="table">
         <colgroup>
           <col style={{ width: '10%' }} />
           <col style={{ width: '15%' }} />
@@ -96,41 +97,36 @@ const CuttingSheet = ({ selectedData }) => {
           <tr>
             <th>PO Number</th>
             <th>Colour</th>
-            {sizes.map(size => <th key={size}>{size}</th>)}
+            {sizes.map(size => <th key={size} style={{ textAlign: 'center' }}>{size}</th>)}
           </tr>
         </thead>
         <tbody>
           {paddedData.map((row, i) => (
             <tr key={i}>
-              <td className="main-data red-text">{row["PO NUMBER"] || ""}</td>
-              <td className="main-data">{row["COLOUR"] || ""}</td>
+              <td className="main-data red-text" style={{ fontSize: '10pt', textAlign: 'left' }}>{row["PO NUMBER"] || ""}</td>
+              <td className="main-data" style={{ fontSize: '10pt', textAlign: 'left' }}>{row["COLOUR"] || ""}</td>
               {sizes.map(size => (
-                <td key={size}>{row[size] || ""}</td>
+                <td key={size} style={{ fontSize: '10pt', textAlign: 'center', verticalAlign: 'middle' }}>{row[size] || ""}</td>
               ))}
             </tr>
           ))}
-<tr className="total-row">
-  <td colSpan={2}>Total:</td>
-  {sizes.map(size => (
-    <td key={size} className="cutting-sheet-total">{totalBySize[size]}</td>
-  ))}
-</tr>
-
-<tr>
-  <td className="cutting-sheet-header">RATIO:</td>
-</tr>
+          <tr className="total-row">
+            <td colSpan={2} style={{ fontSize: '10pt', textAlign: 'center', verticalAlign: 'middle' }}>Total:</td>
+            {sizes.map(size => (
+              <td key={size} style={{ fontSize: '10pt', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>{totalBySize[size]}</td>
+            ))}
+          </tr>
         </tbody>
       </table>
-      <table className="ratio-section">
+      
+      <table className="table">
         <tbody>
           <tr>
-            <td>RATIO:.</td>
+            <td style={{ fontSize: '10pt', textAlign: 'center', verticalAlign: 'middle', height: '10mm' }}>RATIO:</td>
           </tr>
-          {Array.from({ length: 1 }).map((_, i) => (
-            <tr key={i}>
-              <td></td>
-            </tr>
-          ))}
+          <tr>
+            <td style={{ height: '10mm' }}></td>
+          </tr>
         </tbody>
       </table>
     </div>

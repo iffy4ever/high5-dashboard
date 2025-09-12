@@ -38,12 +38,6 @@ function App() {
     SUPPLIER: ""
   });
   const [activeTab, setActiveTab] = useState("sales");
-  const [previewImage, setPreviewImage] = useState({
-    url: null,
-    visible: false,
-    position: { x: 0, y: 0 },
-    direction: 'below'
-  });
   const [poInput, setPoInput] = useState("");
   const [selectedPOs, setSelectedPOs] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
@@ -57,7 +51,7 @@ function App() {
     primaryDark: "#4F46E5",
     secondary: "#EC4899",
     secondaryLight: "#F472B6",
-    secondaryDark: "##DB2777",
+    secondaryDark: "#DB2777",
     accent: "#F59E0B",
     accentLight: "#FBBF24",
     accentDark: "#D97706",
@@ -148,7 +142,7 @@ function App() {
       url: "/pd-kaiia",
       icon: <FiUsers size={16} />,
       color: colors.accent,
-      external: true // Changed to true to open in new window
+      external: true
     }
   ], [colors]);
 
@@ -157,15 +151,27 @@ function App() {
     const oneMonthAgo = new Date(now);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     
+    // Calculate dates for 3 quarters ago
+    const threeQuartersAgo = new Date(now);
+    threeQuartersAgo.setMonth(threeQuartersAgo.getMonth() - 9);
+    
+    // Calculate dates for 3 years ago
+    const threeYearsAgo = new Date(now);
+    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+    
     const stats = {
       totalOrders: 0,
       totalUnits: 0,
       deliveredLast30Days: 0,
       deliveredUnitsLast30Days: 0,
+      last3QuartersUnits: 0,
+      threeYearUnits: 0,
+      threeYearOrders: 0,
       pendingUnits: 0,
       inProduction: 0,
       fabricOrdered: 0,
       notDelivered: 0,
+      gsToSend: 0, // 1st Fit + 2nd Fit
       goldSealSent: 0,
       lastDeliveryDateFormatted: "-",
     };
@@ -174,24 +180,46 @@ function App() {
       data.sales_po.forEach(row => {
         const units = parseInt(row["TOTAL UNITS"] || 0);
         const status = row["LIVE STATUS"];
+        const fitStatus = row["FIT STATUS"] || "";
         const deliveryDate = getDateValue(row["REAL DD"]);
         
         stats.totalOrders++;
         stats.totalUnits += isNaN(units) ? 0 : units;
         
+        // Last 30 days delivered
         if (status === "DELIVERED" && deliveryDate >= oneMonthAgo.getTime()) {
           stats.deliveredLast30Days++;
           stats.deliveredUnitsLast30Days += isNaN(units) ? 0 : units;
         }
         
+        // Last 3 quarters delivered
+        if (status === "DELIVERED" && deliveryDate >= threeQuartersAgo.getTime()) {
+          stats.last3QuartersUnits += isNaN(units) ? 0 : units;
+        }
+        
+        // Last 3 years stats
+        if (deliveryDate >= threeYearsAgo.getTime()) {
+          stats.threeYearUnits += isNaN(units) ? 0 : units;
+          stats.threeYearOrders++;
+        }
+        
+        // Pending orders
         if (status !== "DELIVERED") {
           stats.pendingUnits += isNaN(units) ? 0 : units;
           stats.notDelivered++;
         }
         
+        // Production status
         if (status === "IN PRODUCTION") stats.inProduction += isNaN(units) ? 0 : units;
         if (status === "FABRIC ORDERED") stats.fabricOrdered += isNaN(units) ? 0 : units;
-        if (row["FIT STATUS"] === "GS SENT") stats.goldSealSent += isNaN(units) ? 0 : units;
+        
+        // Fit status calculations
+        if (fitStatus.includes("1st Fit") || fitStatus.includes("2nd Fit")) {
+          stats.gsToSend += isNaN(units) ? 0 : units;
+        }
+        if (fitStatus.includes("GOLD SEAL SENT") || fitStatus.includes("GS SENT")) {
+          stats.goldSealSent += isNaN(units) ? 0 : units;
+        }
       });
 
       // Find last delivery
@@ -260,22 +288,6 @@ function App() {
       .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
   }, [data.insert_pattern, search, filters]);
-
-  const handleMouseEnter = useCallback((url, e) => {
-    if (!url) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const isNearBottom = window.innerHeight - rect.bottom < 250;
-    setPreviewImage({
-      url: getGoogleDriveThumbnail(url),
-      visible: true,
-      position: { x: rect.left + rect.width / 2, y: rect.top + window.scrollY },
-      direction: isNearBottom ? 'above' : 'below'
-    });
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setPreviewImage(prev => ({ ...prev, visible: false }));
-  }, []);
 
   const exportToExcel = useCallback(() => {
     let exportData = [];
@@ -511,8 +523,6 @@ function App() {
                 <SalesTable
                   data={filteredSales}
                   colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
                   getGoogleDriveThumbnail={getGoogleDriveThumbnail}
                   getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
                   formatCurrency={formatCurrency}
@@ -529,8 +539,6 @@ function App() {
                 <FabricTable
                   data={filteredFabric}
                   colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
                   getGoogleDriveThumbnail={getGoogleDriveThumbnail}
                   formatCurrency={formatCurrency}
                   formatDate={formatDate}
@@ -545,8 +553,6 @@ function App() {
                 <DevelopmentsTable
                   data={filteredDevelopments}
                   colors={colors}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
                   getGoogleDriveThumbnail={getGoogleDriveThumbnail}
                   formatCurrency={formatCurrency}
                   formatDate={formatDate}
@@ -567,7 +573,7 @@ function App() {
                         placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
                         rows={1}
                         className="filter-select"
-                        style={{ width: '100%', height: '40px', overflow: 'hidden' }}
+                        style={{ width: '100', height: '40px', overflow: 'hidden' }}
                       />
                     </div>
                     <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
@@ -600,27 +606,6 @@ function App() {
                 </div>
               )}
             </div>
-
-            {previewImage.visible && (
-              <div 
-                className={`image-preview ${previewImage.direction} no-print`}
-                style={{
-                  left: `${previewImage.position.x}px`,
-                  [previewImage.direction === 'below' ? 'top' : 'bottom']: 
-                    `${previewImage.direction === 'below' ? previewImage.position.y + 20 : window.innerHeight - previewImage.position.y + 20}px`
-                }}
-              >
-                <img 
-                  src={previewImage.url} 
-                  alt="Preview"
-                  className="preview-image"
-                  onError={(e) => {
-                    e.target.src = "/fallback-image.png";
-                  }}
-                />
-                <div className="preview-arrow"></div>
-              </div>
-            )}
 
             <footer className="app-footer no-print">
               <div className="footer-content">

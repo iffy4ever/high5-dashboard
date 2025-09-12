@@ -5,11 +5,7 @@ import { getColorCode } from '../utils';
 
 const SalesTable = ({
   data,
-  filters,
-  setFilters,
   colors,
-  handleMouseEnter,
-  handleMouseLeave,
   getGoogleDriveThumbnail,
   getGoogleDriveDownloadLink,
   formatCurrency,
@@ -72,10 +68,7 @@ const SalesTable = ({
                 <tr key={i}>
                   <td className="image-cell">
                     {row.IMAGE ? (
-                      <div 
-                        onMouseEnter={(e) => handleMouseEnter(row.IMAGE, e)}
-                        onMouseLeave={handleMouseLeave}
-                      >
+                      <div>
                         <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
                           <img
                             src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
@@ -97,7 +90,6 @@ const SalesTable = ({
                     ) : (
                       <div className="no-image">
                         No Image
-                        {console.warn("No IMAGE field in row:", row)}
                       </div>
                     )}
                   </td>
@@ -159,7 +151,7 @@ const SalesTable = ({
                           <td>{row["8"] || ""}</td>
                           <td>{row["10"] || ""}</td>
                         </tr>
-                        <tr style={{ margin: "0 5px" }}></tr> {/* Spacer row */}
+                        <tr style={{ margin: "0 5px" }}></tr>
                         <tr>
                           <td>12</td>
                           <td>14</td>
