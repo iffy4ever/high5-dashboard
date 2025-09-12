@@ -89,16 +89,17 @@ const SalesTable = ({
                     {row.IMAGE ? (
                       <div>
                         <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
-                          <img
-                            src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
-                            alt="Product"
-                            className="product-image"
-                            loading="eager"
-                            fetchPriority="high"
-                            onError={(e) => {
-                              e.target.src = "/fallback-image.png";
-                            }}
-                          />
+
+<img
+  src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
+  alt="Product"
+  className="product-image"
+  loading="lazy" // Change from eager to lazy for better performance
+  onError={(e) => {
+    console.warn('Image failed to load, trying direct URL:', row.IMAGE);
+    e.target.src = row.IMAGE || "/fallback-image.png"; // Fallback to direct URL
+  }}
+/>
                         </a>
                       </div>
                     ) : (

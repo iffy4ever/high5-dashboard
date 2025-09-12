@@ -35,22 +35,33 @@ export const getGoogleDriveThumbnail = (url) => {
   }
 
   try {
+    // Try multiple patterns to extract file ID
     const fileIdMatch = url.match(/\/file\/d\/([^/]+)/) || 
                         url.match(/id=([^&]+)/) || 
                         url.match(/\/open\?id=([^&]+)/) || 
                         url.match(/\/d\/([^/]+)/) || 
-                        url.match(/\/uc\?id=([^&]+)/);
+                        url.match(/\/uc\?id=([^&]+)/) ||
+                        url.match(/\/thumbnail\?id=([^&]+)/);
     
     const fileId = fileIdMatch?.[1];
     if (!fileId || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
+      console.warn('Invalid file ID from URL:', url);
       return "/fallback-image.png";
     }
     
-    // Use direct thumbnail URL for better loading
-    const thumbnailUrl = `https://lh3.googleusercontent.com/d/${fileId}=s200`;
-    imageCache.set(url, thumbnailUrl);
-    return thumbnailUrl;
+    // Use multiple thumbnail URL formats for better reliability
+    const thumbnailUrls = [
+      `https://lh3.googleusercontent.com/d/${fileId}=s200`, // Google's thumbnail service
+      `https://drive.google.com/thumbnail?id=${fileId}&sz=s200`, // Google Drive thumbnail API
+      `https://docs.google.com/uc?id=${fileId}` // Direct content URL (fallback)
+    ];
+    
+    // Cache the first thumbnail URL
+    imageCache.set(url, thumbnailUrls[0]);
+    return thumbnailUrls[0];
+    
   } catch (e) {
+    console.error('Error generating thumbnail URL:', e, 'URL:', url);
     return "/fallback-image.png";
   }
 };
@@ -136,7 +147,7 @@ export const getGoogleDriveDownloadLink = (url) => {
   }
 };
 
-// Enhanced preload with error handling
+// Enhanced preload with multiple URL attempts
 export const preloadImage = (url) => {
   if (!url || imageCache.has(url)) return;
   
@@ -144,20 +155,25 @@ export const preloadImage = (url) => {
   const img = new Image();
   
   img.onload = () => {
+    console.log('Image preloaded successfully:', url);
     imageCache.set(url, thumbnailUrl);
   };
   
   img.onerror = () => {
-    imageCache.set(url, "/fallback-image.png");
+    console.warn('Failed to preload image, trying fallback:', url);
+    // Try direct URL as fallback
+    img.src = url;
   };
   
   img.src = thumbnailUrl;
 };
 
-// Batch preload images
+// Batch preload images with better error handling
 export const preloadImages = (urls) => {
   urls.forEach(url => {
-    if (url) preloadImage(url);
+    if (url) {
+      setTimeout(() => preloadImage(url), 100); // Stagger loading to avoid blocking
+    }
   });
 };
 
