@@ -302,8 +302,8 @@ button {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
-  width: 800px; /* DOUBLE THE WIDTH */
-  max-width: 800px; /* DOUBLE THE MAX WIDTH */
+  width: 800px;
+  max-width: 800px;
   margin: 0;
 }
 
@@ -313,7 +313,7 @@ button {
   outline: none;
   color: var(--text-dark);
   width: 100%;
-  font-size: 1rem; /* Slightly larger font */
+  font-size: 1rem;
 }
 
 .search-box input::placeholder {
@@ -364,7 +364,7 @@ button {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Wider stats */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
 }
 
@@ -471,7 +471,7 @@ button {
   width: 160px;
   height: 160px;
   object-fit: contain;
-  cursor: default; /* Remove pointer cursor */
+  cursor: default;
 }
 
 .no-image {
@@ -522,6 +522,15 @@ button {
   font-weight: 600;
 }
 
+.price-cell a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.price-cell a:hover {
+  text-decoration: underline;
+}
+
 .bold-cell {
   font-weight: 600;
   color: var(--text-dark);
@@ -542,6 +551,9 @@ button {
   color: var(--text-light);
   border-radius: 0.25rem;
   font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .na-text {
@@ -556,21 +568,19 @@ button {
   text-overflow: ellipsis;
 }
 
+/* New sizes table layout */
 .sizes-table {
   width: 100%;
   border-collapse: collapse;
+  border: 1px solid var(--border);
 }
 
 .sizes-table td {
-  padding: 0.25rem;
-  text-align: center;
   border: 1px solid var(--border);
-  color: var(--text-dark);
-}
-
-.sizes-table tr:nth-child(2),
-.sizes-table tr:nth-child(4) {
-  margin: 0 5px;
+  padding: 2px;
+  text-align: center;
+  font-size: 10px;
+  width: 25%;
 }
 
 .empty-state {
@@ -730,13 +740,13 @@ button {
 
 /* Cutting Sheet specific styles */
 .cutting-sheet-total {
-  font-size: 10pt !important; /* Same font size as other cells */
-  text-align: center !important; /* Center aligned */
+  font-size: 10pt !important;
+  text-align: center !important;
   vertical-align: middle !important;
 }
 
 .cutting-sheet-header {
-  text-align: center !important; /* Center aligned headers */
+  text-align: center !important;
 }
 
 /* Pagination */

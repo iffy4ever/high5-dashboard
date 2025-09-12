@@ -1,6 +1,6 @@
 // src/components/SalesTable.js
 import React from 'react';
-import { FiAlertCircle, FiImage, FiUsers, FiDollarSign, FiFileText } from 'react-icons/fi';
+import { FiAlertCircle, FiImage, FiUsers, FiDollarSign, FiFileText, FiExternalLink } from 'react-icons/fi';
 import { getColorCode } from '../utils';
 
 const SalesTable = ({
@@ -22,6 +22,25 @@ const SalesTable = ({
     <>
       <div className="table-container">
         <table className="data-table">
+          <colgroup>
+            <col /> {/* IMAGE - Auto width */}
+            <col /> {/* FIT STATUS - Auto width */}
+            <col /> {/* H-NUMBER - Auto width */}
+            <col /> {/* CUSTOMER NAME - Auto width */}
+            <col /> {/* PO NUMBER - Auto width */}
+            <col /> {/* STYLE NUMBER - Auto width */}
+            <col /> {/* DESCRIPTION - Auto width */}
+            <col /> {/* COLOUR - Auto width */}
+            <col /> {/* PRICE - Auto width */}
+            <col /> {/* TOTAL UNITS - Auto width */}
+            <col /> {/* XFACT DD - Auto width */}
+            <col /> {/* REAL DD - Auto width */}
+            <col /> {/* LIVE STATUS - Auto width */}
+            <col /> {/* CMT PRICE - Auto width */}
+            <col /> {/* ACTUAL CMT - Auto width */}
+            <col /> {/* PACKING LIST - Auto width */}
+            <col style={{ width: '150px' }} /> {/* SIZES - Fixed width */}
+          </colgroup>
           <thead>
             <tr>
               {[
@@ -77,11 +96,6 @@ const SalesTable = ({
                             loading="eager"
                             fetchPriority="high"
                             onError={(e) => {
-                              console.error("SalesTable image failed to load:", {
-                                url: row.IMAGE,
-                                message: e.message,
-                                rowData: row
-                              });
                               e.target.src = "/fallback-image.png";
                             }}
                           />
@@ -119,17 +133,43 @@ const SalesTable = ({
                   <td>
                     <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
                   </td>
-                  <td className="price-cell">{formatCurrency(row["CMT PRICE"])}</td>
+                  <td className="price-cell nowrap bold-cell">
+                    {row["COSTING LINK"] ? (
+                      <a 
+                        href={row["COSTING LINK"]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ 
+                          color: '#EF4444', 
+                          textDecoration: 'underline',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        aria-label="View costing file"
+                        title="Click to view costing file"
+                      >
+                        <FiExternalLink size={14} />
+                        {formatCurrency(row["CMT PRICE"])}
+                      </a>
+                    ) : (
+                      formatCurrency(row["CMT PRICE"])
+                    )}
+                  </td>
                   <td className="price-cell">{formatCurrency(row["ACTUAL CMT"])}</td>
                   <td>
                     {row["PACKING LIST"] ? (
                       <a
-                        href={getGoogleDriveDownloadLink(row["PACKING LIST"])}
+                        href={row["PACKING LIST"]}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="view-button"
                         aria-label="View packing list"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
+                        <FiExternalLink size={14} />
                         View PL
                       </a>
                     ) : (
@@ -137,35 +177,32 @@ const SalesTable = ({
                     )}
                   </td>
                   <td className="sizes-cell">
-                    <table className="sizes-table">
-                      <tbody>
-                        <tr>
-                          <td>4</td>
-                          <td>6</td>
-                          <td>8</td>
-                          <td>10</td>
-                        </tr>
-                        <tr>
-                          <td>{row["4"] || ""}</td>
-                          <td>{row["6"] || ""}</td>
-                          <td>{row["8"] || ""}</td>
-                          <td>{row["10"] || ""}</td>
-                        </tr>
-                        <tr style={{ margin: "0 5px" }}></tr>
-                        <tr>
-                          <td>12</td>
-                          <td>14</td>
-                          <td>16</td>
-                          <td>18</td>
-                        </tr>
-                        <tr>
-                          <td>{row["12"] || ""}</td>
-                          <td>{row["14"] || ""}</td>
-                          <td>{row["16"] || ""}</td>
-                          <td>{row["18"] || ""}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px' }}>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        4 - {row["4"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        12 - {row["12"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        6 - {row["6"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        14 - {row["14"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        8 - {row["8"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        16 - {row["16"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        10 - {row["10"] || "0"}
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                        18 - {row["18"] || "0"}
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ))

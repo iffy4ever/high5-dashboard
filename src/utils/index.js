@@ -160,3 +160,10 @@ export const preloadImages = (urls) => {
     if (url) preloadImage(url);
   });
 };
+
+// Safe data access with fallbacks
+export const getSafeValue = (obj, key, fallback = 'N/A') => {
+  if (!obj || typeof obj !== 'object') return fallback;
+  const value = obj[key];
+  return value !== undefined && value !== null && value !== '' ? value : fallback;
+};
