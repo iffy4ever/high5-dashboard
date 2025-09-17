@@ -313,91 +313,85 @@ function App() {
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      XLSX.writeFile(wb, `${sheetName}_export_${new Date().toISOString().split('T')[0]}.xlsx`);
-    } catch (error) {
-      console.error('Export error:', error);
-      alert('Failed to export data. Please try again.');
+      XLSX.writeFile(wb, `${sheetName}_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Export failed. Please try again.');
     }
   }, [activeTab, filteredSales, filteredFabric, filteredDevelopments]);
 
-  if (loading) return (
-    <div className="loading-screen">
-      <div className="loading-content">
-        <div className="spinner">
-          <FiShoppingBag size={32} className="spin" />
+  if (loading) {
+    return (
+      <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+        <div className="loading-screen">
+          <div className="loading-content">
+            <div className="spinner spin" style={{ fontSize: '2rem' }}>⏳</div>
+            <h2>Loading Dashboard...</h2>
+            <p>Fetching the latest data from Google Sheets</p>
+          </div>
         </div>
-        <h2>Loading High5 Production Dashboard</h2>
-        <p>Fetching the latest data...</p>
       </div>
-    </div>
-  );
+    );
+  }
 
-  if (error) return (
-    <div className="error-screen">
-      <div className="error-content">
-        <div className="error-icon">
-          <FiAlertCircle size={48} />
+  if (error) {
+    return (
+      <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+        <div className="error-screen">
+          <div className="error-content">
+            <FiAlertCircle className="error-icon" size={48} />
+            <h2>Data Load Failed</h2>
+            <p>{error}</p>
+            <button onClick={() => window.location.reload()} className="retry-button">
+              Retry
+            </button>
+          </div>
         </div>
-        <h2>Error Loading Data</h2>
-        <p>{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="retry-button"
-        >
-          <FiShoppingBag size={16} /> Try Again
-        </button>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <Routes>
-      <Route path="/" element={
-        <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
-          <div className="app-content">
-            <header className="app-header no-print">
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+      <Routes>
+        <Route path="/" element={
+          <div>
+            <header className="app-header">
               <div className="header-left">
-                <h1 className="app-title">High5 Production Dashboard</h1>
+                <h1 className="app-title">High5 Dashboard</h1>
                 <div className="form-links">
-                  {formLinks.map((link, index) => (
-                    link.external ? (
-                      <a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="form-link"
-                        style={{ color: link.color }}
-                        aria-label={link.label}
-                      >
-                        {link.icon}
-                        <span>{link.label}</span>
-                      </a>
-                    ) : (
-                      <Link
-                        key={index}
-                        to={link.url}
-                        className="form-link"
-                        style={{ color: link.color }}
-                        aria-label={link.label}
-                      >
-                        {link.icon}
-                        <span>{link.label}</span>
-                      </Link>
-                    )
+                  {formLinks.map((link, i) => (
+                    <a
+                      key={i}
+                      href={link.url}
+                      target={link.external ? "_blank" : "_self"}
+                      rel={link.external ? "noopener noreferrer" : undefined}
+                      className="form-link"
+                    >
+                      {link.icon} {link.label}
+                    </a>
                   ))}
                 </div>
               </div>
               <div className="header-center">
                 <div className="tab-container">
                   <div className="tabs">
-                    {["sales", "fabric", "developments", "production"].map(tab => (
+                    {[
+                      { key: "sales", label: "Sales PO", icon: <FiShoppingBag size={14} /> },
+                      { key: "fabric", label: "Fabric", icon: <FiLayers size={14} /> },
+                      { key: "developments", label: "Developments", icon: <FiFileText size={14} /> },
+                      { key: "production", label: "Production", icon: <FiPrinter size={14} /> }
+                    ].map(tab => (
                       <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`tab-button ${activeTab === tab ? 'active' : ''}`}
+                        key={tab.key}
+                        className={`tab-button ${activeTab === tab.key ? 'active' : ''}`}
+                        onClick={() => {
+                          setActiveTab(tab.key);
+                          setCurrentPage(1);
+                        }}
                       >
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        <span className="header-icon">{tab.icon}</span>
+                        {tab.label}
                       </button>
                     ))}
                   </div>
@@ -564,36 +558,38 @@ function App() {
               )}
 
               {activeTab === "production" && (
-                <div className="no-print">
-                  <div className="po-input-container">
-                    <div className="filter-item" style={{ flex: 1 }}>
-                      <textarea
-                        value={poInput}
-                        onChange={(e) => setPoInput(e.target.value)}
-                        placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
-                        rows={1}
-                        className="filter-select"
-                        style={{ width: '100', height: '40px', overflow: 'hidden' }}
-                      />
-                    </div>
-                    <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
-                      <button
-                        onClick={() => {
-                          const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
-                          setSelectedPOs(pos);
-                        }}
-                        className="action-button generate-button"
-                        disabled={!poInput.trim()}
-                      >
-                        Generate Sheets
-                      </button>
-                      <button 
-                        onClick={() => window.print()} 
-                        className="action-button print-button"
-                        disabled={selectedPOs.length === 0}
-                      >
-                        <FiPrinter size={14} /> Print Sheets
-                      </button>
+                <div>
+                  <div className="no-print">
+                    <div className="po-input-container">
+                      <div className="filter-item" style={{ flex: 1 }}>
+                        <textarea
+                          value={poInput}
+                          onChange={(e) => setPoInput(e.target.value)}
+                          placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
+                          rows={1}
+                          className="filter-select"
+                          style={{ width: '100', height: '40px', overflow: 'hidden' }}
+                        />
+                      </div>
+                      <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button
+                          onClick={() => {
+                            const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
+                            setSelectedPOs(pos);
+                          }}
+                          className="action-button generate-button"
+                          disabled={!poInput.trim()}
+                        >
+                          Generate Sheets
+                        </button>
+                        <button 
+                          onClick={() => window.print()} 
+                          className="action-button print-button"
+                          disabled={selectedPOs.length === 0}
+                        >
+                          <FiPrinter size={14} /> Print Sheets
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -622,10 +618,10 @@ function App() {
               </div>
             </footer>
           </div>
-        </div>
-      } />
-      <Route path="/pd-kaiia" element={<CustomerPage />} />
-    </Routes>
+        } />
+        <Route path="/pd-kaiia" element={<CustomerPage />} />
+      </Routes>
+    </div>
   );
 }
 

@@ -119,14 +119,16 @@ const CuttingSheet = ({ selectedData }) => {
         </tbody>
       </table>
       
-      <table className="table">
+      <table className="ratio-section">
         <tbody>
           <tr>
-            <td style={{ fontSize: '10pt', textAlign: 'center', verticalAlign: 'middle', height: '10mm' }}>RATIO:</td>
+            <td>RATIO : -</td>
           </tr>
-          <tr>
-            <td style={{ height: '10mm' }}></td>
-          </tr>
+          {Array.from({ length: 1 }).map((_, i) => (
+            <tr key={i}>
+              <td></td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
