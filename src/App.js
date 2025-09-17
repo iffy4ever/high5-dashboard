@@ -1,9 +1,9 @@
 // src/App.js
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as XLSX from 'xlsx';
 import { Routes, Route, Link } from 'react-router-dom';
 import ReactDOMServer from 'react-dom/server';
-import { FiAlertCircle, FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers } from 'react-icons/fi'; // Added FiFileText, FiLayers, FiUsers
+import { FiAlertCircle, FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers } from 'react-icons/fi';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -14,6 +14,15 @@ import CustomerPage from './components/CustomerPage';
 import { formatDate, getDateValue, formatCurrency, compactSizes, getGoogleDriveThumbnail, getGoogleDriveDownloadLink, preloadImages } from './utils/index';
 import { useData } from './useData';
 import './styles.css';
+
+// Debounce function to reduce re-renders
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
 
 function App() {
   const { data, loading, error } = useData();
@@ -37,6 +46,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Debounced search handler
+  const debouncedSetSearch = useRef(debounce((value) => setSearch(value), 300)).current;
+
   const colors = useMemo(() => darkMode ? {
     primary: "#6366F1",
     primaryLight: "#818CF8",
@@ -51,7 +63,7 @@ function App() {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
-    textDark: "#F3F4F6",
+    textDark: "#FFFFFF", // Changed to white for dark mode
     textMedium: "#9CA3AF",
     textLight: "#FFFFFF",
     background: "#111827",
@@ -60,7 +72,7 @@ function App() {
     rowEven: "#1F2937",
     rowOdd: "#111827",
     headerBg: "#374151",
-    headerText: "#000000",
+    headerText: "#FFFFFF", // Changed to white for dark mode
     activeTab: "#CD5E77",
     inactiveTab: "#6B7280",
     actionButton: "#1B4D3E",
@@ -475,7 +487,7 @@ function App() {
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => debouncedSetSearch(e.target.value)}
                     placeholder="Search..."
                     aria-label="Search sales, fabric, or developments"
                   />

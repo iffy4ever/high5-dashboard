@@ -13,6 +13,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
+  color: var(--text-dark); /* Inherits text color from theme */
 }
 
 input, select, button {
@@ -100,7 +101,7 @@ button {
   --scrollbar-thumb: #6B7280;
   --primary: #6366F1;
   --background: #111827;
-  --text-dark: #F3F4F6;
+  --text-dark: #FFFFFF; /* Changed to white for dark mode */
   --text-medium: #9CA3AF;
   --text-light: #FFFFFF;
   --card-bg: #000000;
@@ -108,7 +109,7 @@ button {
   --row-even: #000000;
   --row-odd: #111827;
   --header-bg: #374151;
-  --header-text: #000000;
+  --header-text: #FFFFFF; /* Changed to white for dark mode */
   --active-tab: #CD5E77;
   --inactive-tab: #6B7280;
   --action-button: #1B4D3E;
@@ -221,6 +222,12 @@ button {
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
+  padding: 0.25rem 0.5rem; /* Added padding for spacing */
+}
+
+.form-link:hover {
+  text-decoration: underline;
+  filter: brightness(1.1); /* Visual feedback for links */
 }
 
 .header-center {
@@ -268,6 +275,10 @@ button {
   color: #FFFFFF;
 }
 
+.tab-button:hover:not(.active) {
+  background-color: rgba(205, 94, 119, 0.2); /* Subtle hover effect */
+}
+
 /* Action Buttons */
 .action-button {
   background-color: var(--action-button);
@@ -279,6 +290,12 @@ button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .action-button:disabled {
@@ -301,8 +318,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
-  width: 800px;
-  max-width: 800px;
+  width: 100%; /* Match filter width */
   margin: 0;
 }
 
@@ -363,15 +379,15 @@ button {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Reduced size */
+  gap: 0.75rem;
 }
 
 .stat-card {
   background: var(--stat-card-bg);
   border: 1px solid var(--stat-card-border);
   border-radius: 0.5rem;
-  padding: 1rem;
+  padding: 0.5rem; /* Reduced padding */
   box-shadow: 0 2px 4px var(--shadow-color);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -381,29 +397,19 @@ button {
   box-shadow: 0 4px 8px var(--shadow-color);
 }
 
-.stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-bottom: 0.5rem;
-}
-
 .stat-content {
   text-align: center;
 }
 
 .stat-value {
-  font-size: 1.25rem;
+  font-size: 1rem; /* Reduced font size */
   font-weight: 600;
   color: var(--text-dark);
   margin-bottom: 0.25rem;
 }
 
 .stat-title {
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Reduced font size */
   color: var(--text-medium);
 }
 
@@ -423,14 +429,14 @@ button {
 }
 
 .data-table th {
-  background: #FFFFFF;
-  color: #1B4D3E;
+  background: var(--card-bg);
+  color: var(--text-dark);
   font-weight: bold;
   font-size: 0.75rem;
   padding: 0.5rem 1rem;
   text-align: left;
   white-space: nowrap;
-  border-right: 1px solid #1B4D3E;
+  border-right: 1px solid var(--border);
 }
 
 .data-table th:last-child {
@@ -476,7 +482,13 @@ button {
   width: 160px;
   height: 160px;
   object-fit: contain;
-  cursor: default;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.image-cell img:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+  cursor: pointer; /* Indicates clickable link */
 }
 
 .no-image {
@@ -489,7 +501,7 @@ button {
 .status-text {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #000000;
+  color: var(--text-dark); /* Changed from #000000 */
 }
 
 .status-text[data-status="GS APPROVED"],
@@ -499,7 +511,7 @@ button {
 }
 
 .status-text:not([data-status="GS APPROVED"]):not([data-status="IN PRODUCTION"]) {
-  color: #000000;
+  color: var(--text-dark); /* Changed from #000000 */
 }
 
 .type-text {
@@ -559,6 +571,12 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.view-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .na-text {
@@ -586,6 +604,7 @@ button {
   text-align: center;
   font-size: 10px;
   width: 25%;
+  color: var(--text-dark); /* Changed from #000000 */
 }
 
 .empty-state {
@@ -662,7 +681,7 @@ button {
   page-break-inside: avoid;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
-  color: #000000;
+  color: #000000; /* Black for print, overrides dark mode */
 }
 
 .printable-sheet table {
@@ -683,7 +702,7 @@ button {
   text-align: left;
   font-size: 10pt;
   font-weight: normal;
-  color: #000000;
+  color: #000000; /* Black for print, overrides dark mode */
 }
 
 .table th {
@@ -708,7 +727,7 @@ button {
 .notes-section td, .ratio-section td {
   border: none;
   height: 5mm;
-  color: #000000;
+  color: #000000; /* Black for print, overrides dark mode */
 }
 
 .sizes-table td {
@@ -716,7 +735,7 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 7pt;
-  color: #000000;
+  color: #000000; /* Black for print, overrides dark mode */
   padding: 0.25rem;
   text-align: center;
   border: 1px solid var(--border);
@@ -724,7 +743,7 @@ button {
 
 .main-data {
   font-weight: normal;
-  color: #000000;
+  color: #000000; /* Black for print, overrides dark mode */
 }
 
 .delivery-info {
@@ -734,7 +753,7 @@ button {
 }
 
 .total-row {
-  color: #000000;
+  color: #000000; /* Black for print, overrides dark mode */
   font-size: 12pt;
   font-weight: normal;
 }
@@ -765,6 +784,11 @@ button {
   font-size: 0.875rem;
 }
 
+.pagination-button:hover {
+  background-color: var(--action-button);
+  color: var(--text-light);
+}
+
 .pagination-button:disabled {
   background-color: var(--text-medium);
   color: var(--text-light);
@@ -775,7 +799,7 @@ button {
 /* Mobile Header Stats */
 @media (max-width: 768px) {
   .stats-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
   
   .search-box {
@@ -793,6 +817,13 @@ button {
 .image-cell img {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.image-cell img:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+  cursor: pointer; /* Indicates clickable link */
 }
 
 /* Print Styles */
