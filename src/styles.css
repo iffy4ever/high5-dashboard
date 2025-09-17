@@ -112,7 +112,7 @@ button {
   --active-tab: #CD5E77;
   --inactive-tab: #6B7280;
   --action-button: #1B4D3E;
-  --stat-card-bg: #000000;
+  --stat-card-bg: #1F2937;
   --stat-card-border: #374151;
 }
 
@@ -364,13 +364,47 @@ button {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--stat-card-bg);
+  border: 1px solid var(--stat-card-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.stat-content {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-dark);
+  margin-bottom: 0.25rem;
 }
 
 .stat-title {
   font-size: 0.75rem;
-  color: var(--text-dark);
+  color: var(--text-medium);
 }
 
 /* Table Styles */

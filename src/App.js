@@ -2,17 +2,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import * as XLSX from 'xlsx';
 import { Routes, Route, Link } from 'react-router-dom';
-import {
-  FiAlertCircle,
-  FiDownload, 
-  FiSearch,
-  FiFileText, 
-  FiLayers, 
-  FiShoppingBag, 
-  FiPrinter, 
-  FiUsers
-} from 'react-icons/fi';
-import ReactDOMServer from 'react-dom/server'; // Added import
+import ReactDOMServer from 'react-dom/server';
+import { FiAlertCircle, FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers } from 'react-icons/fi'; // Added FiFileText, FiLayers, FiUsers
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -431,10 +422,10 @@ function App() {
                 <div className="tab-container">
                   <div className="tabs">
                     {[
-                      { key: "sales", label: "Sales PO", icon: <FiShoppingBag size={14} /> },
-                      { key: "fabric", label: "Fabric", icon: <FiLayers size={14} /> },
-                      { key: "developments", label: "Developments", icon: <FiFileText size={14} /> },
-                      { key: "production", label: "Production", icon: <FiPrinter size={14} /> }
+                      { key: "sales", label: "Sales PO" },
+                      { key: "fabric", label: "Fabric" },
+                      { key: "developments", label: "Developments" },
+                      { key: "production", label: "Production" }
                     ].map(tab => (
                       <button
                         key={tab.key}
@@ -444,7 +435,6 @@ function App() {
                           setCurrentPage(1);
                         }}
                       >
-                        <span className="header-icon">{tab.icon}</span>
                         {tab.label}
                       </button>
                     ))}
