@@ -12,6 +12,7 @@ import {
   FiPrinter, 
   FiUsers
 } from 'react-icons/fi';
+import ReactDOMServer from 'react-dom/server'; // Added import
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -320,6 +321,58 @@ function App() {
     }
   }, [activeTab, filteredSales, filteredFabric, filteredDevelopments]);
 
+  const handlePrint = () => {
+    if (selectedPOs.length === 0) return;
+
+    const selectedData = data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]));
+    const docketSheet = ReactDOMServer.renderToString(<DocketSheet selectedData={selectedData} />);
+    const cuttingSheet = ReactDOMServer.renderToString(<CuttingSheet selectedData={selectedData} />);
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Print Sheets</title>
+          <style>
+            @page { size: A4 portrait; margin: 0; }
+            body { margin: 0; font-family: 'Roboto', sans-serif; }
+            .printable-sheet {
+              width: 210mm;
+              height: 297mm;
+              padding: 5mm;
+              box-sizing: border-box;
+              font-size: 10pt;
+              page-break-after: always;
+              page-break-inside: avoid;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+              color: #000000;
+            }
+            .printable-sheet:last-child { page-break-after: avoid; }
+            .printable-sheet table { margin-bottom: 3mm; width: 100%; border-collapse: collapse; table-layout: fixed; border-width: 0.5pt; }
+            .printable-sheet .table th, .printable-sheet .table td { border: 0.5pt solid #000000; padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: #000000; }
+            .printable-sheet .table th { background-color: #f0f0f0; }
+            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: #000000; }
+            .printable-sheet .notes-section, .printable-sheet .ratio-section { border: none; width: 100%; }
+            .printable-sheet .notes-section td, .printable-sheet .ratio-section td { border: none; height: 5mm; color: #000000; }
+            .printable-sheet .main-data { font-weight: normal; color: #000000; }
+            .printable-sheet .delivery-info { margin: 2mm 0; font-size: 20pt; color: #FF0000; }
+            .printable-sheet .total-row { color: #000000; font-size: 12pt; font-weight: normal; }
+            .printable-sheet .red-text { color: #FF0000; }
+            .printable-sheet img { width: 100%; height: 100%; object-fit: contain; }
+          </style>
+        </head>
+        <body>
+          <div class="printable-sheet">${docketSheet}</div>
+          <div class="printable-sheet">${cuttingSheet}</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   if (loading) {
     return (
       <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
@@ -367,6 +420,7 @@ function App() {
                       target={link.external ? "_blank" : "_self"}
                       rel={link.external ? "noopener noreferrer" : undefined}
                       className="form-link"
+                      style={{ color: link.color }}
                     >
                       {link.icon} {link.label}
                     </a>
@@ -583,7 +637,7 @@ function App() {
                           Generate Sheets
                         </button>
                         <button 
-                          onClick={() => window.print()} 
+                          onClick={handlePrint} 
                           className="action-button print-button"
                           disabled={selectedPOs.length === 0}
                         >
