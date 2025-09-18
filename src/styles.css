@@ -681,7 +681,7 @@ button {
   page-break-inside: avoid;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
-  color: #000000; /* Black for print, overrides dark mode */
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
 }
 
 .printable-sheet table {
@@ -702,7 +702,7 @@ button {
   text-align: left;
   font-size: 10pt;
   font-weight: normal;
-  color: #000000; /* Black for print, overrides dark mode */
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
 }
 
 .table th {
@@ -716,7 +716,7 @@ button {
   font-size: 56pt;
   font-weight: bold;
   line-height: 1;
-  color: #000000;
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
 }
 
 .notes-section, .ratio-section {
@@ -727,7 +727,7 @@ button {
 .notes-section td, .ratio-section td {
   border: none;
   height: 5mm;
-  color: #000000; /* Black for print, overrides dark mode */
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
 }
 
 .sizes-table td {
@@ -735,7 +735,7 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 7pt;
-  color: #000000; /* Black for print, overrides dark mode */
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
   padding: 0.25rem;
   text-align: center;
   border: 1px solid var(--border);
@@ -743,7 +743,7 @@ button {
 
 .main-data {
   font-weight: normal;
-  color: #000000; /* Black for print, overrides dark mode */
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
 }
 
 .delivery-info {
@@ -753,7 +753,7 @@ button {
 }
 
 .total-row {
-  color: #000000; /* Black for print, overrides dark mode */
+  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
   font-size: 12pt;
   font-weight: normal;
 }
@@ -828,38 +828,16 @@ button {
 
 /* Print Styles */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-  .printable-sheet,
-  .printable-sheet * {
-    visibility: visible;
-  }
   .printable-sheet {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    max-width: 210mm;
-    margin: 0;
-    padding: 10mm;
-    page-break-after: always;
-    page-break-inside: avoid;
+    color: #000000; /* Black for print */
   }
-  .sheets-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    display: block !important;
-    gap: 0 !important;
-  }
-  .app-header,
-  .app-footer,
-  .search-box-container,
-  .filter-container,
-  .stats-panel,
-  .po-input-container,
-  .no-print {
-    display: none !important;
+  .printable-sheet .table th,
+  .printable-sheet .table td,
+  .printable-sheet .main-data,
+  .printable-sheet .total-row,
+  .printable-sheet .notes-section td,
+  .printable-sheet .sizes-table td,
+  .printable-sheet .merged-total {
+    color: #000000; /* Black for print */
   }
 }

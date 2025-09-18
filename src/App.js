@@ -44,7 +44,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 100; // Set to 100 items per page
 
   // Debounced search handler
   const debouncedSetSearch = useRef(debounce((value) => setSearch(value), 300)).current;
@@ -328,8 +328,18 @@ function App() {
     if (selectedPOs.length === 0) return;
 
     const selectedData = data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]));
-    const docketSheet = ReactDOMServer.renderToString(<DocketSheet selectedData={selectedData} />);
-    const cuttingSheet = ReactDOMServer.renderToString(<CuttingSheet selectedData={selectedData} />);
+    const docketSheet = ReactDOMServer.renderToString(
+      <DocketSheet 
+        selectedData={selectedData} 
+        imageOnError={(e) => { e.target.src = 'https://via.placeholder.com/160'; e.target.onerror = null; }} 
+      />
+    );
+    const cuttingSheet = ReactDOMServer.renderToString(
+      <CuttingSheet 
+        selectedData={selectedData} 
+        imageOnError={(e) => { e.target.src = 'https://via.placeholder.com/160'; e.target.onerror = null; }} 
+      />
+    );
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -350,20 +360,34 @@ function App() {
               page-break-inside: avoid;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
-              color: #000000;
+              color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
             }
             .printable-sheet:last-child { page-break-after: avoid; }
             .printable-sheet table { margin-bottom: 3mm; width: 100%; border-collapse: collapse; table-layout: fixed; border-width: 0.5pt; }
-            .printable-sheet .table th, .printable-sheet .table td { border: 0.5pt solid #000000; padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: #000000; }
+            .printable-sheet .table th, .printable-sheet .table td { border: 0.5pt solid #000000; padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
             .printable-sheet .table th { background-color: #f0f0f0; }
-            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: #000000; }
+            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
             .printable-sheet .notes-section, .printable-sheet .ratio-section { border: none; width: 100%; }
-            .printable-sheet .notes-section td, .printable-sheet .ratio-section td { border: none; height: 5mm; color: #000000; }
-            .printable-sheet .main-data { font-weight: normal; color: #000000; }
+            .printable-sheet .notes-section td, .printable-sheet .ratio-section td { border: none; height: 5mm; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
+            .printable-sheet .main-data { font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
             .printable-sheet .delivery-info { margin: 2mm 0; font-size: 20pt; color: #FF0000; }
-            .printable-sheet .total-row { color: #000000; font-size: 12pt; font-weight: normal; }
+            .printable-sheet .total-row { color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ font-size: 12pt; font-weight: normal; }
             .printable-sheet .red-text { color: #FF0000; }
             .printable-sheet img { width: 100%; height: 100%; object-fit: contain; }
+            @media print {
+              .printable-sheet {
+                color: #000000; /* Black for print */
+              }
+              .printable-sheet .table th,
+              .printable-sheet .table td,
+              .printable-sheet .main-data,
+              .printable-sheet .total-row,
+              .printable-sheet .notes-section td,
+              .printable-sheet .sizes-table td,
+              .printable-sheet .merged-total {
+                color: #000000; /* Black for print */
+              }
+            }
           </style>
         </head>
         <body>
@@ -650,7 +674,7 @@ function App() {
                   </div>
 
                   {selectedPOs.length > 0 && (
-                    <div className="sheets-container" style={{ marginTop: '20px' }}>
+                    <div className="sheets-container">
                       <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                       <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
                     </div>
