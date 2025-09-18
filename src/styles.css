@@ -14,6 +14,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
   color: var(--text-dark); /* Inherits text color from theme */
+  height: 100%; /* Ensure body takes full height */
+  margin: 0;
 }
 
 input, select, button {
@@ -34,8 +36,8 @@ button {
 
 /* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px; /* Increased width for visibility */
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -46,6 +48,7 @@ button {
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 3px;
+  background-color: var(--primary); /* Distinct color for thumb */
 }
 
 /* Animation */
@@ -71,6 +74,9 @@ button {
   width: 100%;
   margin: 0;
   padding: 0;
+  overflow-y: auto; /* Added vertical scrollbar */
+  height: 100%; /* Ensure full height for scrolling */
+  flex: 1; /* Allow container to grow and shrink */
 }
 
 .app-container.light {
@@ -595,11 +601,11 @@ button {
 .sizes-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid var(--border);
+  border: 0.25pt solid var(--border); /* Thinner border */
 }
 
 .sizes-table td {
-  border: 1px solid var(--border);
+  border: 0.25pt solid var(--border); /* Thinner border */
   padding: 2px;
   text-align: center;
   font-size: 10px;
@@ -692,21 +698,22 @@ button {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  border-width: 0.5pt;
+  border-width: 0.25pt; /* Thinner border */
 }
 
 .table th, .table td {
-  border: 0.5pt solid #000000;
+  border: 0.25pt solid #000000; /* Thinner border */
   padding: 1mm;
   vertical-align: top;
   text-align: left;
   font-size: 10pt;
   font-weight: normal;
   color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
+  background-color: var(--card-bg); /* Dark mode background for th */
 }
 
 .table th {
-  background-color: #f0f0f0;
+  background-color: var(--card-bg); /* Dark mode background, overridden to #f0f0f0 in print */
 }
 
 .merged-total {
@@ -716,7 +723,7 @@ button {
   font-size: 56pt;
   font-weight: bold;
   line-height: 1;
-  color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
+  color: #000000; /* Black text in dark mode on screen, overridden by #000000 in print */
 }
 
 .notes-section, .ratio-section {
@@ -738,7 +745,7 @@ button {
   color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
   padding: 0.25rem;
   text-align: center;
-  border: 1px solid var(--border);
+  border: 0.25pt solid var(--border); /* Thinner border */
 }
 
 .main-data {
@@ -831,6 +838,12 @@ button {
   .printable-sheet {
     color: #000000; /* Black for print */
   }
+  .printable-sheet .table {
+    border-width: 0.25pt; /* Thinner border */
+  }
+  .printable-sheet .table th {
+    background-color: #f0f0f0; /* Light background for print */
+  }
   .printable-sheet .table th,
   .printable-sheet .table td,
   .printable-sheet .main-data,
@@ -839,5 +852,9 @@ button {
   .printable-sheet .sizes-table td,
   .printable-sheet .merged-total {
     color: #000000; /* Black for print */
+    border: 0.25pt solid #000000; /* Thinner border */
+  }
+  .printable-sheet .merged-total {
+    color: #000000; /* Ensure black text in print */
   }
 }

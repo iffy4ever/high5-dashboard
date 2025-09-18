@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import * as XLSX from 'xlsx';
 import { Routes, Route, Link } from 'react-router-dom';
 import ReactDOMServer from 'react-dom/server';
-import { FiAlertCircle, FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers } from 'react-icons/fi';
+import { FiAlertCircle, FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers, FiArrowUp } from 'react-icons/fi';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -45,6 +45,7 @@ function App() {
   const [showStats, setShowStats] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 100; // Set to 100 items per page
+  const [isVisible, setIsVisible] = useState(false); // State for scroll button visibility
 
   // Debounced search handler
   const debouncedSetSearch = useRef(debounce((value) => setSearch(value), 300)).current;
@@ -125,6 +126,16 @@ function App() {
       preloadImages(devImages);
     }
   }, [data]);
+
+  // Handle scroll to show/hide button
+  useEffect(() => {
+    const handleScroll = () => {
+      console.log("Scroll Y:", window.scrollY); // Debug scroll position
+      setIsVisible(window.scrollY > 50); // Lower threshold to 50px
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const formLinks = useMemo(() => [
     {
@@ -363,10 +374,10 @@ function App() {
               color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
             }
             .printable-sheet:last-child { page-break-after: avoid; }
-            .printable-sheet table { margin-bottom: 3mm; width: 100%; border-collapse: collapse; table-layout: fixed; border-width: 0.5pt; }
-            .printable-sheet .table th, .printable-sheet .table td { border: 0.5pt solid #000000; padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
-            .printable-sheet .table th { background-color: #f0f0f0; }
-            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
+            .printable-sheet table { margin-bottom: 3mm; width: 100%; border-collapse: collapse; table-layout: fixed; border-width: 0.25pt; /* Thinner border */ }
+            .printable-sheet .table th, .printable-sheet .table td { border: 0.25pt solid #000000; /* Thinner border */ padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ background-color: var(--card-bg); /* Dark mode background for th */ }
+            .printable-sheet .table th { background-color: #f0f0f0; /* Light background for print, overridden in dark mode */ }
+            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: #000000; /* Black text in dark mode on screen, overridden by #000000 in print */ }
             .printable-sheet .notes-section, .printable-sheet .ratio-section { border: none; width: 100%; }
             .printable-sheet .notes-section td, .printable-sheet .ratio-section td { border: none; height: 5mm; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
             .printable-sheet .main-data { font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
@@ -378,6 +389,12 @@ function App() {
               .printable-sheet {
                 color: #000000; /* Black for print */
               }
+              .printable-sheet .table {
+                border-width: 0.25pt; /* Thinner border */
+              }
+              .printable-sheet .table th {
+                background-color: #f0f0f0; /* Light background for print */
+              }
               .printable-sheet .table th,
               .printable-sheet .table td,
               .printable-sheet .main-data,
@@ -386,6 +403,10 @@ function App() {
               .printable-sheet .sizes-table td,
               .printable-sheet .merged-total {
                 color: #000000; /* Black for print */
+                border: 0.25pt solid #000000; /* Thinner border */
+              }
+              .printable-sheet .merged-total {
+                color: #000000; /* Ensure black text in print */
               }
             }
           </style>
@@ -400,42 +421,16 @@ function App() {
     printWindow.print();
   };
 
-  if (loading) {
-    return (
-      <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
-        <div className="loading-screen">
-          <div className="loading-content">
-            <div className="spinner spin" style={{ fontSize: '2rem' }}>⏳</div>
-            <h2>Loading Dashboard...</h2>
-            <p>Fetching the latest data from Google Sheets</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
-        <div className="error-screen">
-          <div className="error-content">
-            <FiAlertCircle className="error-icon" size={48} />
-            <h2>Data Load Failed</h2>
-            <p>{error}</p>
-            <button onClick={() => window.location.reload()} className="retry-button">
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`} style={{ minHeight: '100vh', flex: 1 }}>
       <Routes>
         <Route path="/" element={
-          <div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <header className="app-header">
               <div className="header-left">
                 <h1 className="app-title">High5 Dashboard</h1>
@@ -504,7 +499,7 @@ function App() {
               <StatsPanel productionStats={productionStats} colors={colors} />
             )}
 
-            <div className="main-content">
+            <div className="main-content" style={{ flex: 1, overflowY: 'auto' }}>
               <div className="search-box-container">
                 <div className="search-box">
                   <FiSearch size={16} />
@@ -697,6 +692,29 @@ function App() {
                 </div>
               </div>
             </footer>
+
+            {/* Scroll to Top Button */}
+            <button 
+              className="scroll-to-top"
+              onClick={scrollToTop}
+              style={{ 
+                position: 'fixed', 
+                bottom: '20px', 
+                right: '20px', 
+                display: isVisible ? 'block' : 'none', // Use state for visibility
+                backgroundColor: colors.actionButton,
+                color: colors.textLight,
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px var(--shadow-color)',
+                transition: 'opacity 0.2s ease'
+              }}
+            >
+              <FiArrowUp size={20} />
+            </button>
           </div>
         } />
         <Route path="/pd-kaiia" element={<CustomerPage />} />
