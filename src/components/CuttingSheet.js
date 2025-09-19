@@ -1,4 +1,3 @@
-// src/components/CuttingSheet.js
 import React from 'react';
 import { formatDate, getGoogleDriveThumbnail } from '../utils';
 
@@ -76,7 +75,7 @@ const CuttingSheet = ({ selectedData }) => {
               <td className="red-text">{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle' }}>
+                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle', color: '#000000' }}>
                   {totalUnits}
                 </td>
               )}

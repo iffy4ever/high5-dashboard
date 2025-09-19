@@ -57,7 +57,7 @@ const DocketSheet = ({ selectedData }) => {
               <td className="red-text">{row["H-NUMBER"] || ""}</td>
               <td>{row["TYPE"] || ""}</td>
               {i === 0 && (
-                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle' }}>
+                <td rowSpan={numPOs} className="merged-total" style={{ backgroundColor: '#ffff00', textAlign: 'center', verticalAlign: 'middle', color: '#000000' }}>
                   {totalUnits}
                 </td>
               )}
@@ -99,18 +99,9 @@ const DocketSheet = ({ selectedData }) => {
         </tbody>
       </table>
 
-      <table className="notes-section">
-        <tbody>
-          <tr>
-            <td>NOTES : -</td>
-          </tr>
-          {Array.from({ length: 1 }).map((_, i) => (
-            <tr key={i}>
-              <td></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="notes-section" style={{ border: 'none', height: '10mm', padding: '2mm', textAlign: 'left' }}>
+        <span>NOTES : -</span>
+      </div>
     </div>
   );
 };

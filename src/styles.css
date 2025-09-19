@@ -46,7 +46,7 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #10B981; /* Changed to green */
+  background: #10B981; /* Green color for scrollbar */
   border-radius: 3px;
 }
 
