@@ -1,4 +1,3 @@
-// src/components/SalesTable.js
 import React from 'react';
 import { FiAlertCircle, FiImage, FiUsers, FiDollarSign, FiFileText, FiExternalLink } from 'react-icons/fi';
 import { getColorCode } from '../utils';
@@ -89,17 +88,16 @@ const SalesTable = ({
                     {row.IMAGE ? (
                       <div>
                         <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
-
-<img
-  src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
-  alt="Product"
-  className="product-image"
-  loading="lazy" // Change from eager to lazy for better performance
-  onError={(e) => {
-    console.warn('Image failed to load, trying direct URL:', row.IMAGE);
-    e.target.src = row.IMAGE || "/fallback-image.png"; // Fallback to direct URL
-  }}
-/>
+                          <img
+                            src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
+                            alt="Product"
+                            className="product-image"
+                            loading="lazy"
+                            onError={(e) => {
+                              console.warn('Image failed to load, trying direct URL:', row.IMAGE);
+                              e.target.src = row.IMAGE || "/fallback-image.png";
+                            }}
+                          />
                         </a>
                       </div>
                     ) : (
@@ -135,24 +133,13 @@ const SalesTable = ({
                     <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
                   </td>
                   <td className="price-cell nowrap bold-cell">
-                    {row["COSTING LINK"] ? (
+                    {row["COSTING LINKS"] ? (
                       <a 
-                        href={row["COSTING LINK"]} 
+                        href={row["COSTING LINKS"]} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        style={{ 
-                          color: '#EF4444', 
-                          textDecoration: 'underline',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        aria-label="View costing file"
-                        title="Click to view costing file"
+                        style={{ color: 'inherit' }}
                       >
-                        <FiExternalLink size={14} />
                         {formatCurrency(row["CMT PRICE"])}
                       </a>
                     ) : (
