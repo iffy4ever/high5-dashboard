@@ -1,9 +1,8 @@
-// src/App.js
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as XLSX from 'xlsx';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import ReactDOMServer from 'react-dom/server';
-import { FiAlertCircle, FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers, FiArrowUp } from 'react-icons/fi';
+import { FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers, FiArrowUp } from 'react-icons/fi';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -25,7 +24,7 @@ const debounce = (func, delay) => {
 };
 
 function App() {
-  const { data, loading, error } = useData();
+  const { data } = useData();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     TYPE: "",
@@ -64,7 +63,7 @@ function App() {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#3B82F6",
-    textDark: "#FFFFFF", // Changed to white for dark mode
+    textDark: "#FFFFFF",
     textMedium: "#9CA3AF",
     textLight: "#FFFFFF",
     background: "#111827",
@@ -73,7 +72,7 @@ function App() {
     rowEven: "#1F2937",
     rowOdd: "#111827",
     headerBg: "#374151",
-    headerText: "#FFFFFF", // Changed to white for dark mode
+    headerText: "#FFFFFF",
     activeTab: "#CD5E77",
     inactiveTab: "#6B7280",
     actionButton: "#1B4D3E",
@@ -110,6 +109,90 @@ function App() {
     statCardBorder: "#E5E7EB",
   }, [darkMode]);
 
+  // productionStats calculation
+  const productionStats = useMemo(() => {
+    const today = new Date(); // Use dynamic date in production
+    const fiscalYearStart = new Date(today.getFullYear(), 6, 1); // July 1, 2025
+    const lastFiscalYearStart = new Date(today.getFullYear() - 1, 6, 1); // July 1, 2024
+    const lastFiscalYearEnd = new Date(today.getFullYear(), 5, 30); // June 30, 2025
+    const twoYearsAgoStart = new Date(today.getFullYear() - 2, 6, 1); // July 1, 2023
+    const twoYearsAgoEnd = new Date(today.getFullYear() - 1, 5, 30); // June 30, 2024
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    // Quarterly ranges for last 4 quarters
+    const quarterlyRanges = [
+      { quarter: 'Q4 2024', start: new Date(2024, 9, 1), end: new Date(2024, 11, 31) }, // Oct-Dec 2024
+      { quarter: 'Q1 2025', start: new Date(2025, 0, 1), end: new Date(2025, 2, 31) }, // Jan-Mar 2025
+      { quarter: 'Q2 2025', start: new Date(2025, 3, 1), end: new Date(2025, 5, 30) }, // Apr-Jun 2025
+      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 20) }, // Jul-Sep 2025
+    ];
+
+    const stats = {
+      totalOrders: data.sales_po.length,
+      totalUnits: data.sales_po.reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      deliveredLast30Days: data.sales_po.filter(row => {
+        const date = getDateValue(row["REAL DD"]);
+        return row["LIVE STATUS"] === "DELIVERED" && date >= oneMonthAgo.getTime();
+      }).length,
+      deliveredUnitsLast30Days: data.sales_po
+        .filter(row => {
+          const date = getDateValue(row["REAL DD"]);
+          return row["LIVE STATUS"] === "DELIVERED" && date >= oneMonthAgo.getTime();
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      last4QuartersUnits: data.sales_po
+        .filter(row => {
+          const date = getDateValue(row["XFACT DD"]);
+          return date >= quarterlyRanges[0].start.getTime() && date <= today.getTime();
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      // Quarterly units
+      ...quarterlyRanges.reduce((acc, range) => {
+        acc[`${range.quarter.replace(' ', '')}Units`] = data.sales_po
+          .filter(row => {
+            const date = getDateValue(row["XFACT DD"]);
+            return date >= range.start.getTime() && date <= range.end.getTime();
+          })
+          .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0);
+        return acc;
+      }, {}),
+      currentYearUnits: data.sales_po
+        .filter(row => {
+          const date = getDateValue(row["XFACT DD"]);
+          return date >= fiscalYearStart.getTime() && date <= today.getTime();
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      lastYearUnits: data.sales_po
+        .filter(row => {
+          const date = getDateValue(row["XFACT DD"]);
+          return date >= lastFiscalYearStart.getTime() && date <= lastFiscalYearEnd.getTime();
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      twoYearsAgoUnits: data.sales_po
+        .filter(row => {
+          const date = getDateValue(row["XFACT DD"]);
+          return date >= twoYearsAgoStart.getTime() && date <= twoYearsAgoEnd.getTime();
+        })
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      inProduction: data.sales_po
+        .filter(row => row["LIVE STATUS"]?.toLowerCase() === "in progress")
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      fabricOrdered: data.fabric.filter(row => row["STATUS"] === "FABRIC ORDERED").length,
+      pendingUnits: data.sales_po
+        .filter(row => row["LIVE STATUS"]?.toLowerCase() === "pending")
+        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      pendingOrders: data.sales_po.filter(row => row["LIVE STATUS"] !== "DELIVERED").length,
+      gsToSend: data.sales_po.filter(row => row["FIT STATUS"] === "GS TO SEND").length,
+      goldSealSent: data.sales_po.filter(row => row["FIT STATUS"] === "GOLD SEAL SENT").length,
+      lastDeliveryDateFormatted: data.sales_po.length > 0
+        ? formatDate(Math.max(...data.sales_po.map(row => getDateValue(row["XFACT DD"]))))
+        : "-"
+    };
+
+    return stats;
+  }, [data.sales_po, data.fabric]);
+
   // Preload images when data changes
   useEffect(() => {
     if (data.sales_po) {
@@ -120,7 +203,7 @@ function App() {
     if (data.insert_pattern) {
       const devImages = data.insert_pattern.flatMap(row => [
         row["FRONT IMAGE"],
-        row["BACK IMAGE"], 
+        row["BACK IMAGE"],
         row["SIDE IMAGE"]
       ]).filter(Boolean);
       preloadImages(devImages);
@@ -160,99 +243,6 @@ function App() {
       external: true
     }
   ], [colors]);
-
-  const productionStats = useMemo(() => {
-    const now = new Date();
-    const oneMonthAgo = new Date(now);
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    
-    // Calculate dates for 3 quarters ago
-    const threeQuartersAgo = new Date(now);
-    threeQuartersAgo.setMonth(threeQuartersAgo.getMonth() - 9);
-    
-    // Calculate dates for 3 years ago
-    const threeYearsAgo = new Date(now);
-    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-    
-    const stats = {
-      totalOrders: 0,
-      totalUnits: 0,
-      deliveredLast30Days: 0,
-      deliveredUnitsLast30Days: 0,
-      last3QuartersUnits: 0,
-      threeYearUnits: 0,
-      threeYearOrders: 0,
-      pendingUnits: 0,
-      inProduction: 0,
-      fabricOrdered: 0,
-      notDelivered: 0,
-      gsToSend: 0, // 1st Fit + 2nd Fit
-      goldSealSent: 0,
-      lastDeliveryDateFormatted: "-",
-    };
-
-    if (data.sales_po && data.sales_po.length > 0) {
-      data.sales_po.forEach(row => {
-        const units = parseInt(row["TOTAL UNITS"] || 0);
-        const status = row["LIVE STATUS"];
-        const fitStatus = row["FIT STATUS"] || "";
-        const deliveryDate = getDateValue(row["REAL DD"]);
-        
-        stats.totalOrders++;
-        stats.totalUnits += isNaN(units) ? 0 : units;
-        
-        // Last 30 days delivered
-        if (status === "DELIVERED" && deliveryDate >= oneMonthAgo.getTime()) {
-          stats.deliveredLast30Days++;
-          stats.deliveredUnitsLast30Days += isNaN(units) ? 0 : units;
-        }
-        
-        // Last 3 quarters delivered
-        if (status === "DELIVERED" && deliveryDate >= threeQuartersAgo.getTime()) {
-          stats.last3QuartersUnits += isNaN(units) ? 0 : units;
-        }
-        
-        // Last 3 years stats
-        if (deliveryDate >= threeYearsAgo.getTime()) {
-          stats.threeYearUnits += isNaN(units) ? 0 : units;
-          stats.threeYearOrders++;
-        }
-        
-        // Pending orders
-        if (status !== "DELIVERED") {
-          stats.pendingUnits += isNaN(units) ? 0 : units;
-          stats.notDelivered++;
-        }
-        
-        // Production status
-        if (status === "IN PRODUCTION") stats.inProduction += isNaN(units) ? 0 : units;
-        if (status === "FABRIC ORDERED") stats.fabricOrdered += isNaN(units) ? 0 : units;
-        
-        // Fit status calculations
-        if (fitStatus.includes("1st Fit") || fitStatus.includes("2nd Fit")) {
-          stats.gsToSend += isNaN(units) ? 0 : units;
-        }
-        if (fitStatus.includes("GOLD SEAL SENT") || fitStatus.includes("GS SENT")) {
-          stats.goldSealSent += isNaN(units) ? 0 : units;
-        }
-      });
-
-      // Find last delivery
-      const deliveredOrders = data.sales_po.filter(row => row["LIVE STATUS"] === "DELIVERED");
-      if (deliveredOrders.length > 0) {
-        const lastDelivery = deliveredOrders.reduce((latest, row) => {
-          const date = getDateValue(row["REAL DD"]);
-          return !latest || date > getDateValue(latest["REAL DD"]) ? row : latest;
-        }, null);
-
-        if (lastDelivery) {
-          stats.lastDeliveryDateFormatted = formatDate(lastDelivery["REAL DD"]);
-        }
-      }
-    }
-
-    return stats;
-  }, [data.sales_po]);
 
   const filteredSales = useMemo(() => {
     if (!data.sales_po) return [];
@@ -335,7 +325,7 @@ function App() {
     }
   }, [activeTab, filteredSales, filteredFabric, filteredDevelopments]);
 
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (selectedPOs.length === 0) return;
 
     const selectedData = data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]));
@@ -371,29 +361,29 @@ function App() {
               page-break-inside: avoid;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
-              color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */
+              color: var(--text-dark);
             }
             .printable-sheet:last-child { page-break-after: avoid; }
-            .printable-sheet table { margin-bottom: 3mm; width: 100%; border-collapse: collapse; table-layout: fixed; border-width: 0.25pt; /* Thinner border */ }
-            .printable-sheet .table th, .printable-sheet .table td { border: 0.25pt solid #000000; /* Thinner border */ padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ background-color: var(--card-bg); /* Dark mode background for th */ }
-            .printable-sheet .table th { background-color: #f0f0f0; /* Light background for print, overridden in dark mode */ }
-            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: #000000; /* Black text in dark mode on screen, overridden by #000000 in print */ }
+            .printable-sheet table { margin-bottom: 3mm; width: 100%; border-collapse: collapse; table-layout: fixed; border-width: 0.25pt; }
+            .printable-sheet .table th, .printable-sheet .table td { border: 0.25pt solid #000000; padding: 1mm; vertical-align: top; text-align: left; font-size: 10pt; font-weight: normal; color: var(--text-dark); background-color: var(--card-bg); }
+            .printable-sheet .table th { background-color: #f0f0f0; }
+            .printable-sheet .merged-total { background-color: #ffff00; text-align: center; vertical-align: middle; font-size: 56pt; font-weight: bold; line-height: 1; color: #000000; }
             .printable-sheet .notes-section, .printable-sheet .ratio-section { border: none; width: 100%; }
-            .printable-sheet .notes-section td, .printable-sheet .ratio-section td { border: none; height: 5mm; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
-            .printable-sheet .main-data { font-weight: normal; color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ }
+            .printable-sheet .notes-section td, .printable-sheet .ratio-section td { border: none; height: 5mm; color: var(--text-dark); }
+            .printable-sheet .main-data { font-weight: normal; color: var(--text-dark); }
             .printable-sheet .delivery-info { margin: 2mm 0; font-size: 20pt; color: #FF0000; }
-            .printable-sheet .total-row { color: var(--text-dark); /* White in dark mode on screen, overridden by #000000 in print */ font-size: 12pt; font-weight: normal; }
+            .printable-sheet .total-row { color: var(--text-dark); font-size: 12pt; font-weight: normal; }
             .printable-sheet .red-text { color: #FF0000; }
             .printable-sheet img { width: 100%; height: 100%; object-fit: contain; }
             @media print {
               .printable-sheet {
-                color: #000000; /* Black for print */
+                color: #000000;
               }
               .printable-sheet .table {
-                border-width: 0.25pt; /* Thinner border */
+                border-width: 0.25pt;
               }
               .printable-sheet .table th {
-                background-color: #f0f0f0; /* Light background for print */
+                background-color: #f0f0f0;
               }
               .printable-sheet .table th,
               .printable-sheet .table td,
@@ -402,11 +392,11 @@ function App() {
               .printable-sheet .notes-section td,
               .printable-sheet .sizes-table td,
               .printable-sheet .merged-total {
-                color: #000000; /* Black for print */
-                border: 0.25pt solid #000000; /* Thinner border */
+                color: #000000;
+                border: 0.25pt solid #000000;
               }
               .printable-sheet .merged-total {
-                color: #000000; /* Ensure black text in print */
+                color: #000000;
               }
             }
           </style>
@@ -419,7 +409,7 @@ function App() {
     `);
     printWindow.document.close();
     printWindow.print();
-  };
+  }, [selectedPOs, data.sales_po]);
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -701,7 +691,7 @@ function App() {
                 position: 'fixed', 
                 bottom: '20px', 
                 right: '20px', 
-                display: isVisible ? 'block' : 'none', // Use state for visibility
+                display: isVisible ? 'block' : 'none',
                 backgroundColor: colors.actionButton,
                 color: colors.textLight,
                 border: 'none',

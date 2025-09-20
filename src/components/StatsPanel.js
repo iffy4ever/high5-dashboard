@@ -1,6 +1,4 @@
-// src/components/StatsPanel.js
 import React from 'react';
-import { FiShoppingBag, FiTruck, FiClock, FiDatabase, FiAlertCircle, FiCalendar, FiCheckCircle, FiBarChart2 } from 'react-icons/fi';
 
 const StatsPanel = ({ productionStats, colors }) => {
   // Format large numbers with commas
@@ -34,19 +32,44 @@ const StatsPanel = ({ productionStats, colors }) => {
             color: productionStats.deliveredUnitsLast30Days > 0 ? "#10B981" : colors.textMedium,
           },
           {
-            title: "Last 3 Quarters Units",
-            value: formatNumber(productionStats.last3QuartersUnits),
-            color: productionStats.last3QuartersUnits > 0 ? "#3B82F6" : colors.textMedium,
+            title: "Last 4 Quarters Units",
+            value: formatNumber(productionStats.last4QuartersUnits),
+            color: productionStats.last4QuartersUnits > 0 ? "#3B82F6" : colors.textMedium,
           },
           {
-            title: "3 Year Total Units",
-            value: formatNumber(productionStats.threeYearUnits),
-            color: productionStats.threeYearUnits > 0 ? "#6366F1" : colors.textMedium,
+            title: "Q4 2024 Units (Oct-Dec)",
+            value: formatNumber(productionStats.Q42024Units),
+            color: productionStats.Q42024Units > 0 ? "#3B82F6" : colors.textMedium,
           },
           {
-            title: "3 Year Total Orders",
-            value: formatNumber(productionStats.threeYearOrders),
-            color: productionStats.threeYearOrders > 0 ? "#6366F1" : colors.textMedium,
+            title: "Q1 2025 Units (Jan-Mar)",
+            value: formatNumber(productionStats.Q12025Units),
+            color: productionStats.Q12025Units > 0 ? "#3B82F6" : colors.textMedium,
+          },
+          {
+            title: "Q2 2025 Units (Apr-Jun)",
+            value: formatNumber(productionStats.Q22025Units),
+            color: productionStats.Q22025Units > 0 ? "#3B82F6" : colors.textMedium,
+          },
+          {
+            title: "Q3 2025 Units (Jul-Sep)",
+            value: formatNumber(productionStats.Q32025Units),
+            color: productionStats.Q32025Units > 0 ? "#3B82F6" : colors.textMedium,
+          },
+          {
+            title: "Current Year Units (Jul 25 - Now)",
+            value: formatNumber(productionStats.currentYearUnits),
+            color: productionStats.currentYearUnits > 0 ? "#6366F1" : colors.textMedium,
+          },
+          {
+            title: "Last Year Units (Jul 24 - Jun 25)",
+            value: formatNumber(productionStats.lastYearUnits),
+            color: productionStats.lastYearUnits > 0 ? "#6366F1" : colors.textMedium,
+          },
+          {
+            title: "2 Years Ago Units (Jul 23 - Jun 24)",
+            value: formatNumber(productionStats.twoYearsAgoUnits),
+            color: productionStats.twoYearsAgoUnits > 0 ? "#6366F1" : colors.textMedium,
           },
           {
             title: "In Production",
@@ -62,6 +85,11 @@ const StatsPanel = ({ productionStats, colors }) => {
             title: "Pending Units",
             value: formatNumber(productionStats.pendingUnits),
             color: productionStats.pendingUnits > 0 ? colors.warning : colors.textMedium,
+          },
+          {
+            title: "Pending Orders",
+            value: formatNumber(productionStats.pendingOrders),
+            color: productionStats.pendingOrders > 0 ? colors.warning : colors.textMedium,
           },
           {
             title: "GS To Send",
