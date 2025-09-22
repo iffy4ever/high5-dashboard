@@ -7,6 +7,10 @@ const StatsPanel = ({ productionStats, colors }) => {
     return num.toLocaleString('en-GB');
   };
 
+  // Determine if Q3 2025 (Jul-Sep 2025) is the current quarter
+  const today = new Date();
+  const isCurrentQuarterQ32025 = today >= new Date(2025, 6, 1) && today <= new Date(2025, 8, 30);
+
   return (
     <div className="stats-panel no-print">
       <div className="stats-grid">
@@ -32,11 +36,6 @@ const StatsPanel = ({ productionStats, colors }) => {
             color: productionStats.deliveredUnitsLast30Days > 0 ? "#10B981" : colors.textMedium,
           },
           {
-            title: "Last 4 Quarters Units",
-            value: formatNumber(productionStats.last4QuartersUnits),
-            color: productionStats.last4QuartersUnits > 0 ? "#3B82F6" : colors.textMedium,
-          },
-          {
             title: "Q4 2024 Units (Oct-Dec)",
             value: formatNumber(productionStats.Q42024Units),
             color: productionStats.Q42024Units > 0 ? "#3B82F6" : colors.textMedium,
@@ -52,7 +51,7 @@ const StatsPanel = ({ productionStats, colors }) => {
             color: productionStats.Q22025Units > 0 ? "#3B82F6" : colors.textMedium,
           },
           {
-            title: "Q3 2025 Units (Jul-Sep)",
+            title: isCurrentQuarterQ32025 ? "Current Quarter Units" : "Q3 2025 Units (Jul-Sep)",
             value: formatNumber(productionStats.Q32025Units),
             color: productionStats.Q32025Units > 0 ? "#3B82F6" : colors.textMedium,
           },

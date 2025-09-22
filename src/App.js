@@ -111,7 +111,7 @@ function App() {
 
   // productionStats calculation
   const productionStats = useMemo(() => {
-    const today = new Date(); // Use dynamic date in production
+    const today = new Date(); // Dynamic date in production
     const fiscalYearStart = new Date(today.getFullYear(), 6, 1); // July 1, 2025
     const lastFiscalYearStart = new Date(today.getFullYear() - 1, 6, 1); // July 1, 2024
     const lastFiscalYearEnd = new Date(today.getFullYear(), 5, 30); // June 30, 2025
@@ -125,7 +125,7 @@ function App() {
       { quarter: 'Q4 2024', start: new Date(2024, 9, 1), end: new Date(2024, 11, 31) }, // Oct-Dec 2024
       { quarter: 'Q1 2025', start: new Date(2025, 0, 1), end: new Date(2025, 2, 31) }, // Jan-Mar 2025
       { quarter: 'Q2 2025', start: new Date(2025, 3, 1), end: new Date(2025, 5, 30) }, // Apr-Jun 2025
-      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 20) }, // Jul-Sep 2025
+      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 30) }, // Jul-Sep 2025
     ];
 
     const stats = {
@@ -139,12 +139,6 @@ function App() {
         .filter(row => {
           const date = getDateValue(row["REAL DD"]);
           return row["LIVE STATUS"] === "DELIVERED" && date >= oneMonthAgo.getTime();
-        })
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
-      last4QuartersUnits: data.sales_po
-        .filter(row => {
-          const date = getDateValue(row["XFACT DD"]);
-          return date >= quarterlyRanges[0].start.getTime() && date <= today.getTime();
         })
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
       // Quarterly units
@@ -176,17 +170,22 @@ function App() {
         })
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
       inProduction: data.sales_po
-        .filter(row => row["LIVE STATUS"]?.toLowerCase() === "in progress")
-        .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
-      fabricOrdered: data.fabric.filter(row => row["STATUS"] === "FABRIC ORDERED").length,
+        .filter(row => row["LIVE STATUS"]?.toLowerCase() === "in production")
+        .length,
+      fabricOrdered: data.fabric.filter(row => row["STATUS"]?.toLowerCase() === "fabric ordered").length,
       pendingUnits: data.sales_po
         .filter(row => row["LIVE STATUS"]?.toLowerCase() === "pending")
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
-      pendingOrders: data.sales_po.filter(row => row["LIVE STATUS"] !== "DELIVERED").length,
-      gsToSend: data.sales_po.filter(row => row["FIT STATUS"] === "GS TO SEND").length,
-      goldSealSent: data.sales_po.filter(row => row["FIT STATUS"] === "GOLD SEAL SENT").length,
+      pendingOrders: data.sales_po.filter(row => row["LIVE STATUS"]?.toLowerCase() !== "delivered").length,
+      gsToSend: data.sales_po.filter(row => row["FIT STATUS"]?.toLowerCase() === "gs to send").length,
+      goldSealSent: data.sales_po.filter(row => row["FIT STATUS"]?.toLowerCase() === "gold seal sent").length,
       lastDeliveryDateFormatted: data.sales_po.length > 0
-        ? formatDate(Math.max(...data.sales_po.map(row => getDateValue(row["XFACT DD"]))))
+        ? (() => {
+            const dates = data.sales_po
+              .map(row => getDateValue(row["XFACT DD"]))
+              .filter(date => !isNaN(date));
+            return dates.length > 0 ? formatDate(Math.max(...dates)) : "-";
+          })()
         : "-"
     };
 
