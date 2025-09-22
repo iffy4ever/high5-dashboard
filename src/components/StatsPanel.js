@@ -91,11 +91,6 @@ const StatsPanel = ({ productionStats, colors }) => {
             color: productionStats.pendingOrders > 0 ? colors.warning : colors.textMedium,
           },
           {
-            title: "GS To Send",
-            value: formatNumber(productionStats.gsToSend),
-            color: productionStats.gsToSend > 0 ? "#F59E0B" : colors.textMedium,
-          },
-          {
             title: "Gold Seal Sent",
             value: formatNumber(productionStats.goldSealSent),
             color: productionStats.goldSealSent > 0 ? "#10B981" : colors.textMedium,

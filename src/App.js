@@ -111,7 +111,7 @@ function App() {
 
   // productionStats calculation
   const productionStats = useMemo(() => {
-    const today = new Date(); // Dynamic date in production
+    const today = new Date(); // Use dynamic date in production
     const fiscalYearStart = new Date(today.getFullYear(), 6, 1); // July 1, 2025
     const lastFiscalYearStart = new Date(today.getFullYear() - 1, 6, 1); // July 1, 2024
     const lastFiscalYearEnd = new Date(today.getFullYear(), 5, 30); // June 30, 2025
@@ -169,22 +169,26 @@ function App() {
           return date >= twoYearsAgoStart.getTime() && date <= twoYearsAgoEnd.getTime();
         })
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
-      inProduction: data.sales_po
-        .filter(row => row["LIVE STATUS"]?.toLowerCase() === "in production")
-        .length,
+      inProduction: data.sales_po.filter(row => row["LIVE STATUS"]?.toLowerCase() === "in production").length,
       fabricOrdered: data.fabric.filter(row => row["STATUS"]?.toLowerCase() === "fabric ordered").length,
       pendingUnits: data.sales_po
-        .filter(row => row["LIVE STATUS"]?.toLowerCase() === "pending")
+        .filter(row => row["LIVE STATUS"]?.toLowerCase() !== "delivered")
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
       pendingOrders: data.sales_po.filter(row => row["LIVE STATUS"]?.toLowerCase() !== "delivered").length,
-      gsToSend: data.sales_po.filter(row => row["FIT STATUS"]?.toLowerCase() === "gs to send").length,
       goldSealSent: data.sales_po.filter(row => row["FIT STATUS"]?.toLowerCase() === "gold seal sent").length,
       lastDeliveryDateFormatted: data.sales_po.length > 0
         ? (() => {
             const dates = data.sales_po
-              .map(row => getDateValue(row["XFACT DD"]))
-              .filter(date => !isNaN(date));
-            return dates.length > 0 ? formatDate(Math.max(...dates)) : "-";
+              .map(row => {
+                const dateValue = getDateValue(row["XFACT DD"]);
+                if (isNaN(dateValue)) {
+                  console.warn("Invalid XFACT DD value:", row["XFACT DD"]);
+                  return null;
+                }
+                return dateValue;
+              })
+              .filter(date => date !== null && !isNaN(date));
+            return dates.length > 0 ? formatDate(new Date(Math.max(...dates))) : "-";
           })()
         : "-"
     };

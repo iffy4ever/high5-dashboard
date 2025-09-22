@@ -1,6 +1,5 @@
-// src/components/FabricTable.js
 import React from 'react';
-import { FiAlertCircle, FiImage, FiDollarSign, FiExternalLink } from 'react-icons/fi';
+import { FiAlertCircle, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { getColorCode } from '../utils';
 
 const FabricTable = ({
@@ -62,30 +61,23 @@ const FabricTable = ({
                 <td colSpan="18">
                   <div className="empty-content">
                     <FiAlertCircle size={28} />
-                    <div>No Matching Fabric Orders Found</div>
+                    <div>No Matching Fabrics Found</div>
                     <p>Try Adjusting Your Search Or Filters</p>
                   </div>
                 </td>
               </tr>
             ) : (
-              data.map((row, i) => (
+              data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((row, i) => (
                 <tr key={i}>
                   <td>{row["NO."] || "N/A"}</td>
                   <td className="nowrap">{formatDate(row["DATE"])}</td>
                   <td className="highlight-cell">{row["H-NUMBER"] || "N/A"}</td>
                   <td>{row["ORDER REF"] || "N/A"}</td>
-                  <td><span className="type-text">{row["TYPE"] || "N/A"}</span></td>
+                  <td className="type-text">{row["TYPE"] || "N/A"}</td>
                   <td>{row["DESCRIPTION"] || "N/A"}</td>
-                  <td>
-                    <div className="color-cell">
-                      {row["COLOUR"] && (
-                        <span 
-                          className="color-dot" 
-                          style={{ backgroundColor: getColorCode(row["COLOUR"]) }}
-                        ></span>
-                      )}
-                      {row["COLOUR"] || "N/A"}
-                    </div>
+                  <td className="color-cell">
+                    <span className="color-dot" style={{ backgroundColor: getColorCode(row["COLOUR"]) }}></span>
+                    {row["COLOUR"] || "N/A"}
                   </td>
                   <td>{row["SUPPLIER"] || "N/A"}</td>
                   <td>{row["ORDER UNITS FABRIC/TRIM COST"] || "N/A"}</td>
