@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { FiSearch, FiAlertCircle, FiShoppingBag } from 'react-icons/fi';
+import { FiSearch, FiAlertCircle } from 'react-icons/fi';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Navigate } from 'react-router-dom';
 import { useData } from '../useData';
 import { getGoogleDriveThumbnail, formatDate, getDateValue, formatCurrency } from '../utils/index';
 import '../styles.css';
@@ -24,9 +26,67 @@ const CustomerPage = () => {
     direction: 'below'
   });
   const [darkMode, setDarkMode] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // ... (rest of the file remains unchanged, assuming the truncated portion is correct)
-  // Since the file was truncated, I'll assume the provided snippet continues correctly
+  const filteredSales = useMemo(() => {
+    if (!data.sales_po) return [];
+    
+    return data.sales_po
+      .filter(row => row["PO NUMBER"] && row["STYLE NUMBER"] && row["TOTAL UNITS"])
+      .filter(row => {
+        const searchLower = search.toLowerCase();
+        return Object.values(row).some(value => 
+          value && value.toString().toLowerCase().includes(searchLower)
+        );
+      })
+      .filter(row => !filters.TYPE || (row["TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
+      .filter(row => !filters.COLOUR || (row["COLOUR"] || "").toLowerCase() === filters.COLOUR.toLowerCase())
+      .filter(row => !filters["LIVE STATUS"] || (row["LIVE STATUS"] || "").toLowerCase() === filters["LIVE STATUS"].toLowerCase())
+      .filter(row => !filters["FIT STATUS"] || (row["FIT STATUS"] || "").toLowerCase() === filters["FIT STATUS"].toLowerCase())
+      .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
+      .sort((a, b) => getDateValue(b["XFACT DD"]) - getDateValue(a["XFACT DD"]));
+  }, [data.sales_po, search, filters]);
+
+  const filteredDevelopments = useMemo(() => {
+    if (!data.insert_pattern) return [];
+    
+    return data.insert_pattern
+      .filter(row => {
+        const searchLower = search.toLowerCase();
+        return Object.values(row).some(value => 
+          value && value.toString().toLowerCase().includes(searchLower)
+        );
+      })
+      .filter(row => !filters["STYLE TYPE"] || (row["STYLE TYPE"] || "").toLowerCase() === filters["STYLE TYPE"].toLowerCase())
+      .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
+      .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
+      .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
+  }, [data.insert_pattern, search, filters]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(getAuth(), (currentUser) => {
+      setUser(currentUser);
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loadingAuth) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <FiAlertCircle size={28} className="spin" />
+          <div>Checking authentication...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -58,6 +118,12 @@ const CustomerPage = () => {
               className="action-button dark-mode-toggle"
             >
               {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            <button
+              onClick={() => getAuth().signOut()}
+              className="action-button logout-button"
+            >
+              Logout
             </button>
           </div>
         </header>
@@ -172,7 +238,7 @@ const CustomerPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.insert_pattern?.length === 0 ? (
+                    {filteredDevelopments.length === 0 ? (
                       <tr className="empty-state">
                         <td colSpan="11">
                           <div className="empty-content">
@@ -183,105 +249,103 @@ const CustomerPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      data.insert_pattern
-                        .filter(row => {
-                          const searchLower = search.toLowerCase();
-                          return Object.values(row).some(value =>
-                            value && value.toString().toLowerCase().includes(searchLower)
-                          );
-                        })
-                        .filter(row => !filters["STYLE TYPE"] || (row["STYLE TYPE"] || "").toLowerCase() === filters["STYLE TYPE"].toLowerCase())
-                        .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
-                        .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
-                        .map((row, i) => (
-                          <tr key={i}>
-                            <td className="nowrap">{formatDate(row["Timestamp"])}</td>
-                            <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                            <td>{row["CUSTOMER NAME"] || "N/A"}</td>
-                            <td>{row["STYLE TYPE"]}</td>
-                            <td>{row["CUSTOMER CODE"] || "N/A"}</td>
-                            <td className="image-cell">
-                              {row["FRONT IMAGE"] ? (
-                                <div>
-                                  <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                    <img
-                                      src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
-                                      alt="Front"
-                                      className="product-image"
-                                      loading="eager"
-                                      onMouseEnter={(e) => setPreviewImage({
-                                        url: getGoogleDriveThumbnail(row["FRONT IMAGE"]),
-                                        visible: true,
-                                        position: { x: e.clientX, y: e.clientY },
-                                        direction: e.clientY < window.innerHeight / 2 ? 'below' : 'above'
-                                      })}
-                                      onMouseLeave={() => setPreviewImage(prev => ({ ...prev, visible: false }))}
-                                    />
-                                  </a>
-                                </div>
-                              ) : (
-                                <div className="no-image">No Image</div>
-                              )}
-                            </td>
-                            <td className="image-cell">
-                              {row["BACK IMAGE"] ? (
-                                <div>
-                                  <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                    <img
-                                      src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
-                                      alt="Back"
-                                      className="product-image"
-                                      loading="eager"
-                                      onMouseEnter={(e) => setPreviewImage({
-                                        url: getGoogleDriveThumbnail(row["BACK IMAGE"]),
-                                        visible: true,
-                                        position: { x: e.clientX, y: e.clientY },
-                                        direction: e.clientY < window.innerHeight / 2 ? 'below' : 'above'
-                                      })}
-                                      onMouseLeave={() => setPreviewImage(prev => ({ ...prev, visible: false }))}
-                                    />
-                                  </a>
-                                </div>
-                              ) : (
-                                <div className="no-image">No Image</div>
-                              )}
-                            </td>
-                            <td className="image-cell">
-                              {row["SIDE IMAGE"] ? (
-                                <div>
-                                  <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer">
-                                    <img
-                                      src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
-                                      alt="Side"
-                                      className="product-image"
-                                      loading="eager"
-                                      onMouseEnter={(e) => setPreviewImage({
-                                        url: getGoogleDriveThumbnail(row["SIDE IMAGE"]),
-                                        visible: true,
-                                        position: { x: e.clientX, y: e.clientY },
-                                        direction: e.clientY < window.innerHeight / 2 ? 'below' : 'above'
-                                      })}
-                                      onMouseLeave={() => setPreviewImage(prev => ({ ...prev, visible: false }))}
-                                    />
-                                  </a>
-                                </div>
-                              ) : (
-                                <div className="no-image">No Image</div>
-                              )}
-                            </td>
-                            <td>{row["FIT SAMPLE"] || "N/A"}</td>
-                            <td className="price-cell nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
-                            <td className="price-cell nowrap bold-cell">
-                              {row["COSTING LINK"] ? (
-                                <a href={row["COSTING LINK"]} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
-                                  {formatCurrency(row["TOTAL GARMENT PRICE"])}
+                      filteredDevelopments.map((row, i) => (
+                        <tr key={i}>
+                          <td className="nowrap">{formatDate(row["Timestamp"])}</td>
+                          <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                          <td>{row["CUSTOMER NAME"] || "N/A"}</td>
+                          <td>{row["STYLE TYPE"]}</td>
+                          <td>{row["CUSTOMER CODE"] || "N/A"}</td>
+                          <td className="image-cell">
+                            {row["FRONT IMAGE"] ? (
+                              <div>
+                                <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
+                                    alt="Front"
+                                    className="product-image"
+                                    loading="eager"
+                                    onError={(e) => {
+                                      console.error("DevelopmentsTable front image failed to load:", {
+                                        url: row["FRONT IMAGE"],
+                                        message: e.message,
+                                        rowData: row
+                                      });
+                                      e.target.src = "/fallback-image.png";
+                                    }}
+                                  />
                                 </a>
-                              ) : (
-                                formatCurrency(row["TOTAL GARMENT PRICE"])
-                              )}
-                            </td>
-                          </tr>
-                        ))
+                              </div>
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td className="image-cell">
+                            {row["BACK IMAGE"] ? (
+                              <div>
+                                <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
+                                    alt="Back"
+                                    className="product-image"
+                                    loading="eager"
+                                    onError={(e) => {
+                                      console.error("DevelopmentsTable back image failed to load:", {
+                                        url: row["BACK IMAGE"],
+                                        message: e.message,
+                                        rowData: row
+                                      });
+                                      e.target.src = "/fallback-image.png";
+                                    }}
+                                  />
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td className="image-cell">
+                            {row["SIDE IMAGE"] ? (
+                              <div>
+                                <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
+                                    alt="Side"
+                                    className="product-image"
+                                    loading="eager"
+                                    onError={(e) => {
+                                      console.error("DevelopmentsTable side image failed to load:", {
+                                        url: row["SIDE IMAGE"],
+                                        message: e.message,
+                                        rowData: row
+                                      });
+                                      e.target.src = "/fallback-image.png";
+                                    }}
+                                  />
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="no-image">No Image</div>
+                            )}
+                          </td>
+                          <td>{row["FIT SAMPLE"] || "N/A"}</td>
+                          <td className="price-cell nowrap bold-cell">{formatCurrency(row["CMT PRICE"])}</td>
+                          <td className="price-cell nowrap bold-cell">
+                            {row["COSTING LINK"] ? (
+                              <a 
+                                href={row["COSTING LINK"]} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                style={{ color: 'inherit' }}
+                              >
+                                {formatCurrency(row["TOTAL GARMENT PRICE"])}
+                              </a>
+                            ) : (
+                              formatCurrency(row["TOTAL GARMENT PRICE"])
+                            )}
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
@@ -309,7 +373,7 @@ const CustomerPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.sales_po?.length === 0 ? (
+                    {filteredSales.length === 0 ? (
                       <tr className="empty-state">
                         <td colSpan="10">
                           <div className="empty-content">
@@ -320,36 +384,24 @@ const CustomerPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      data.sales_po
-                        .filter(row => {
-                          const searchLower = search.toLowerCase();
-                          return Object.values(row).some(value =>
-                            value && value.toString().toLowerCase().includes(searchLower)
-                          );
-                        })
-                        .filter(row => !filters.TYPE || (row["TYPE"] || "").toLowerCase() === filters.TYPE.toLowerCase())
-                        .filter(row => !filters.COLOUR || (row["COLOUR"] || "").toLowerCase() === filters.COLOUR.toLowerCase())
-                        .filter(row => !filters["LIVE STATUS"] || (row["LIVE STATUS"] || "").toLowerCase() === filters["LIVE STATUS"].toLowerCase())
-                        .filter(row => !filters["FIT STATUS"] || (row["FIT STATUS"] || "").toLowerCase() === filters["FIT STATUS"].toLowerCase())
-                        .filter(row => !filters["CUSTOMER NAME"] || (row["CUSTOMER NAME"] || "").toLowerCase() === filters["CUSTOMER NAME"].toLowerCase())
-                        .map((row, i) => (
-                          <tr key={i}>
-                            <td>
-                              <span className="status-text" data-status={row["FIT STATUS"]}>{row["FIT STATUS"]}</span>
-                            </td>
-                            <td className="highlight-cell">{row["H-NUMBER"]}</td>
-                            <td>{row["CUSTOMER NAME"]}</td>
-                            <td>{row["PO NUMBER"]}</td>
-                            <td>{row["STYLE NUMBER"]}</td>
-                            <td>{row["DESCRIPTION"]}</td>
-                            <td className="bold-cell">{row["TOTAL UNITS"]}</td>
-                            <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
-                            <td className="nowrap">{formatDate(row["REAL DD"])}</td>
-                            <td>
-                              <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
-                            </td>
-                          </tr>
-                        ))
+                      filteredSales.map((row, i) => (
+                        <tr key={i}>
+                          <td>
+                            <span className="status-text" data-status={row["FIT STATUS"]}>{row["FIT STATUS"]}</span>
+                          </td>
+                          <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                          <td>{row["CUSTOMER NAME"]}</td>
+                          <td>{row["PO NUMBER"]}</td>
+                          <td>{row["STYLE NUMBER"]}</td>
+                          <td>{row["DESCRIPTION"]}</td>
+                          <td className="bold-cell">{row["TOTAL UNITS"]}</td>
+                          <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
+                          <td className="nowrap">{formatDate(row["REAL DD"])}</td>
+                          <td>
+                            <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>

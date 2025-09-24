@@ -1,4 +1,3 @@
-// src/components/DevelopmentsTable.js
 import React from 'react';
 import { FiAlertCircle, FiImage, FiDollarSign } from 'react-icons/fi';
 
@@ -67,11 +66,10 @@ const DevelopmentsTable = ({
                       <div>
                         <a href={row["FRONT IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View front image">
                           <img
-                            src={getGoogleDriveThumbnail(row["FRONT IMAGE"]) || "/fallback-image.png"}
+                            src={getGoogleDriveThumbnail(row["FRONT IMAGE"])}
                             alt="Front"
                             className="product-image"
                             loading="eager"
-                            fetchPriority="high"
                             onError={(e) => {
                               console.error("DevelopmentsTable front image failed to load:", {
                                 url: row["FRONT IMAGE"],
@@ -84,9 +82,7 @@ const DevelopmentsTable = ({
                         </a>
                       </div>
                     ) : (
-                      <div className="no-image">
-                        No Image
-                      </div>
+                      <div className="no-image">No Image</div>
                     )}
                   </td>
                   <td className="image-cell">
@@ -94,11 +90,10 @@ const DevelopmentsTable = ({
                       <div>
                         <a href={row["BACK IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View back image">
                           <img
-                            src={getGoogleDriveThumbnail(row["BACK IMAGE"]) || "/fallback-image.png"}
+                            src={getGoogleDriveThumbnail(row["BACK IMAGE"])}
                             alt="Back"
                             className="product-image"
                             loading="eager"
-                            fetchPriority="high"
                             onError={(e) => {
                               console.error("DevelopmentsTable back image failed to load:", {
                                 url: row["BACK IMAGE"],
@@ -111,9 +106,7 @@ const DevelopmentsTable = ({
                         </a>
                       </div>
                     ) : (
-                      <div className="no-image">
-                        No Image
-                      </div>
+                      <div className="no-image">No Image</div>
                     )}
                   </td>
                   <td className="image-cell">
@@ -121,11 +114,10 @@ const DevelopmentsTable = ({
                       <div>
                         <a href={row["SIDE IMAGE"]} target="_blank" rel="noopener noreferrer" aria-label="View side image">
                           <img
-                            src={getGoogleDriveThumbnail(row["SIDE IMAGE"]) || "/fallback-image.png"}
+                            src={getGoogleDriveThumbnail(row["SIDE IMAGE"])}
                             alt="Side"
                             className="product-image"
                             loading="eager"
-                            fetchPriority="high"
                             onError={(e) => {
                               console.error("DevelopmentsTable side image failed to load:", {
                                 url: row["SIDE IMAGE"],
@@ -138,9 +130,7 @@ const DevelopmentsTable = ({
                         </a>
                       </div>
                     ) : (
-                      <div className="no-image">
-                        No Image
-                      </div>
+                      <div className="no-image">No Image</div>
                     )}
                   </td>
                   <td>{row["FIT SAMPLE"] || "N/A"}</td>

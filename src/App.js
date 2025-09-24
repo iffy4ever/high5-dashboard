@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as XLSX from 'xlsx';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import ReactDOMServer from 'react-dom/server';
-import { FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers, FiArrowUp } from 'react-icons/fi';
+import { FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers, FiArrowUp, FiAlertCircle } from 'react-icons/fi';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -10,8 +11,10 @@ import DocketSheet from './components/DocketSheet';
 import CuttingSheet from './components/CuttingSheet';
 import StatsPanel from './components/StatsPanel';
 import CustomerPage from './components/CustomerPage';
+import Login from './components/Login';
 import { formatDate, getDateValue, formatCurrency, compactSizes, getGoogleDriveThumbnail, getGoogleDriveDownloadLink, preloadImages } from './utils/index';
 import { useData } from './useData';
+import { auth } from './firebase';
 import './styles.css';
 
 // Debounce function to reduce re-renders
@@ -23,8 +26,35 @@ const debounce = (func, delay) => {
   };
 };
 
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loadingAuth) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <FiAlertCircle size={28} className="spin" />
+          <div>Checking authentication...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" replace />;
+};
+
 function App() {
-  const { data } = useData();
+  const { data, loading, error } = useData();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     TYPE: "",
@@ -111,7 +141,7 @@ function App() {
 
   // productionStats calculation
   const productionStats = useMemo(() => {
-    const today = new Date(); // Use dynamic date in production
+    const today = new Date();
     const fiscalYearStart = new Date(today.getFullYear(), 6, 1); // July 1, 2025
     const lastFiscalYearStart = new Date(today.getFullYear() - 1, 6, 1); // July 1, 2024
     const lastFiscalYearEnd = new Date(today.getFullYear(), 5, 30); // June 30, 2025
@@ -120,12 +150,11 @@ function App() {
     const oneMonthAgo = new Date(today);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    // Quarterly ranges for last 4 quarters
     const quarterlyRanges = [
-      { quarter: 'Q4 2024', start: new Date(2024, 9, 1), end: new Date(2024, 11, 31) }, // Oct-Dec 2024
-      { quarter: 'Q1 2025', start: new Date(2025, 0, 1), end: new Date(2025, 2, 31) }, // Jan-Mar 2025
-      { quarter: 'Q2 2025', start: new Date(2025, 3, 1), end: new Date(2025, 5, 30) }, // Apr-Jun 2025
-      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 30) }, // Jul-Sep 2025
+      { quarter: 'Q4 2024', start: new Date(2024, 9, 1), end: new Date(2024, 11, 31) },
+      { quarter: 'Q1 2025', start: new Date(2025, 0, 1), end: new Date(2025, 2, 31) },
+      { quarter: 'Q2 2025', start: new Date(2025, 3, 1), end: new Date(2025, 5, 30) },
+      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 30) },
     ];
 
     const stats = {
@@ -141,7 +170,6 @@ function App() {
           return row["LIVE STATUS"] === "DELIVERED" && date >= oneMonthAgo.getTime();
         })
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
-      // Quarterly units
       ...quarterlyRanges.reduce((acc, range) => {
         acc[`${range.quarter.replace(' ', '')}Units`] = data.sales_po
           .filter(row => {
@@ -196,7 +224,6 @@ function App() {
     return stats;
   }, [data.sales_po, data.fabric]);
 
-  // Preload images when data changes
   useEffect(() => {
     if (data.sales_po) {
       const salesImages = data.sales_po.map(row => row.IMAGE).filter(Boolean);
@@ -213,11 +240,10 @@ function App() {
     }
   }, [data]);
 
-  // Handle scroll to show/hide button
   useEffect(() => {
     const handleScroll = () => {
-      console.log("Scroll Y:", window.scrollY); // Debug scroll position
-      setIsVisible(window.scrollY > 50); // Lower threshold to 50px
+      console.log("Scroll Y:", window.scrollY);
+      setIsVisible(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -296,6 +322,10 @@ function App() {
       .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
   }, [data.insert_pattern, search, filters]);
+
+  const paginatedSales = filteredSales.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedFabric = filteredFabric.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedDevelopments = filteredDevelopments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const exportToExcel = useCallback(() => {
     let exportData = [];
@@ -414,7 +444,6 @@ function App() {
     printWindow.print();
   }, [selectedPOs, data.sales_po]);
 
-  // Scroll to top function
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -422,295 +451,299 @@ function App() {
   return (
     <div className={`app-container ${darkMode ? 'dark' : 'light'}`} style={{ minHeight: '100vh', flex: 1 }}>
       <Routes>
-        <Route path="/" element={
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <header className="app-header">
-              <div className="header-left">
-                <h1 className="app-title">High5 Dashboard</h1>
-                <div className="form-links">
-                  {formLinks.map((link, i) => (
-                    <a
-                      key={i}
-                      href={link.url}
-                      target={link.external ? "_blank" : "_self"}
-                      rel={link.external ? "noopener noreferrer" : undefined}
-                      className="form-link"
-                      style={{ color: link.color }}
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <header className="app-header">
+                  <div className="header-left">
+                    <h1 className="app-title">High5 Dashboard</h1>
+                    <div className="form-links">
+                      {formLinks.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target={link.external ? "_blank" : "_self"}
+                          rel={link.external ? "noopener noreferrer" : undefined}
+                          className="form-link"
+                          style={{ color: link.color }}
+                        >
+                          {link.icon} {link.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="header-center">
+                    <div className="tab-container">
+                      <div className="tabs">
+                        {[
+                          { key: "sales", label: "Sales PO" },
+                          { key: "fabric", label: "Fabric" },
+                          { key: "developments", label: "Developments" },
+                          { key: "production", label: "Production" }
+                        ].map(tab => (
+                          <button
+                            key={tab.key}
+                            className={`tab-button ${activeTab === tab.key ? 'active' : ''}`}
+                            onClick={() => {
+                              setActiveTab(tab.key);
+                              setCurrentPage(1);
+                            }}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="header-right">
+                    <button
+                      onClick={() => setShowStats(!showStats)}
+                      className="action-button show-stats-button"
                     >
-                      {link.icon} {link.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div className="header-center">
-                <div className="tab-container">
-                  <div className="tabs">
-                    {[
-                      { key: "sales", label: "Sales PO" },
-                      { key: "fabric", label: "Fabric" },
-                      { key: "developments", label: "Developments" },
-                      { key: "production", label: "Production" }
-                    ].map(tab => (
-                      <button
-                        key={tab.key}
-                        className={`tab-button ${activeTab === tab.key ? 'active' : ''}`}
-                        onClick={() => {
-                          setActiveTab(tab.key);
-                          setCurrentPage(1);
-                        }}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
+                      {showStats ? 'Hide Stats' : 'Show Stats'}
+                    </button>
+                    <button
+                      onClick={() => setDarkMode(!darkMode)}
+                      className="action-button dark-mode-toggle"
+                    >
+                      {darkMode ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                    <button
+                      onClick={() => getAuth().signOut()}
+                      className="action-button logout-button"
+                    >
+                      Logout
+                    </button>
+                    <button
+                      onClick={exportToExcel}
+                      className="action-button export-button"
+                      disabled={!filteredSales.length && !filteredFabric.length && !filteredDevelopments.length}
+                    >
+                      <FiDownload size={14} /> Export
+                    </button>
                   </div>
-                </div>
-              </div>
-              <div className="header-right">
-                <button
-                  onClick={() => setShowStats(!showStats)}
-                  className="action-button show-stats-button"
-                >
-                  {showStats ? 'Hide Stats' : 'Show Stats'}
-                </button>
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="action-button dark-mode-toggle"
-                >
-                  {darkMode ? 'Light Mode' : 'Dark Mode'}
-                </button>
-                <button
-                  onClick={exportToExcel}
-                  className="action-button export-button"
-                  disabled={!filteredSales.length && !filteredFabric.length && !filteredDevelopments.length}
-                >
-                  <FiDownload size={14} /> Export
-                </button>
-              </div>
-            </header>
+                </header>
 
-            {showStats && (
-              <StatsPanel productionStats={productionStats} colors={colors} />
-            )}
-
-            <div className="main-content" style={{ flex: 1, overflowY: 'auto' }}>
-              <div className="search-box-container">
-                <div className="search-box">
-                  <FiSearch size={16} />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => debouncedSetSearch(e.target.value)}
-                    placeholder="Search..."
-                    aria-label="Search sales, fabric, or developments"
-                  />
-                </div>
-              </div>
-
-              {activeTab !== "production" && (
-                <div className="filter-container no-print">
-                  {activeTab === "sales" && (
-                    <div className="filter-row">
-                      {[
-                        { key: "TYPE", label: "Type", options: [...new Set(data.sales_po?.map(row => row["TYPE"]).filter(Boolean))] },
-                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.sales_po?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
-                        { key: "LIVE STATUS", label: "Live Status", options: [...new Set(data.sales_po?.map(row => row["LIVE STATUS"]).filter(Boolean))] },
-                        { key: "FIT STATUS", label: "Fit Status", options: [...new Set(data.sales_po?.map(row => row["FIT STATUS"]).filter(Boolean))] }
-                      ].map(filter => (
-                        <div key={filter.key} className="filter-item">
-                          <label>{filter.label}</label>
-                          <select
-                            value={filters[filter.key]}
-                            onChange={(e) => setFilters(prev => ({ ...prev, [filter.key]: e.target.value }))}
-                            className="filter-select"
-                          >
-                            <option value="">All</option>
-                            {filter.options.map((option, i) => (
-                              <option key={i} value={option}>{option}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
+                {loading && (
+                  <div className="loading-screen">
+                    <div className="loading-content">
+                      <FiAlertCircle size={28} className="spin" />
+                      <div>Loading Dashboard...</div>
                     </div>
-                  )}
-                  {activeTab === "fabric" && (
-                    <div className="filter-row">
-                      {[
-                        { key: "TYPE", label: "Type", options: [...new Set(data.fabric?.map(row => row["TYPE"]).filter(Boolean))] },
-                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.fabric?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
-                        { key: "SUPPLIER", label: "Supplier", options: [...new Set(data.fabric?.map(row => row["SUPPLIER"]).filter(Boolean))] }
-                      ].map(filter => (
-                        <div key={filter.key} className="filter-item">
-                          <label>{filter.label}</label>
-                          <select
-                            value={fabricFilters[filter.key]}
-                            onChange={(e) => setFabricFilters(prev => ({ ...prev, [filter.key]: e.target.value }))}
-                            className="filter-select"
-                          >
-                            <option value="">All</option>
-                            {filter.options.map((option, i) => (
-                              <option key={i} value={option}>{option}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
+                  </div>
+                )}
+
+                {error && (
+                  <div className="error-screen">
+                    <div className="error-content">
+                      <FiAlertCircle size={28} className="error-icon" />
+                      <h2>Error Loading Data</h2>
+                      <p>{error}</p>
                     </div>
-                  )}
-                  {activeTab === "developments" && (
-                    <div className="filter-row">
-                      {[
-                        { key: "STYLE TYPE", label: "Style Type", options: [...new Set(data.insert_pattern?.map(row => row["STYLE TYPE"]).filter(Boolean))] },
-                        { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.insert_pattern?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
-                        { key: "FIT SAMPLE", label: "Fit Sample", options: [...new Set(data.insert_pattern?.map(row => row["FIT SAMPLE"]).filter(Boolean))] }
-                      ].map(filter => (
-                        <div key={filter.key} className="filter-item">
-                          <label>{filter.label}</label>
-                          <select
-                            value={filters[filter.key]}
-                            onChange={(e) => setFilters(prev => ({ ...prev, [filter.key]: e.target.value }))}
-                            className="filter-select"
-                          >
-                            <option value="">All</option>
-                            {filter.options.map((option, i) => (
-                              <option key={i} value={option}>{option}</option>
-                            ))}
-                          </select>
+                  </div>
+                )}
+
+                {!loading && !error && (
+                  <>
+                    {showStats && (
+                      <StatsPanel productionStats={productionStats} colors={colors} />
+                    )}
+
+                    <div className="main-content" style={{ flex: 1, overflowY: 'auto' }}>
+                      <div className="search-box-container">
+                        <div className="search-box">
+                          <FiSearch size={16} />
+                          <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => debouncedSetSearch(e.target.value)}
+                            placeholder="Search..."
+                            aria-label="Search sales, fabric, or developments"
+                          />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                      </div>
 
-              {activeTab === "sales" && (
-                <SalesTable
-                  data={filteredSales}
-                  colors={colors}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  compactSizes={compactSizes}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredSales.length}
-                  itemsPerPage={itemsPerPage}
-                />
-              )}
+                      {activeTab !== "production" && (
+                        <div className="filter-container no-print">
+                          {activeTab === "sales" && (
+                            <div className="filter-row">
+                              {[
+                                { key: "TYPE", label: "Type", options: [...new Set(data.sales_po?.map(row => row["TYPE"]).filter(Boolean))] },
+                                { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.sales_po?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
+                                { key: "LIVE STATUS", label: "Live Status", options: [...new Set(data.sales_po?.map(row => row["LIVE STATUS"]).filter(Boolean))] },
+                                { key: "FIT STATUS", label: "Fit Status", options: [...new Set(data.sales_po?.map(row => row["FIT STATUS"]).filter(Boolean))] }
+                              ].map(filter => (
+                                <div key={filter.key} className="filter-item">
+                                  <label>{filter.label}</label>
+                                  <select
+                                    value={filters[filter.key]}
+                                    onChange={(e) => setFilters(prev => ({ ...prev, [filter.key]: e.target.value }))}
+                                    className="filter-select"
+                                  >
+                                    <option value="">All</option>
+                                    {filter.options.map((option, i) => (
+                                      <option key={i} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {activeTab === "fabric" && (
+                            <div className="filter-row">
+                              {[
+                                { key: "TYPE", label: "Type", options: [...new Set(data.fabric?.map(row => row["TYPE"]).filter(Boolean))] },
+                                { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.fabric?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
+                                { key: "SUPPLIER", label: "Supplier", options: [...new Set(data.fabric?.map(row => row["SUPPLIER"]).filter(Boolean))] }
+                              ].map(filter => (
+                                <div key={filter.key} className="filter-item">
+                                  <label>{filter.label}</label>
+                                  <select
+                                    value={fabricFilters[filter.key]}
+                                    onChange={(e) => setFabricFilters(prev => ({ ...prev, [filter.key]: e.target.value }))}
+                                    className="filter-select"
+                                  >
+                                    <option value="">All</option>
+                                    {filter.options.map((option, i) => (
+                                      <option key={i} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {activeTab === "developments" && (
+                            <div className="filter-row">
+                              {[
+                                { key: "STYLE TYPE", label: "Style Type", options: [...new Set(data.insert_pattern?.map(row => row["STYLE TYPE"]).filter(Boolean))] },
+                                { key: "CUSTOMER NAME", label: "Customer Name", options: [...new Set(data.insert_pattern?.map(row => row["CUSTOMER NAME"]).filter(Boolean))] },
+                                { key: "FIT SAMPLE", label: "Fit Sample", options: [...new Set(data.insert_pattern?.map(row => row["FIT SAMPLE"]).filter(Boolean))] }
+                              ].map(filter => (
+                                <div key={filter.key} className="filter-item">
+                                  <label>{filter.label}</label>
+                                  <select
+                                    value={filters[filter.key]}
+                                    onChange={(e) => setFilters(prev => ({ ...prev, [filter.key]: e.target.value }))}
+                                    className="filter-select"
+                                  >
+                                    <option value="">All</option>
+                                    {filter.options.map((option, i) => (
+                                      <option key={i} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-              {activeTab === "fabric" && (
-                <FabricTable
-                  data={filteredFabric}
-                  colors={colors}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredFabric.length}
-                  itemsPerPage={itemsPerPage}
-                />
-              )}
-
-              {activeTab === "developments" && (
-                <DevelopmentsTable
-                  data={filteredDevelopments}
-                  colors={colors}
-                  getGoogleDriveThumbnail={getGoogleDriveThumbnail}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
-                  totalItems={filteredDevelopments.length}
-                  itemsPerPage={itemsPerPage}
-                />
-              )}
-
-              {activeTab === "production" && (
-                <div>
-                  <div className="no-print">
-                    <div className="po-input-container">
-                      <div className="filter-item" style={{ flex: 1 }}>
-                        <textarea
-                          value={poInput}
-                          onChange={(e) => setPoInput(e.target.value)}
-                          placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
-                          rows={1}
-                          className="filter-select"
-                          style={{ width: '100', height: '40px', overflow: 'hidden' }}
+                      {activeTab === "sales" && (
+                        <SalesTable
+                          data={paginatedSales}
+                          colors={colors}
+                          getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                          getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
+                          formatCurrency={formatCurrency}
+                          formatDate={formatDate}
+                          compactSizes={compactSizes}
+                          currentPage={currentPage}
+                          setCurrentPage={setCurrentPage}
+                          totalItems={filteredSales.length}
+                          itemsPerPage={itemsPerPage}
                         />
-                      </div>
-                      <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button
-                          onClick={() => {
-                            const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
-                            setSelectedPOs(pos);
-                          }}
-                          className="action-button generate-button"
-                          disabled={!poInput.trim()}
-                        >
-                          Generate Sheets
-                        </button>
-                        <button 
-                          onClick={handlePrint} 
-                          className="action-button print-button"
-                          disabled={selectedPOs.length === 0}
-                        >
-                          <FiPrinter size={14} /> Print Sheets
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                      )}
 
-                  {selectedPOs.length > 0 && (
-                    <div className="sheets-container">
-                      <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                      <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                      {activeTab === "fabric" && (
+                        <FabricTable
+                          data={paginatedFabric}
+                          colors={colors}
+                          getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                          formatCurrency={formatCurrency}
+                          formatDate={formatDate}
+                          currentPage={currentPage}
+                          setCurrentPage={setCurrentPage}
+                          totalItems={filteredFabric.length}
+                          itemsPerPage={itemsPerPage}
+                        />
+                      )}
 
-            <footer className="app-footer no-print">
-              <div className="footer-content">
-                <div>High5 Production Dashboard © {new Date().getFullYear()}</div>
-                <div>
-                  Last Updated: {new Date().toLocaleString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div>
+                      {activeTab === "developments" && (
+                        <DevelopmentsTable
+                          data={paginatedDevelopments}
+                          colors={colors}
+                          getGoogleDriveThumbnail={getGoogleDriveThumbnail}
+                          formatCurrency={formatCurrency}
+                          formatDate={formatDate}
+                          currentPage={currentPage}
+                          setCurrentPage={setCurrentPage}
+                          totalItems={filteredDevelopments.length}
+                          itemsPerPage={itemsPerPage}
+                        />
+                      )}
+
+                      {activeTab === "production" && (
+                        <div>
+                          <div className="no-print">
+                            <div className="po-input-container">
+                              <div className="filter-item" style={{ flex: 1 }}>
+                                <textarea
+                                  value={poInput}
+                                  onChange={(e) => setPoInput(e.target.value)}
+                                  placeholder="Enter PO Numbers e.g., PO0004 PO0001,PO0002"
+                                  rows={1}
+                                  className="filter-select"
+                                  style={{ width: '100', height: '40px', overflow: 'hidden' }}
+                                />
+                              </div>
+                              <div className="po-buttons" style={{ display: 'flex', gap: '0.75rem' }}>
+                                <button
+                                  onClick={() => {
+                                    const pos = poInput.split(/[\n, ]+/).map(p => p.trim()).filter(Boolean);
+                                    setSelectedPOs(pos);
+                                  }}
+                                  className="action-button generate-button"
+                                  disabled={!poInput.trim()}
+                                >
+                                  Generate Sheets
+                                </button>
+                                <button 
+                                  onClick={handlePrint} 
+                                  className="action-button print-button"
+                                  disabled={selectedPOs.length === 0}
+                                >
+                                  <FiPrinter size={14} /> Print Sheets
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {selectedPOs.length > 0 && (
+                            <div className="sheets-container">
+                              <DocketSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                              <CuttingSheet selectedData={data.sales_po.filter(row => selectedPOs.includes(row["PO NUMBER"]))} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            </footer>
-
-            {/* Scroll to Top Button */}
-            <button 
-              className="scroll-to-top"
-              onClick={scrollToTop}
-              style={{ 
-                position: 'fixed', 
-                bottom: '20px', 
-                right: '20px', 
-                display: isVisible ? 'block' : 'none',
-                backgroundColor: colors.actionButton,
-                color: colors.textLight,
-                border: 'none',
-                borderRadius: '50%',
-                width: '40px',
-                height: '40px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px var(--shadow-color)',
-                transition: 'opacity 0.2s ease'
-              }}
-            >
-              <FiArrowUp size={20} />
-            </button>
-          </div>
-        } />
-        <Route path="/pd-kaiia" element={<CustomerPage />} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pd-kaiia"
+          element={
+            <ProtectedRoute>
+              <CustomerPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );
