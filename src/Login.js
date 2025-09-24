@@ -19,17 +19,24 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    if (!allowedEmails.includes(email.toLowerCase())) {
+    const normalizedEmail = email.toLowerCase();
+    if (!allowedEmails.includes(normalizedEmail)) {
       setError('Access denied: Email not authorized');
+      console.log('Unauthorized email:', normalizedEmail);
       return;
     }
 
     try {
       await signInWithEmailAndPassword(getAuth(), email, 'High54ever');
+      console.log('Login successful for email:', normalizedEmail);
       navigate('/');
     } catch (err) {
-      console.error('Firebase Login Error:', err.code, err.message);
-      setError('Login failed. Please check your email or contact support.');
+      console.error('Firebase Login Error:', {
+        code: err.code,
+        message: err.message,
+        email: normalizedEmail
+      });
+      setError(`Login failed: ${err.code} - ${err.message}`);
     }
   };
 
