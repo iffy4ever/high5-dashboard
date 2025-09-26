@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as XLSX from 'xlsx';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import ReactDOMServer from 'react-dom/server';
 import { FiDownload, FiSearch, FiPrinter, FiFileText, FiLayers, FiUsers, FiArrowUp, FiAlertCircle } from 'react-icons/fi';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import SalesTable from './components/SalesTable';
 import FabricTable from './components/FabricTable';
 import DevelopmentsTable from './components/DevelopmentsTable';
@@ -14,7 +14,7 @@ import CustomerPage from './components/CustomerPage';
 import Login from './components/Login';
 import { formatDate, getDateValue, formatCurrency, compactSizes, getGoogleDriveThumbnail, getGoogleDriveDownloadLink, preloadImages } from './utils/index';
 import { useData } from './useData';
-import { auth } from './firebase';
+import './firebase'; // Initialize Firebase
 import './styles.css';
 
 // Debounce function to reduce re-renders
@@ -26,22 +26,23 @@ const debounce = (func, delay) => {
   };
 };
 
-// Protected Route component
+// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoadingAuth(false);
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      setUser(user);
+      setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
-  if (loadingAuth) {
+  if (loading) {
     return (
-      <div className="loading-screen">
+      <div className="app-container light" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="loading-content">
           <FiAlertCircle size={28} className="spin" />
           <div>Checking authentication...</div>
@@ -141,7 +142,9 @@ function App() {
 
   // productionStats calculation
   const productionStats = useMemo(() => {
-    const today = new Date();
+    if (!data.sales_po || !data.fabric) return {};
+    
+    const today = new Date(); // Use dynamic date in production
     const fiscalYearStart = new Date(today.getFullYear(), 6, 1); // July 1, 2025
     const lastFiscalYearStart = new Date(today.getFullYear() - 1, 6, 1); // July 1, 2024
     const lastFiscalYearEnd = new Date(today.getFullYear(), 5, 30); // June 30, 2025
@@ -150,11 +153,12 @@ function App() {
     const oneMonthAgo = new Date(today);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
+    // Quarterly ranges for last 4 quarters
     const quarterlyRanges = [
-      { quarter: 'Q4 2024', start: new Date(2024, 9, 1), end: new Date(2024, 11, 31) },
-      { quarter: 'Q1 2025', start: new Date(2025, 0, 1), end: new Date(2025, 2, 31) },
-      { quarter: 'Q2 2025', start: new Date(2025, 3, 1), end: new Date(2025, 5, 30) },
-      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 30) },
+      { quarter: 'Q4 2024', start: new Date(2024, 9, 1), end: new Date(2024, 11, 31) }, // Oct-Dec 2024
+      { quarter: 'Q1 2025', start: new Date(2025, 0, 1), end: new Date(2025, 2, 31) }, // Jan-Mar 2025
+      { quarter: 'Q2 2025', start: new Date(2025, 3, 1), end: new Date(2025, 5, 30) }, // Apr-Jun 2025
+      { quarter: 'Q3 2025', start: new Date(2025, 6, 1), end: new Date(2025, 8, 30) }, // Jul-Sep 2025
     ];
 
     const stats = {
@@ -170,6 +174,7 @@ function App() {
           return row["LIVE STATUS"] === "DELIVERED" && date >= oneMonthAgo.getTime();
         })
         .reduce((sum, row) => sum + parseInt(row["TOTAL UNITS"] || 0, 10), 0),
+      // Quarterly units
       ...quarterlyRanges.reduce((acc, range) => {
         acc[`${range.quarter.replace(' ', '')}Units`] = data.sales_po
           .filter(row => {
@@ -224,6 +229,7 @@ function App() {
     return stats;
   }, [data.sales_po, data.fabric]);
 
+  // Preload images when data changes
   useEffect(() => {
     if (data.sales_po) {
       const salesImages = data.sales_po.map(row => row.IMAGE).filter(Boolean);
@@ -240,10 +246,11 @@ function App() {
     }
   }, [data]);
 
+  // Handle scroll to show/hide button
   useEffect(() => {
     const handleScroll = () => {
-      console.log("Scroll Y:", window.scrollY);
-      setIsVisible(window.scrollY > 50);
+      console.log("Scroll Y:", window.scrollY); // Debug scroll position
+      setIsVisible(window.scrollY > 50); // Lower threshold to 50px
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -322,10 +329,6 @@ function App() {
       .filter(row => !filters["FIT SAMPLE"] || (row["FIT SAMPLE"] || "").toLowerCase() === filters["FIT SAMPLE"].toLowerCase())
       .sort((a, b) => getDateValue(b["Timestamp"]) - getDateValue(a["Timestamp"]));
   }, [data.insert_pattern, search, filters]);
-
-  const paginatedSales = filteredSales.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const paginatedFabric = filteredFabric.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const paginatedDevelopments = filteredDevelopments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const exportToExcel = useCallback(() => {
     let exportData = [];
@@ -444,6 +447,7 @@ function App() {
     printWindow.print();
   }, [selectedPOs, data.sales_po]);
 
+  // Scroll to top function
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -457,76 +461,6 @@ function App() {
           element={
             <ProtectedRoute>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <header className="app-header">
-                  <div className="header-left">
-                    <h1 className="app-title">High5 Dashboard</h1>
-                    <div className="form-links">
-                      {formLinks.map((link, i) => (
-                        <a
-                          key={i}
-                          href={link.url}
-                          target={link.external ? "_blank" : "_self"}
-                          rel={link.external ? "noopener noreferrer" : undefined}
-                          className="form-link"
-                          style={{ color: link.color }}
-                        >
-                          {link.icon} {link.label}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="header-center">
-                    <div className="tab-container">
-                      <div className="tabs">
-                        {[
-                          { key: "sales", label: "Sales PO" },
-                          { key: "fabric", label: "Fabric" },
-                          { key: "developments", label: "Developments" },
-                          { key: "production", label: "Production" }
-                        ].map(tab => (
-                          <button
-                            key={tab.key}
-                            className={`tab-button ${activeTab === tab.key ? 'active' : ''}`}
-                            onClick={() => {
-                              setActiveTab(tab.key);
-                              setCurrentPage(1);
-                            }}
-                          >
-                            {tab.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="header-right">
-                    <button
-                      onClick={() => setShowStats(!showStats)}
-                      className="action-button show-stats-button"
-                    >
-                      {showStats ? 'Hide Stats' : 'Show Stats'}
-                    </button>
-                    <button
-                      onClick={() => setDarkMode(!darkMode)}
-                      className="action-button dark-mode-toggle"
-                    >
-                      {darkMode ? 'Light Mode' : 'Dark Mode'}
-                    </button>
-                    <button
-                      onClick={() => getAuth().signOut()}
-                      className="action-button logout-button"
-                    >
-                      Logout
-                    </button>
-                    <button
-                      onClick={exportToExcel}
-                      className="action-button export-button"
-                      disabled={!filteredSales.length && !filteredFabric.length && !filteredDevelopments.length}
-                    >
-                      <FiDownload size={14} /> Export
-                    </button>
-                  </div>
-                </header>
-
                 {loading && (
                   <div className="loading-screen">
                     <div className="loading-content">
@@ -548,6 +482,76 @@ function App() {
 
                 {!loading && !error && (
                   <>
+                    <header className="app-header">
+                      <div className="header-left">
+                        <h1 className="app-title">High5 Dashboard</h1>
+                        <div className="form-links">
+                          {formLinks.map((link, i) => (
+                            <a
+                              key={i}
+                              href={link.url}
+                              target={link.external ? "_blank" : "_self"}
+                              rel={link.external ? "noopener noreferrer" : undefined}
+                              className="form-link"
+                              style={{ color: link.color }}
+                            >
+                              {link.icon} {link.label}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="header-center">
+                        <div className="tab-container">
+                          <div className="tabs">
+                            {[
+                              { key: "sales", label: "Sales PO" },
+                              { key: "fabric", label: "Fabric" },
+                              { key: "developments", label: "Developments" },
+                              { key: "production", label: "Production" }
+                            ].map(tab => (
+                              <button
+                                key={tab.key}
+                                className={`tab-button ${activeTab === tab.key ? 'active' : ''}`}
+                                onClick={() => {
+                                  setActiveTab(tab.key);
+                                  setCurrentPage(1);
+                                }}
+                              >
+                                {tab.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="header-right">
+                        <button
+                          onClick={() => setShowStats(!showStats)}
+                          className="action-button show-stats-button"
+                        >
+                          {showStats ? 'Hide Stats' : 'Show Stats'}
+                        </button>
+                        <button
+                          onClick={() => setDarkMode(!darkMode)}
+                          className="action-button dark-mode-toggle"
+                        >
+                          {darkMode ? 'Light Mode' : 'Dark Mode'}
+                        </button>
+                        <button
+                          onClick={() => getAuth().signOut()}
+                          className="action-button logout-button"
+                        >
+                          Logout
+                        </button>
+                        <button
+                          onClick={exportToExcel}
+                          className="action-button export-button"
+                          disabled={!filteredSales.length && !filteredFabric.length && !filteredDevelopments.length}
+                        >
+                          <FiDownload size={14} /> Export
+                        </button>
+                      </div>
+                    </header>
+
                     {showStats && (
                       <StatsPanel productionStats={productionStats} colors={colors} />
                     )}
@@ -643,7 +647,7 @@ function App() {
 
                       {activeTab === "sales" && (
                         <SalesTable
-                          data={paginatedSales}
+                          data={filteredSales}
                           colors={colors}
                           getGoogleDriveThumbnail={getGoogleDriveThumbnail}
                           getGoogleDriveDownloadLink={getGoogleDriveDownloadLink}
@@ -659,7 +663,7 @@ function App() {
 
                       {activeTab === "fabric" && (
                         <FabricTable
-                          data={paginatedFabric}
+                          data={filteredFabric}
                           colors={colors}
                           getGoogleDriveThumbnail={getGoogleDriveThumbnail}
                           formatCurrency={formatCurrency}
@@ -673,7 +677,7 @@ function App() {
 
                       {activeTab === "developments" && (
                         <DevelopmentsTable
-                          data={paginatedDevelopments}
+                          data={filteredDevelopments}
                           colors={colors}
                           getGoogleDriveThumbnail={getGoogleDriveThumbnail}
                           formatCurrency={formatCurrency}
@@ -730,6 +734,27 @@ function App() {
                         </div>
                       )}
                     </div>
+
+                    <footer className="app-footer no-print">
+                      <div className="footer-content">
+                        <div className="footer-left">
+                          <p>&copy; 2025 High5 Clothing. All rights reserved.</p>
+                        </div>
+                        <div className="footer-right">
+                          <p>Dashboard v2.0</p>
+                        </div>
+                      </div>
+                    </footer>
+
+                    {isVisible && (
+                      <button
+                        onClick={scrollToTop}
+                        className="scroll-to-top"
+                        aria-label="Scroll to top"
+                      >
+                        <FiArrowUp size={20} />
+                      </button>
+                    )}
                   </>
                 )}
               </div>

@@ -76,7 +76,7 @@ const SalesTable = ({
                 <td colSpan="17">
                   <div className="empty-content">
                     <FiAlertCircle size={28} />
-                    <div>No Matching Sales Found</div>
+                    <div>No Matching Orders Found</div>
                     <p>Try Adjusting Your Search Or Filters</p>
                   </div>
                 </td>
@@ -86,42 +86,66 @@ const SalesTable = ({
                 <tr key={i}>
                   <td className="image-cell">
                     {row.IMAGE ? (
-                      <a href={getGoogleDriveDownloadLink(row.IMAGE)} target="_blank" rel="noopener noreferrer" aria-label="View image">
-                        <img
-                          src={getGoogleDriveThumbnail(row.IMAGE)}
-                          alt={row["DESCRIPTION"]}
-                          className="product-image"
-                          loading="eager"
-                          onError={(e) => {
-                            console.error("SalesTable image failed to load:", {
-                              url: row.IMAGE,
-                              message: e.message,
-                              rowData: row
-                            });
-                            e.target.src = "/fallback-image.png";
-                          }}
-                        />
-                      </a>
+                      <div>
+                        <a href={row.IMAGE} target="_blank" rel="noopener noreferrer" aria-label="View product image">
+                          <img
+                            src={getGoogleDriveThumbnail(row.IMAGE) || "/fallback-image.png"}
+                            alt="Product"
+                            className="product-image"
+                            loading="lazy"
+                            onError={(e) => {
+                              console.warn('Image failed to load, trying direct URL:', row.IMAGE);
+                              e.target.src = row.IMAGE || "/fallback-image.png";
+                            }}
+                          />
+                        </a>
+                      </div>
                     ) : (
-                      <div className="no-image">No Image</div>
+                      <div className="no-image">
+                        No Image
+                      </div>
                     )}
                   </td>
-                  <td><span className="status-text" data-status={row["FIT STATUS"]}>{row["FIT STATUS"] || "N/A"}</span></td>
-                  <td className="highlight-cell">{row["H-NUMBER"] || "N/A"}</td>
-                  <td>{row["CUSTOMER NAME"] || "N/A"}</td>
-                  <td>{row["PO NUMBER"] || "N/A"}</td>
-                  <td>{row["STYLE NUMBER"] || "N/A"}</td>
-                  <td>{row["DESCRIPTION"] || "N/A"}</td>
-                  <td className="color-cell">
-                    <span className="color-dot" style={{ backgroundColor: getColorCode(row["COLOUR"]) }}></span>
-                    {row["COLOUR"] || "N/A"}
+                  <td>
+                    <span className="status-text" data-status={row["FIT STATUS"]}>{row["FIT STATUS"]}</span>
+                  </td>
+                  <td className="highlight-cell">{row["H-NUMBER"]}</td>
+                  <td>{row["CUSTOMER NAME"]}</td>
+                  <td>{row["PO NUMBER"]}</td>
+                  <td>{row["STYLE NUMBER"]}</td>
+                  <td>{row["DESCRIPTION"]}</td>
+                  <td>
+                    <div className="color-cell">
+                      {row["COLOUR"] && (
+                        <span 
+                          className="color-dot" 
+                          style={{ backgroundColor: getColorCode(row["COLOUR"]) }}
+                        ></span>
+                      )}
+                      {row["COLOUR"]}
+                    </div>
                   </td>
                   <td className="price-cell">{formatCurrency(row["PRICE"])}</td>
-                  <td className="bold-cell">{row["TOTAL UNITS"] || "N/A"}</td>
+                  <td className="bold-cell">{row["TOTAL UNITS"]}</td>
                   <td className="nowrap">{formatDate(row["XFACT DD"])}</td>
                   <td className="nowrap">{formatDate(row["REAL DD"])}</td>
-                  <td><span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"] || "N/A"}</span></td>
-                  <td className="price-cell">{formatCurrency(row["CMT PRICE"])}</td>
+                  <td>
+                    <span className="status-text" data-status={row["LIVE STATUS"]}>{row["LIVE STATUS"]}</span>
+                  </td>
+                  <td className="price-cell nowrap bold-cell">
+                    {row["COSTING LINKS"] ? (
+                      <a 
+                        href={row["COSTING LINKS"]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ color: 'inherit' }}
+                      >
+                        {formatCurrency(row["CMT PRICE"])}
+                      </a>
+                    ) : (
+                      formatCurrency(row["CMT PRICE"])
+                    )}
+                  </td>
                   <td className="price-cell">{formatCurrency(row["ACTUAL CMT"])}</td>
                   <td>
                     {row["PACKING LIST"] ? (
@@ -131,15 +155,17 @@ const SalesTable = ({
                         rel="noopener noreferrer"
                         className="view-button"
                         aria-label="View packing list"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
-                        <FiExternalLink size={12} /> View
+                        <FiExternalLink size={14} />
+                        View PL
                       </a>
                     ) : (
                       <span className="na-text">N/A</span>
                     )}
                   </td>
                   <td className="sizes-cell">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px' }}>
                       <div style={{ textAlign: 'center', padding: '4px', border: '1px solid #ddd', borderRadius: '3px' }}>
                         4 - {row["4"] || "0"}
                       </div>

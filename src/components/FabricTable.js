@@ -4,8 +4,13 @@ import { getColorCode } from '../utils';
 
 const FabricTable = ({
   data,
+  fabricFilters,
+  setFabricFilters,
   colors,
+  handleMouseEnter,
+  handleMouseLeave,
   getGoogleDriveThumbnail,
+  getMatchingSalesImage,
   formatCurrency,
   formatDate,
   currentPage,
@@ -62,7 +67,7 @@ const FabricTable = ({
                 </td>
               </tr>
             ) : (
-              data.map((row, i) => (
+              data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((row, i) => (
                 <tr key={i}>
                   <td>{row["NO."] || "N/A"}</td>
                   <td className="nowrap">{formatDate(row["DATE"])}</td>
