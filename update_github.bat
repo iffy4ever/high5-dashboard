@@ -2,7 +2,7 @@
 echo Quick update to GitHub...
 echo.
 
-cd /d "C:\Users\IrfanMaster\dashboard-app"
+cd /d "C:\Users\irfan\dashboard-app"
 
 git add .
 git commit -m "Update: %date% %time%"
